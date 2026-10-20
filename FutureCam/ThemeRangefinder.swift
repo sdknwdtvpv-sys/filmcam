@@ -220,7 +220,7 @@ struct RangefinderCameraView: View {
                 Spacer(minLength: 0)
                 flipKey(t)
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 36)   // 两侧按钮往中间收，别贴着边
             .padding(.top, 12)      // 和上面的读数条拉开
             .padding(.bottom, bottomInset)   // 整排压到底边
         }
