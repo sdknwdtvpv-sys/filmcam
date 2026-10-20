@@ -6,9 +6,9 @@ struct CameraRoot: View {
     @EnvironmentObject var manager: CameraManager
     @Environment(\.scenePhase) private var scenePhase
 
-    @AppStorage("filmcam.theme") private var themeRaw = ThemeID.darkroom.rawValue
+    @AppStorage("filmcam.theme") private var themeRaw = ThemeID.precision.rawValue
 
-    private var themeID: ThemeID { ThemeID(rawValue: themeRaw) ?? .darkroom }
+    private var themeID: ThemeID { ThemeID(rawValue: themeRaw) ?? .precision }
 
     var body: some View {
         // 共享页面（相册 / 弹层 / 提示条）读的是 CameraTheme 静态令牌，
@@ -99,9 +99,9 @@ struct CameraRoot: View {
 
     @ViewBuilder private var themeScreen: some View {
         switch themeID {
-        case .darkroom:  DarkroomCameraView()
-        case .meter:     MeterCameraView()
-        case .filmstrip: FilmStripCameraView()
+        case .precision: PrecisionCameraView()
+        case .cockpit:   CockpitCameraView()
+        case .rig:       RigCameraView()
         }
     }
 }

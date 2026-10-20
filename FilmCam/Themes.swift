@@ -3,35 +3,51 @@ import SwiftUI
 // MARK: - 主题标识
 
 enum ThemeID: String, CaseIterable, Identifiable {
-    case darkroom
-    case meter
-    case filmstrip
+    case precision
+    case cockpit
+    case rig
 
     var id: String { rawValue }
 
     var tokens: ThemeTokens {
         switch self {
-        case .darkroom:  return .darkroom
-        case .meter:     return .meter
-        case .filmstrip: return .filmstrip
+        case .precision: return .precision
+        case .cockpit:   return .cockpit
+        case .rig:       return .rig
         }
     }
 }
 
+/// 面板材质：决定底纹、高光走向与颗粒
+enum MaterialKind: Sendable {
+    /// 拉丝阳极氧化铝（横向细纹）
+    case brushed
+    /// 喷砂石墨（细微颗粒 + 冷光）
+    case graphite
+    /// 碳纤编织 + 机加工边
+    case carbon
+}
+
 // MARK: - 令牌
 
-/// 一套主题的全部可见变量。三个方向的差别不只是颜色：
-/// 字体族、圆角、密度、发丝线宽都跟着换，否则切主题只会像换了个色号。
 struct ThemeTokens: Sendable {
     let id: ThemeID
     let name: String
-    /// 选择器里的一句话说明
     let blurb: String
+    let material: MaterialKind
 
-    // 底色三层
+    // 底色
     let background: Color
     let panel: Color
     let elevated: Color
+
+    // 面板渐变（受光面 → 背光面）
+    let faceTop: Color
+    let faceBottom: Color
+
+    // 凹陷井（取景窗、读数窗）
+    let wellTop: Color
+    let wellBottom: Color
 
     // 文字
     let ink: Color
@@ -41,150 +57,156 @@ struct ThemeTokens: Sendable {
     let accent: Color
     let accentDeep: Color
     let accentGlow: Color
+    /// LED 发光色
+    let glow: Color
     let hairline: Color
     let recRed: Color
 
     // 形状与密度
     let radius: CGFloat
     let hairWidth: CGFloat
-    /// 卡片内边距（密集主题更小）
     let inset: CGFloat
 
     // 字体
     let displayFont: @Sendable (CGFloat, Font.Weight) -> Font
     let labelFont: @Sendable (CGFloat, Font.Weight) -> Font
     let monoFont: @Sendable (CGFloat, Font.Weight) -> Font
+}
 
-    // MARK: 预设
+// MARK: - 三套工业主题
 
-    /// 暗房工单：米白纸面 + 品红墨 + 迪多内衬线
-    static let darkroom = ThemeTokens(
-        id: .darkroom,
-        name: "暗房工单",
-        blurb: "纸面开一扇窗，快门是一条要撕开的封条",
-        background: Color(hex: 0xE9E1D0),
-        panel: Color(hex: 0xF3EDE0),
-        elevated: Color(hex: 0xDCD2BC),
-        ink: Color(hex: 0x241C17),
-        inkDim: Color(hex: 0x241C17, opacity: 0.55),
-        accent: Color(hex: 0xA3245B),
-        accentDeep: Color(hex: 0x7A1743),
-        accentGlow: Color(hex: 0xC8397A),
-        hairline: Color(hex: 0x241C17, opacity: 0.18),
-        recRed: Color(hex: 0xB3261E),
-        radius: 2,
-        hairWidth: 1,
-        inset: 16,
-        displayFont: { size, weight in
-            .custom("Didot", size: size).weight(weight == .regular ? .regular : weight)
-        },
-        labelFont: { size, weight in
-            .system(size: size, weight: weight, design: .monospaced)
-        },
-        monoFont: { size, weight in
-            .system(size: size, weight: weight, design: .monospaced)
-        }
-    )
+extension ThemeTokens {
 
-    /// 测光台：冷白仪器面板 + 红绿区间 + 窄体读数
-    static let meter = ThemeTokens(
-        id: .meter,
-        name: "测光台",
-        blurb: "整屏仪器面板，参数是刻度上的游标",
-        background: Color(hex: 0xE5E7E2),
-        panel: Color(hex: 0xEFF1EC),
-        elevated: Color(hex: 0xD5D8D1),
-        ink: Color(hex: 0x1B1F1C),
-        inkDim: Color(hex: 0x1B1F1C, opacity: 0.52),
-        accent: Color(hex: 0xC03325),
-        accentDeep: Color(hex: 0x8B2116),
-        accentGlow: Color(hex: 0xE1594A),
-        hairline: Color(hex: 0x1B1F1C, opacity: 0.22),
-        recRed: Color(hex: 0xC03325),
-        radius: 3,
+    /// A · 精密仪器：拉丝铝面板，橙色安全标记，滚花转盘
+    static let precision = ThemeTokens(
+        id: .precision,
+        name: "精密仪器",
+        blurb: "拉丝铝机身，读数窗与滚花转盘",
+        material: .brushed,
+        background: Color(hex: 0xB4B9BE),
+        panel: Color(hex: 0xC9CED2),
+        elevated: Color(hex: 0xDFE3E6),
+        faceTop: Color(hex: 0xE6EAED),
+        faceBottom: Color(hex: 0xADB3B9),
+        wellTop: Color(hex: 0x2E3338),
+        wellBottom: Color(hex: 0x1A1E22),
+        ink: Color(hex: 0x1D2125),
+        inkDim: Color(hex: 0x1D2125, opacity: 0.5),
+        accent: Color(hex: 0xE85D1F),
+        accentDeep: Color(hex: 0xA83F11),
+        accentGlow: Color(hex: 0xFF8A4A),
+        glow: Color(hex: 0xFF7A33),
+        hairline: Color(hex: 0x1D2125, opacity: 0.22),
+        recRed: Color(hex: 0xC8321F),
+        radius: 7,
         hairWidth: 1,
         inset: 14,
-        displayFont: { size, weight in
-            .custom("DINCondensed-Bold", size: size)
-        },
-        labelFont: { size, weight in
-            .custom("DINCondensed-Bold", size: size)
-        },
-        monoFont: { size, weight in
-            .system(size: size, weight: weight, design: .monospaced)
-        }
+        displayFont: { size, _ in .custom("DINAlternate-Bold", size: size) },
+        labelFont: { size, weight in .custom("DINAlternate-Bold", size: size) },
+        monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
     )
 
-    /// 胶片带：深靛蓝 + 横向分带 + 巨型帧计数
-    static let filmstrip = ThemeTokens(
-        id: .filmstrip,
-        name: "胶片带",
-        blurb: "整屏像一条拉出来的胶片，帧数最大",
-        background: Color(hex: 0x0B0D1E),
-        panel: Color(hex: 0x151833),
-        elevated: Color(hex: 0x1E2242),
-        ink: Color(hex: 0xE9E4F3),
-        inkDim: Color(hex: 0xE9E4F3, opacity: 0.55),
-        accent: Color(hex: 0xB79CFF),
-        accentDeep: Color(hex: 0x7A5BD6),
-        accentGlow: Color(hex: 0xD9C8FF),
-        hairline: Color(hex: 0xB79CFF, opacity: 0.24),
-        recRed: Color(hex: 0xFF5A63),
-        radius: 14,
+    /// B · 驾驶舱：喷砂石墨 + 凹陷仪表井 + 青色 LED
+    static let cockpit = ThemeTokens(
+        id: .cockpit,
+        name: "驾驶舱",
+        blurb: "石墨仪表台，凹玻璃井，LED 读数条",
+        material: .graphite,
+        background: Color(hex: 0x0C0F11),
+        panel: Color(hex: 0x171B1F),
+        elevated: Color(hex: 0x242B31),
+        faceTop: Color(hex: 0x262E34),
+        faceBottom: Color(hex: 0x11161A),
+        wellTop: Color(hex: 0x05070A),
+        wellBottom: Color(hex: 0x0A0E12),
+        ink: Color(hex: 0xD6DEE4),
+        inkDim: Color(hex: 0xD6DEE4, opacity: 0.46),
+        accent: Color(hex: 0x3FD8D2),
+        accentDeep: Color(hex: 0x1B7E7A),
+        accentGlow: Color(hex: 0x8AF6F1),
+        glow: Color(hex: 0x5FF3EC),
+        hairline: Color(hex: 0xD6DEE4, opacity: 0.14),
+        recRed: Color(hex: 0xFF5A4E),
+        radius: 4,
         hairWidth: 1,
-        inset: 18,
-        displayFont: { size, weight in
-            .custom("Rockwell-Bold", size: size)
-        },
-        labelFont: { size, weight in
-            .custom("AvenirNext-DemiBold", size: size)
-        },
-        monoFont: { size, weight in
-            .system(size: size, weight: weight, design: .monospaced)
-        }
+        inset: 12,
+        displayFont: { size, _ in .custom("Menlo-Bold", size: size) },
+        labelFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) },
+        monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
+    )
+
+    /// C · 模块机架：碳纤 + 机加工铝框 + 红色标记 + 大镜头环
+    static let rig = ThemeTokens(
+        id: .rig,
+        name: "模块机架",
+        blurb: "碳纤机身，铝框，镜头环快门",
+        material: .carbon,
+        background: Color(hex: 0x07080A),
+        panel: Color(hex: 0x13161A),
+        elevated: Color(hex: 0x1E2227),
+        faceTop: Color(hex: 0x22272D),
+        faceBottom: Color(hex: 0x0C0E11),
+        wellTop: Color(hex: 0x040506),
+        wellBottom: Color(hex: 0x08090C),
+        ink: Color(hex: 0xECEEF1),
+        inkDim: Color(hex: 0xECEEF1, opacity: 0.45),
+        accent: Color(hex: 0xE23A2E),
+        accentDeep: Color(hex: 0x8C1C14),
+        accentGlow: Color(hex: 0xFF6A5E),
+        glow: Color(hex: 0xFF4A3D),
+        hairline: Color(hex: 0xFFFFFF, opacity: 0.12),
+        recRed: Color(hex: 0xFF3B2F),
+        radius: 10,
+        hairWidth: 1,
+        inset: 13,
+        displayFont: { size, _ in .custom("HelveticaNeue-CondensedBold", size: size) },
+        labelFont: { size, weight in .custom("HelveticaNeue-Medium", size: size) },
+        monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
     )
 }
 
-// MARK: - 当前主题（给历史遗留的 CameraTheme.* 调用点兜底）
+// MARK: - 当前主题
 
-/// 相册、弹层、提示条这些共享界面仍然读 `CameraTheme.xxx`，
-/// 这里提供当前主题的解析。根视图在 build 之前写入。
 enum ThemeStore {
-    nonisolated(unsafe) static var current: ThemeTokens = .darkroom
+    nonisolated(unsafe) static var current: ThemeTokens = .precision
 }
 
 // MARK: - 主题选择器
 
-/// 顶部常驻的主题切换入口：一个色点 + 名字，点开是三选一的说明
 struct ThemeSwitcher: View {
     @Binding var selection: ThemeID
-
     @State private var showPicker = false
 
     var body: some View {
+        let t = ThemeStore.current
+
         Button { showPicker = true } label: {
-            HStack(spacing: 7) {
-                Circle()
-                    .fill(ThemeStore.current.accent)
-                    .frame(width: 8, height: 8)
-                Text(ThemeStore.current.name)
-                    .font(ThemeStore.current.labelFont(11, .semibold))
-                    .foregroundColor(ThemeStore.current.ink)
-                    .tracking(0.5)
+            HStack(spacing: 6) {
+                LEDDot(color: t.glow, size: 6)
+                Text(t.name)
+                    .font(t.labelFont(10, .semibold))
+                    .tracking(1.2)
+                    .foregroundColor(t.ink)
                 Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(ThemeStore.current.inkDim)
+                    .font(.system(size: 7, weight: .bold))
+                    .foregroundColor(t.inkDim)
             }
-            .padding(.horizontal, 10).padding(.vertical, 6)
+            .padding(.horizontal, 9).padding(.vertical, 5)
             .background(
-                Capsule().fill(ThemeStore.current.panel.opacity(0.92))
+                Capsule().fill(
+                    LinearGradient(colors: [t.faceTop, t.faceBottom],
+                                   startPoint: .top, endPoint: .bottom))
             )
             .overlay(
-                Capsule().stroke(ThemeStore.current.hairline, lineWidth: 1)
+                Capsule().strokeBorder(
+                    LinearGradient(colors: [.white.opacity(0.35), .black.opacity(0.4)],
+                                   startPoint: .top, endPoint: .bottom),
+                    lineWidth: 1)
             )
+            .shadow(color: .black.opacity(0.45), radius: 3, y: 1)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("切换界面主题，当前为\(ThemeStore.current.name)")
+        .accessibilityLabel("切换界面主题，当前为\(t.name)")
         .sheet(isPresented: $showPicker) {
             ThemePickerSheet(selection: $selection)
         }
@@ -199,11 +221,11 @@ struct ThemePickerSheet: View {
         let t = ThemeStore.current
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text("界面主题")
-                    .font(t.displayFont(26, .regular))
+                Text("机身主题")
+                    .font(t.displayFont(24, .regular))
                     .foregroundColor(t.ink)
-                Text("同一台相机，三种界面骨架。切换后所有页面立即生效。")
-                    .font(t.labelFont(12, .regular))
+                Text("同一台相机，三种工业外壳。切换后整机立即生效。")
+                    .font(t.labelFont(11, .regular))
                     .foregroundColor(t.inkDim)
 
                 ForEach(ThemeID.allCases) { id in
@@ -213,47 +235,50 @@ struct ThemePickerSheet: View {
                         dismiss()
                     } label: {
                         HStack(alignment: .top, spacing: 12) {
-                            VStack(spacing: 3) {
-                                ForEach(0..<3, id: \.self) { i in
-                                    Rectangle()
-                                        .fill(i == 0 ? item.background
-                                              : (i == 1 ? item.accent : item.ink))
-                                        .frame(width: 22, height: 9)
-                                }
+                            VStack(spacing: 2) {
+                                LinearGradient(colors: [item.faceTop, item.faceBottom],
+                                               startPoint: .top, endPoint: .bottom)
+                                    .frame(width: 26, height: 20)
+                                item.accent.frame(width: 26, height: 5)
                             }
-                            .padding(.top, 3)
+                            .clipShape(RoundedRectangle(cornerRadius: 3))
+                            .overlay(RoundedRectangle(cornerRadius: 3)
+                                .stroke(item.hairline, lineWidth: 1))
 
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text(item.name)
-                                    .font(t.labelFont(14, .semibold))
+                                    .font(t.labelFont(13, .semibold))
                                     .foregroundColor(t.ink)
                                 Text(item.blurb)
-                                    .font(t.labelFont(11, .regular))
+                                    .font(t.labelFont(10, .regular))
                                     .foregroundColor(t.inkDim)
                                     .multilineTextAlignment(.leading)
                             }
                             Spacer()
                             if selection == id {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(t.accent)
+                                LEDDot(color: t.glow, size: 7)
                             }
                         }
-                        .padding(12)
-                        .background(selection == id ? t.elevated : t.panel)
-                        .clipShape(RoundedRectangle(cornerRadius: max(t.radius, 4)))
+                        .padding(10)
+                        .background(
+                            RoundedRectangle(cornerRadius: t.radius)
+                                .fill(LinearGradient(
+                                    colors: selection == id ? [t.faceTop, t.faceBottom]
+                                                            : [t.panel, t.panel],
+                                    startPoint: .top, endPoint: .bottom))
+                        )
                         .overlay(
-                            RoundedRectangle(cornerRadius: max(t.radius, 4))
-                                .stroke(selection == id ? t.accent : t.hairline, lineWidth: 1)
+                            RoundedRectangle(cornerRadius: t.radius)
+                                .strokeBorder(selection == id ? t.accent.opacity(0.7) : t.hairline,
+                                              lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
                 }
-
                 Spacer(minLength: 8)
             }
             .padding(20)
         }
-        .background(t.background.ignoresSafeArea())
+        .background(MetalSurface(tokens: t).ignoresSafeArea())
     }
 }
