@@ -10,6 +10,8 @@ struct CameraRoot: View {
     @AppStorage("futurecam.seenGuide.v2") private var seenGuide = false
     /// 冷启动时先放一次开机页
     @State private var showLaunch = true
+    /// 进后台的时刻：离开久了再回来，重新放一次开机页
+    @State private var backgroundedAt: Date?
 
     var body: some View {
         ZStack {
@@ -104,7 +106,9 @@ struct CameraRoot: View {
                 manager.refreshAuthorization()
                 DetentFeedback.shared.prepare()
                 updateFeedbackSound()
+                replayLaunchIfAwayTooLong()
             case .background:
+                backgroundedAt = Date()
                 manager.pauseCamera()
                 DetentFeedback.shared.suspend()
             default:
@@ -147,6 +151,14 @@ struct CameraRoot: View {
         #else
         return 0
         #endif
+    }
+
+    /// 冷启动必放；从后台离开超过 10 分钟再回来也放一次
+    private func replayLaunchIfAwayTooLong() {
+        guard let leftAt = backgroundedAt else { return }
+        backgroundedAt = nil
+        guard Date().timeIntervalSince(leftAt) > 600, !showLaunch else { return }
+        showLaunch = true
     }
 
     private var shouldShowGuide: Bool {
