@@ -241,10 +241,12 @@ struct RangefinderCameraView: View {
                 } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(paramTitle(key))
-                            .font(t.monoFont(6, .bold))
-                            .tracking(0.6)
+                            .font(t.labelFont(7, .medium))
                             .foregroundColor(manager.activeParam == key ? t.accent : t.ink.opacity(0.5))
                             .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                            // 标签定宽，五个数值才对得齐
+                            .frame(width: 26, alignment: .leading)
                         Text(paramValue(key, manager))
                             .font(t.displayFont(13.5, .medium))
                             .foregroundColor(manager.activeParam == key ? t.ink : t.ink.opacity(0.72))
@@ -433,11 +435,11 @@ struct RangefinderCameraView: View {
 
     private var armedTitle: String {
         switch armed {
-        case .iso: return "ISO"
-        case .shutter: return "SHUTTER"
-        case .bias: return "EXPOSURE"
-        case .temperature: return "TEMP"
-        case .tint: return "TINT"
+        case .iso: return "感光度"
+        case .shutter: return "快门"
+        case .bias: return "曝光"
+        case .temperature: return "色温"
+        case .tint: return "色调"
         }
     }
 
@@ -466,7 +468,7 @@ struct RangefinderCameraView: View {
             manager.shutterSeconds = v
             manager.applyExposure()
             feedback(dx: dx, key: log2(1 / v), step: 1.0 / 3.0)
-            showHUD("SHUTTER", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
+            showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
 
         case .iso:
             let stops: [Double] = [100, 200, 400, 800, 1600]
@@ -476,7 +478,7 @@ struct RangefinderCameraView: View {
             manager.iso = v
             manager.applyExposure()
             feedback(dx: dx, key: Double(index), step: 1)
-            showHUD("ISO", "\(Int(v))", Double(index) / Double(stops.count - 1))
+            showHUD("感光度", "\(Int(v))", Double(index) / Double(stops.count - 1))
 
         case .bias:
             let raw = base + Double(dx) / 50 * 0.3
@@ -484,7 +486,7 @@ struct RangefinderCameraView: View {
             manager.bias = v
             manager.applyExposure()
             feedback(dx: dx, key: v, step: 0.3)
-            showHUD("EXPOSURE", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
+            showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
 
         case .temperature:
             let raw = base + Double(dx) / 5 * 100
@@ -492,7 +494,7 @@ struct RangefinderCameraView: View {
             manager.temperature = v
             manager.applyWhiteBalance()
             feedback(dx: dx, key: v, step: 100)
-            showHUD("TEMP", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
+            showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
 
         case .tint:
             let raw = base + Double(dx) / 4 * 10
@@ -500,7 +502,7 @@ struct RangefinderCameraView: View {
             manager.tint = v
             manager.applyWhiteBalance()
             feedback(dx: dx, key: v, step: 10)
-            showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
+            showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
     }
 
@@ -578,7 +580,7 @@ struct RangefinderCameraView: View {
 
     private func showModeHUD(_ mode: CameraMode) {
         let strip = CameraMode.strip
-        showHUD("MODE", mode.label,
+        showHUD("模式", mode.label,
                 Double(mode.stripIndex) / Double(max(strip.count - 1, 1)))
     }
 
@@ -610,11 +612,11 @@ struct RangefinderCameraView: View {
     private func announceArmed() {
         let v = value(of: armed)
         switch armed {
-        case .shutter: showHUD("SHUTTER", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
-        case .iso: showHUD("ISO", "\(Int(v))", CameraMath.isoProgress(v))
-        case .bias: showHUD("EXPOSURE", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
-        case .temperature: showHUD("TEMP", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
-        case .tint: showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
+        case .shutter: showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
+        case .iso: showHUD("感光度", "\(Int(v))", CameraMath.isoProgress(v))
+        case .bias: showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
+        case .temperature: showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
+        case .tint: showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
     }
 
@@ -626,7 +628,7 @@ struct RangefinderCameraView: View {
         manager.shutterSeconds = value
         manager.applyExposure()
         DetentFeedback.shared.fire(.detent)
-        showHUD("SHUTTER", shutterLabel(value), CameraMath.shutterProgress(value))
+        showHUD("快门", shutterLabel(value), CameraMath.shutterProgress(value))
     }
 
     private func showHUD(_ title: String, _ value: String, _ progress: Double) {
@@ -641,7 +643,7 @@ struct RangefinderCameraView: View {
         manager.iso = steps[(index + 1) % steps.count]
         manager.applyExposure()
         Haptics.impact(.light)
-        showHUD("ISO", "\(Int(manager.iso))", CameraMath.isoProgress(manager.iso))
+        showHUD("感光度", "\(Int(manager.iso))", CameraMath.isoProgress(manager.iso))
     }
 }
 

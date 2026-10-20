@@ -111,13 +111,14 @@ func shutterLabel(_ v: Double) -> String { CameraMath.shutterLabel(v) }
 func evLabel(_ v: Double) -> String { CameraMath.evLabel(v) }
 
 /// 参数短标题（戳记 / 读数字段上用）
+/// 读数条上的标题：写给不懂相机缩写的人看，所以直接用中文
 func paramTitle(_ key: ParamKey) -> String {
     switch key {
-    case .iso: return "ISO"
-    case .shutter: return "T"
-    case .bias: return "EV"
-    case .temperature: return "K"
-    case .tint: return "TINT"
+    case .iso: return "感光度"
+    case .shutter: return "快门"
+    case .bias: return "曝光"
+    case .temperature: return "色温"
+    case .tint: return "色调"
     }
 }
 
@@ -156,6 +157,6 @@ func shutterHint(_ manager: CameraManager) -> String {
     switch manager.mode {
     case .video: return manager.isRecording ? "STOP · REC" : "RECORD · 1080P"
     case .doubleExposure: return manager.doubleExposureStep == 1 ? "SECOND EXPOSURE" : "FIRST EXPOSURE"
-    case .photo: return "SHUTTER"
+    case .photo: return "拍照"
     }
 }
