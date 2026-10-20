@@ -16,6 +16,12 @@ enum CameraMode: String, CaseIterable, Identifiable {
         }
     }
 
+    /// 快门键横向拖拽 → 模式：往左拖是双曝，往右拖是视频。
+    /// `dragSteps` 正数向右、负数向左，每 26pt 一档。
+    func shifted(byDragSteps dragSteps: Int) -> CameraMode {
+        cycled(steps: -dragSteps)
+    }
+
     /// 从当前模式往前/往后数 steps 档（循环）
     func cycled(steps: Int) -> CameraMode {
         let all = CameraMode.allCases

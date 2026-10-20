@@ -520,7 +520,7 @@ struct RangefinderCameraView: View {
         }
 
         guard let start = shiftStart else { return }
-        let target = start.cycled(steps: Int((dx / shiftStep).rounded()))
+        let target = start.shifted(byDragSteps: Int((dx / shiftStep).rounded()))
         guard target != shiftTarget else { return }
         shiftTarget = target
         Haptics.impact(.light)
