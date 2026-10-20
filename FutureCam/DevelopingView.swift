@@ -143,17 +143,43 @@ struct DevelopingPhotoView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
                 LookChip(title: "原色", color: .white.opacity(0.25),
-                         selected: manager.selectedLook == nil, tokens: t) {
-                    manager.regradeCaptured(to: nil)
+                         selected: manager.selectedLook == .none, tokens: t) {
+                    manager.regradeCaptured(to: .none)
                     Haptics.impact(.light)
                 }
                 ForEach(FilmPreset.looks) { preset in
+                    let choice = LookChoice.builtin(preset)
                     LookChip(title: preset.label, color: canisterColor(preset),
-                             selected: manager.selectedLook == preset, tokens: t) {
-                        manager.regradeCaptured(to: preset)
+                             selected: manager.selectedLook == choice, tokens: t) {
+                        manager.regradeCaptured(to: choice)
                         Haptics.impact(.light)
                     }
                 }
+                ForEach(CustomFilmStore.shared.films) { film in
+                    let choice = LookChoice.custom(film)
+                    LookChip(title: film.name, color: choice.color,
+                             selected: manager.selectedLook == choice, tokens: t) {
+                        manager.regradeCaptured(to: choice)
+                        Haptics.impact(.light)
+                    }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            CustomFilmStore.shared.delete(film)
+                            if manager.selectedLook == choice { manager.selectedLook = .none }
+                        } label: { Label("删除这卷", systemImage: "trash") }
+                    }
+                }
+                Button {
+                    manager.showFilmEditor = true
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white.opacity(0.7))
+                        .frame(width: 30, height: 26)
+                        .background(RoundedRectangle(cornerRadius: 5).stroke(.white.opacity(0.2), lineWidth: 0.5))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("自制胶卷")
             }
             .padding(.vertical, 2)
         }

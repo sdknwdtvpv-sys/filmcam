@@ -128,7 +128,7 @@ final class CameraManager: NSObject, ObservableObject {
 
     /// 当前这一张用的调色（只表示显影页里选了什么，不参与拍摄）。
     /// 调色是纯后置的：拍摄永远只出胶片，调色在显影页里选。
-    @Published var selectedLook: FilmPreset?
+    @Published var selectedLook: LookChoice = .none
     /// 胶卷仓库：当前装着的这卷 + 已拍完的卷
     let rolls = RollStore.shared
     /// 一次性提示（本卷拍完 / 已换卷），视图消费后清空
@@ -155,6 +155,8 @@ final class CameraManager: NSObject, ObservableObject {
     /// 三脚架检测
     private let stability = StabilityMonitor()
     private var longExposureWarned = false
+    /// 自制胶卷编辑器
+    @Published var showFilmEditor = false
     /// 长曝光进行中：按钮转红、盘面显示积分进度
     @Published var isLongExposing = false
     @Published var longExposureProgress: Double = 0
@@ -230,7 +232,7 @@ final class CameraManager: NSObject, ObservableObject {
     override init() {
         super.init()
         selectedPreset = rolls.current.preset
-        selectedLook = nil
+        selectedLook = .none
         syncGrain()
         refreshStorage()
         loadAlbum()
@@ -246,7 +248,7 @@ final class CameraManager: NSObject, ObservableObject {
                 self.capturedBase = base
                 self.capturedAlbumItem = nil
                 self.pendingLibrarySave = (final, jpeg)
-                self.selectedLook = nil
+                self.selectedLook = .none
                 self.bumpFrameCount()
                 self.rolls.recordShot()
                 let rollID = self.rolls.current.id
@@ -517,7 +519,7 @@ final class CameraManager: NSObject, ObservableObject {
             self.capturedBase = rendered.0
             self.capturedAlbumItem = nil
             self.pendingLibrarySave = (final, self.controller.reencodeJPEG(final))
-            self.selectedLook = nil
+            self.selectedLook = .none
             self.bumpFrameCount()
             self.saveToAlbumOnly(final, jpeg: nil, rollID: self.rolls.current.id)
             Haptics.impact(.heavy)
@@ -650,12 +652,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     /// 拍完再换调色：从「只过胶片的底」重渲染，覆盖相册里那一张
-    func regradeCaptured(to look: FilmPreset?) {
+    func regradeCaptured(to look: LookChoice) {
         guard let base = capturedBase, let ci = CIImage(image: base) else { return }
-        var out = ci
-        if let grade = look?.grade {
-            out = FilmFilter.applyGrade(out, grade)
-        }
+        let out = look.apply(to: ci)
         guard let rendered = FilmFilter.render(out) else { return }
         let final = finalized(rendered.0)
         // 用原片的 EXIF 重新编码，换调色不会丢元数据

@@ -53,6 +53,9 @@ struct CameraRoot: View {
             // 弹层
             if manager.showFilmSheet { FilmSheet(anchor: anchors[.film] ?? .zero) }
             if manager.showSettingsSheet { SettingsSheet() }
+            if manager.showFilmEditor {
+                FilmEditorView().environmentObject(manager)
+            }
             if manager.showAlbum { AlbumView() }
 
             #if DEBUG
