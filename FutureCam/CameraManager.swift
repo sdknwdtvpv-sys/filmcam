@@ -113,7 +113,7 @@ final class CameraManager: NSObject, ObservableObject {
     /// 是否前摄
     @Published var isFrontCamera = false
     /// 胶片计数器（跨启动累计，暗房工单 / 胶片带主题的主视觉）
-    @Published var frameCount: Int = UserDefaults.standard.integer(forKey: "filmcam.frameCount")
+    @Published var frameCount: Int = UserDefaults.standard.integer(forKey: "futurecam.frameCount")
 
     // 手动参数（UI 状态，device 内部会 clamp 到支持范围）
     @Published var iso: Double = 200
@@ -474,7 +474,7 @@ final class CameraManager: NSObject, ObservableObject {
     /// 计数器进位（拍立得/胶片带主题用）
     private func bumpFrameCount() {
         frameCount += 1
-        UserDefaults.standard.set(frameCount, forKey: "filmcam.frameCount")
+        UserDefaults.standard.set(frameCount, forKey: "futurecam.frameCount")
     }
 
     // MARK: - 视频保存

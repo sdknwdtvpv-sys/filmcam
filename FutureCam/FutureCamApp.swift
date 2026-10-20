@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct FilmCamApp: App {
+struct FutureCamApp: App {
     @StateObject private var manager = CameraManager()
 
     var body: some Scene {

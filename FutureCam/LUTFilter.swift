@@ -64,7 +64,7 @@ struct CubeLUT {
 
 /// LUT 资源加载与施加（Core Image CIColorCube）。
 struct LUTFilter {
-    /// 预设 → 绑定的 .cube 文件名（位于 FilmCam/LUTs/ 下，CC0 HaldCLUT，已改描述性文件名）。
+    /// 预设 → 绑定的 .cube 文件名（位于 FutureCam/LUTs/ 下，CC0 HaldCLUT，已改描述性文件名）。
     /// 想新增/替换 LUT：把 .cube 丢进 LUTs/，在此映射即可。
     static let lutFileForPreset: [FilmPreset: String] = [
         .kodakGold: "warm-negative.cube",

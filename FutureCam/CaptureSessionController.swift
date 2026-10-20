@@ -19,8 +19,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private var cameraInput: AVCaptureDeviceInput?
     nonisolated(unsafe) private var audioInput: AVCaptureDeviceInput?
     nonisolated(unsafe) private var hasAudio = false
-    private let sessionQueue = DispatchQueue(label: "com.filmcam.session")
-    private let processingQueue = DispatchQueue(label: "com.filmcam.processing")
+    private let sessionQueue = DispatchQueue(label: "com.futurecam.session")
+    private let processingQueue = DispatchQueue(label: "com.futurecam.processing")
     private let ciContext = CIContext()
     private let presetLock = OSAllocatedUnfairLock<FilmPreset>(initialState: .kodakGold)
     nonisolated(unsafe) private var isConfigured = false
@@ -109,7 +109,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
             ?? AVCaptureDevice.default(for: .video)
         guard let device, let input = try? AVCaptureDeviceInput(device: device) else {
-            NSLog("[FilmCam] 无法获取相机设备，会话未配置")
+            NSLog("[FutureCam] 无法获取相机设备，会话未配置")
             return
         }
         videoDevice = device
@@ -120,7 +120,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             session.addInput(input)
             cameraInput = input
         } else {
-            NSLog("[FilmCam] 无法加入相机输入")
+            NSLog("[FutureCam] 无法加入相机输入")
             return
         }
 
@@ -319,7 +319,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     // MARK: - 视频录制（实时 LUT 写入）
     func startRecording() {
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("filmcam_\(Int(Date().timeIntervalSince1970)).mov")
+            .appendingPathComponent("futurecam_\(Int(Date().timeIntervalSince1970)).mov")
         try? FileManager.default.removeItem(at: url)
         guard let writer = try? AVAssetWriter(outputURL: url, fileType: .mov) else { return }
         let w = 1080, h = 1920

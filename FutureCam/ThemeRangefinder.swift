@@ -51,7 +51,7 @@ struct RangefinderCameraView: View {
                     .padding(.top, 6)
 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("FILMCAM")
+                    Text("FUTURE CAM")
                         .font(t.labelFont(16, .medium))
                         .tracking(3.4)
                         .foregroundColor(t.ink)
@@ -61,18 +61,6 @@ struct RangefinderCameraView: View {
                 .padding(.top, 2)
 
                 Spacer(minLength: 2)
-
-                // 帧数窗
-                VStack(spacing: 2) {
-                    InsetWell(tokens: t, radius: 3) {
-                        Text(String(format: "%02d", manager.frameCount % 36 + 1))
-                            .font(t.monoFont(13, .bold))
-                            .foregroundColor(lcdInk)
-                            .frame(width: 26, height: 16)
-                    }
-                    Silkscreen(text: "FRAME", color: t.ink.opacity(0.5), size: 5.5, tracking: 0.9)
-                }
-                .padding(.top, 4)
 
                 // 胶片型号窗：像机背上的胶片确认窗，点一下开仓换片
                 Button {
@@ -88,7 +76,12 @@ struct RangefinderCameraView: View {
                                 .minimumScaleFactor(0.7)
                                 .frame(width: 62, height: 17)
                         }
-                        Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
+                        HStack(spacing: 3) {
+                            Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 5, weight: .bold))
+                                .foregroundColor(t.ink.opacity(0.45))
+                        }
                     }
                     .contentShape(Rectangle())
                 }

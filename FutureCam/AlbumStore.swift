@@ -5,8 +5,8 @@ import UIKit
 /// 全部方法都是同步的，调用方负责放到后台线程。
 enum AlbumStore {
 
-    static let photosFolder = "filmcam_photos"
-    static let videosFolder = "filmcam_videos"
+    static let photosFolder = "futurecam_photos"
+    static let videosFolder = "futurecam_videos"
 
     private static var documentsURL: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -17,8 +17,22 @@ enum AlbumStore {
 
     // MARK: - 读取
 
+    /// 旧版本（FilmCam 时期）的沙盒目录迁移，避免改名后老照片消失
+    private static func migrateLegacyFoldersIfNeeded() {
+        let fm = FileManager.default
+        let pairs = [("filmcam_photos", photosFolder), ("filmcam_videos", videosFolder)]
+        for (old, new) in pairs {
+            let from = documentsURL.appendingPathComponent(old, isDirectory: true)
+            let to = documentsURL.appendingPathComponent(new, isDirectory: true)
+            guard fm.fileExists(atPath: from.path),
+                  !fm.fileExists(atPath: to.path) else { continue }
+            try? fm.moveItem(at: from, to: to)
+        }
+    }
+
     /// 扫描两个目录，按时间倒序返回（最新在前）
     static func loadAll() -> [AlbumItem] {
+        migrateLegacyFoldersIfNeeded()
         let photos = items(in: photosURL, ext: "jpg") { name, url in
             AlbumItem(id: name, url: url, kind: .photo, createdAt: timestamp(from: name, fallback: url))
         }
@@ -37,7 +51,7 @@ enum AlbumStore {
             .map { make($0.lastPathComponent, $0) }
     }
 
-    /// 文件名里带毫秒时间戳（filmcam_1740000000000.jpg），解析失败则退回文件修改时间
+    /// 文件名里带毫秒时间戳（futurecam_1740000000000.jpg），解析失败则退回文件修改时间
     private static func timestamp(from name: String, fallback url: URL) -> Date {
         let digits = name.drop { !$0.isNumber }.prefix { $0.isNumber }
         if let ms = Double(digits), ms > 1_000_000_000_000 {
@@ -57,7 +71,7 @@ enum AlbumStore {
     @discardableResult
     static func savePhoto(_ image: UIImage) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: photosURL, withIntermediateDirectories: true)
-        let name = "filmcam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
+        let name = "futurecam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
         let url = photosURL.appendingPathComponent(name)
         guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
         do {
@@ -72,7 +86,7 @@ enum AlbumStore {
     @discardableResult
     static func saveVideo(from tmpURL: URL) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: videosURL, withIntermediateDirectories: true)
-        let name = "filmcam_\(Int(Date().timeIntervalSince1970 * 1000)).mov"
+        let name = "futurecam_\(Int(Date().timeIntervalSince1970 * 1000)).mov"
         let url = videosURL.appendingPathComponent(name)
         do {
             if FileManager.default.fileExists(atPath: url.path) {
@@ -81,7 +95,7 @@ enum AlbumStore {
             try FileManager.default.copyItem(at: tmpURL, to: url)
             return AlbumItem(id: name, url: url, kind: .video, createdAt: Date())
         } catch {
-            NSLog("[FilmCam] 视频落地失败: \(error.localizedDescription)")
+            NSLog("[FutureCam] 视频落地失败: \(error.localizedDescription)")
             return nil
         }
     }

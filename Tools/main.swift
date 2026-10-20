@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-// FilmCam 纯逻辑自检：xcrun swiftc FilmCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
+// FutureCam 纯逻辑自检：xcrun swiftc FutureCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
 
 var failures = 0
 var checks = 0

@@ -33,7 +33,7 @@ struct PermissionGate: View {
                         .strokeBorder(.white.opacity(0.08), lineWidth: 1)
                         .frame(width: 104, height: 104)
                     VStack(spacing: 2) {
-                        Text("FILMCAM")
+                        Text("FUTURE CAM")
                             .font(.custom("Futura-Medium", size: 11))
                             .tracking(3)
                             .foregroundColor(.white.opacity(0.32))

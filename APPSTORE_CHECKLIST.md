@@ -1,4 +1,4 @@
-# FilmCam App Store 上架清单
+# FutureCam App Store 上架清单
 
 > 对标 DAZZ（胶片）/ 飓风相机（Log+LUT 电影感）的原创独立相机应用。
 > 最后更新：2026-10-20
@@ -7,8 +7,8 @@
 
 | 项 | 值 | 状态 |
 | --- | --- | --- |
-| Bundle ID | `com.filmcam.app` | 待替换成真实反向域名 |
-| Display Name | FilmCam | ✅ |
+| Bundle ID | `com.futurecam.app` | 待替换成真实反向域名 |
+| Display Name | FutureCam | ✅ |
 | Version / Build | 1.0 / 1 | ✅ |
 | Deployment Target | iOS 17.0 | ✅ |
 | Devices | iPhone（`TARGETED_DEVICE_FAMILY = 1`） | ✅ |
@@ -16,12 +16,12 @@
 | Signing | 自动管理 | 需登录开发者账号 |
 | AppIcon | 1024×1024 单尺寸（iOS 17+ 只需这一张） | ✅ 已接入真实图 |
 | 隐私权限文案 | 相机 / 麦克风 / 相册写入 | ✅ 均在 `Info.plist` |
-| 隐私清单 | `FilmCam/PrivacyInfo.xcprivacy` | ✅ 已声明 DiskSpace、FileTimestamp |
+| 隐私清单 | `FutureCam/PrivacyInfo.xcprivacy` | ✅ 已声明 DiskSpace、FileTimestamp |
 | 第三方依赖 | 无 | ✅ |
 
 ## 二、4.2 原创性规避（关键）
 
-App Store 指南 4.2 会拒绝「缺乏独特设计、仅仅是模板/克隆」的应用。FilmCam 的差异化主张：
+App Store 指南 4.2 会拒绝「缺乏独特设计、仅仅是模板/克隆」的应用。FutureCam 的差异化主张：
 
 1. **原创滤镜引擎**：基于 Core Image 自建胶片/电影 LUT 链（色温、暗角、漏光、双重曝光），不套现成 SDK。
 2. **原创交互**：拍立得「摇一摇显影」动效、拟物取景框、点按对焦 + 长按 AE/AF 锁定、实时参数面板。

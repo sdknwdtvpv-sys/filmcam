@@ -14,13 +14,13 @@ struct CameraRoot: View {
             if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
                 PermissionGate(
                     title: "相机权限已关闭",
-                    message: "FilmCam 需要相机权限才能拍摄。点下方按钮前往系统设置开启相机权限，然后返回本页即可。",
+                    message: "FutureCam 需要相机权限才能拍摄。点下方按钮前往系统设置开启相机权限，然后返回本页即可。",
                     buttonTitle: "去系统设置开启",
                     action: { manager.openSystemSettings() })
             } else if manager.authorizationStatus == .notDetermined {
                 PermissionGate(
                     title: "需要相机权限",
-                    message: "FilmCam 需要访问相机来拍摄复古胶片照片。",
+                    message: "FutureCam 需要访问相机来拍摄复古胶片照片。",
                     buttonTitle: "授权并开启",
                     action: { manager.requestAccessAndConfigure() })
             }

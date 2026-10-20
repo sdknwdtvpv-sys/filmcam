@@ -1,4 +1,4 @@
-# FilmCam
+# FutureCam
 
 一台只做一件事的胶片相机：实时胶片滤镜、拍立得显影、双重曝光，以及带 LUT 的竖版视频录制。
 纯原生 SwiftUI + AVFoundation + Core Image，无第三方依赖。
@@ -8,7 +8,7 @@
 ## 跑起来
 
 ```bash
-open FilmCam.xcodeproj      # 选 FilmCam scheme + 真机运行
+open FutureCam.xcodeproj      # 选 FutureCam scheme + 真机运行
 ```
 
 首次运行会依次请求**相机**、**麦克风**（录音用；拒绝则静音录像）、**相册写入**（保存成片；拒绝则只存应用内相册）。
@@ -16,7 +16,7 @@ open FilmCam.xcodeproj      # 选 FilmCam scheme + 真机运行
 命令行编译（不需要签名）：
 
 ```bash
-xcodebuild -project FilmCam.xcodeproj -scheme FilmCam \
+xcodebuild -project FutureCam.xcodeproj -scheme FutureCam \
   -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
   -configuration Debug -derivedDataPath ./build CODE_SIGNING_ALLOWED=NO build
 ```
@@ -39,8 +39,8 @@ xcodebuild -project FilmCam.xcodeproj -scheme FilmCam \
 ## 目录结构
 
 ```
-FilmCam/
-├─ FilmCamApp.swift              入口，注入 CameraManager
+FutureCam/
+├─ FutureCamApp.swift              入口，注入 CameraManager
 ├─ CameraView.swift              相机主界面 + 各类控件 + 弹层 + toast + 显影页
 ├─ CameraTheme.swift             设计令牌（配色 / 等宽字体）
 ├─ CameraManager.swift           主线程视图模型：UI 状态、权限、保存、相册列表
@@ -73,7 +73,7 @@ FilmCam/
 **缩略图一律下采样。** `UIImage(contentsOfFile:)` 读一张 12MP 成片解码后约 48MB，网格里十几张就会被系统杀掉。
 照片走 ImageIO `CGImageSourceCreateThumbnailAtIndex`，视频走 `AVAssetImageGenerator`，结果进 `NSCache`。
 
-**相册存储只依赖沙盒。** `Documents/filmcam_photos`、`Documents/filmcam_videos`；
+**相册存储只依赖沙盒。** `Documents/futurecam_photos`、`Documents/futurecam_videos`；
 系统「照片」写入用 `addOnly` 权限，所以应用内删除**不会**删掉系统相册里的副本，删除确认里已写明。
 
 ## Debug 自检
@@ -81,19 +81,19 @@ FilmCam/
 模拟器没有相机，也没法脚本点击，所以 Debug 构建提供了启动参数（`DebugHarness.swift`，Release 不含）：
 
 ```bash
-xcrun simctl launch booted com.filmcam.app -fcScreen album      # album / albumDetail / albumPhoto / film / settings
-xcrun simctl launch booted com.filmcam.app -fcStubPreview       # 垫一帧合成预览，检查叠加层可读性
+xcrun simctl launch booted com.futurecam.app -fcScreen album      # album / albumDetail / albumPhoto / film / settings
+xcrun simctl launch booted com.futurecam.app -fcStubPreview       # 垫一帧合成预览，检查叠加层可读性
 ```
 
 `-fcStubPreview` 只是布局自检用的假画面，**不能**拿来当商店截图。
 
 ## 纯逻辑自检
 
-对焦坐标换算、快门刻度、档位量化这些纯函数放在 `FilmCam/CameraMath.swift`（只依赖 Foundation/CoreGraphics），
+对焦坐标换算、快门刻度、档位量化这些纯函数放在 `FutureCam/CameraMath.swift`（只依赖 Foundation/CoreGraphics），
 配套检查在 `Tools/main.swift`：
 
 ```bash
-xcrun swiftc FilmCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
+xcrun swiftc FutureCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
 # PASS  21 项检查全部通过
 ```
 

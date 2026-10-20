@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>FilmCam</string>
+	<string>FutureCam</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,11 +23,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>FilmCam 需要访问相机以拍摄复古胶片照片</string>
+	<string>FutureCam 需要访问相机以拍摄复古胶片照片</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>FilmCam 录制视频时需要麦克风收录环境声音</string>
+	<string>FutureCam 录制视频时需要麦克风收录环境声音</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>FilmCam 需要将拍摄的照片保存到你的相册</string>
+	<string>FutureCam 需要将拍摄的照片保存到你的相册</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchScreen</key>
