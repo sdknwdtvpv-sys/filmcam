@@ -35,6 +35,9 @@ enum DebugHarness {
     /// `-fcSkipGuide`：把引导标记为已看过，方便截其它界面
     static var shouldSkipGuide: Bool { arguments.contains("-fcSkipGuide") }
 
+    /// `-fcHoldLaunch`：开机页停在最后一帧，方便截图
+    static var shouldHoldLaunch: Bool { arguments.contains("-fcHoldLaunch") }
+
     /// `-fcGuideStep 3`：引导直接从第 3 步开始，方便逐步截图
     static var guideStep: Int {
         guard let index = arguments.firstIndex(of: "-fcGuideStep"),

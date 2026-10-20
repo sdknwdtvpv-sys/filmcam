@@ -8,6 +8,8 @@ struct CameraRoot: View {
     /// 关键控件的屏幕位置：胶片仓从这里长出来，首跑引导也指这里
     @State private var anchors: [GuideTarget: CGRect] = [:]
     @AppStorage("futurecam.seenGuide.v2") private var seenGuide = false
+    /// 冷启动时先放一次开机页
+    @State private var showLaunch = true
 
     var body: some View {
         ZStack {
@@ -50,6 +52,15 @@ struct CameraRoot: View {
             if manager.showFilmSheet { FilmSheet(anchor: anchors[.film] ?? .zero) }
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
+
+            // 冷启动的开机页，放完让位给取景器
+            if showLaunch {
+                LaunchScreenView(onFinish: {
+                    withAnimation(.easeInOut(duration: 0.3)) { showLaunch = false }
+                }, frozen: launchFrozen)
+                .zIndex(20)
+                .transition(.opacity)
+            }
 
             // 一次性的用法引导（拍过一张或点一下就不再出现）
             if shouldShowGuide {
@@ -103,6 +114,14 @@ struct CameraRoot: View {
 
     /// 视频模式下麦克风占着音频会话，会话被锁进 playAndRecord，静音键就管不住了；
     /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
+    private var launchFrozen: Bool {
+        #if DEBUG
+        return DebugHarness.shouldHoldLaunch
+        #else
+        return false
+        #endif
+    }
+
     private var guideInitialStep: Int {
         #if DEBUG
         return DebugHarness.guideStep
