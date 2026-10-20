@@ -221,8 +221,8 @@ struct RangefinderCameraView: View {
                 flipKey(t)
             }
             .padding(.horizontal, 18)
-            .padding(.top, 2)
-            .padding(.bottom, 12)   // 给浮在外面的丝印留位置
+            .padding(.top, 12)      // 和上面的读数条拉开
+            .padding(.bottom, 6)
 
             HStack {
                 Spacer()
@@ -230,7 +230,7 @@ struct RangefinderCameraView: View {
                            color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
             }
             .padding(.horizontal, 18)
-            .padding(.bottom, 10 + bottomInset)
+            .padding(.bottom, 4 + bottomInset)
         }
         .background(AluminumFace(tokens: t))
         .overlay(alignment: .top) {
