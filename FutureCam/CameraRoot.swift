@@ -57,7 +57,10 @@ struct CameraRoot: View {
             if showLaunch {
                 LaunchScreenView(onFinish: {
                     withAnimation(.easeInOut(duration: 0.3)) { showLaunch = false }
-                }, frozen: launchFrozen)
+                },
+                                 frozen: launchFrozen || launchFixedProgress != nil,
+                                 style: launchStyle,
+                                 fixedProgress: launchFixedProgress)
                 .zIndex(20)
                 .transition(.opacity)
             }
@@ -114,6 +117,22 @@ struct CameraRoot: View {
 
     /// 视频模式下麦克风占着音频会话，会话被锁进 playAndRecord，静音键就管不住了；
     /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
+    private var launchStyle: LaunchIntroStyle {
+        #if DEBUG
+        return DebugHarness.launchStyle ?? .engraved
+        #else
+        return .engraved
+        #endif
+    }
+
+    private var launchFixedProgress: CGFloat? {
+        #if DEBUG
+        return DebugHarness.launchProgress
+        #else
+        return nil
+        #endif
+    }
+
     private var launchFrozen: Bool {
         #if DEBUG
         return DebugHarness.shouldHoldLaunch

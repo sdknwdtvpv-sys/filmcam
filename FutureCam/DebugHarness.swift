@@ -35,6 +35,26 @@ enum DebugHarness {
     /// `-fcSkipGuide`：把引导标记为已看过，方便截其它界面
     static var shouldSkipGuide: Bool { arguments.contains("-fcSkipGuide") }
 
+    /// `-fcLaunchStyle noise|chrome|engraved`：切换开机页刻字的出场方式
+    static var launchStyle: LaunchIntroStyle? {
+        guard let index = arguments.firstIndex(of: "-fcLaunchStyle"),
+              index + 1 < arguments.count else { return nil }
+        switch arguments[index + 1] {
+        case "noise": return .noise
+        case "chrome": return .chromatic
+        case "engraved": return .engraved
+        default: return nil
+        }
+    }
+
+    /// `-fcLaunchT 0.4`：把开机页进度钉死，方便逐帧截图
+    static var launchProgress: CGFloat? {
+        guard let index = arguments.firstIndex(of: "-fcLaunchT"),
+              index + 1 < arguments.count,
+              let value = Double(arguments[index + 1]) else { return nil }
+        return CGFloat(value)
+    }
+
     /// `-fcHoldLaunch`：开机页停在最后一帧，方便截图
     static var shouldHoldLaunch: Bool { arguments.contains("-fcHoldLaunch") }
 
