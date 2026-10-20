@@ -1,23 +1,14 @@
 import SwiftUI
 
-/// 应用根视图：按当前主题装配相机界面，并承载所有共享浮层
+/// 应用根视图：装配「测距仪」机身，并承载所有共享浮层
 /// （权限引导、显影、提示条、胶片/设置弹层、相册）。
 struct CameraRoot: View {
     @EnvironmentObject var manager: CameraManager
     @Environment(\.scenePhase) private var scenePhase
 
-    @AppStorage("filmcam.theme") private var themeRaw = ThemeID.rangefinder.rawValue
-
-    private var themeID: ThemeID { ThemeID(rawValue: themeRaw) ?? .rangefinder }
-
     var body: some View {
-        // 共享页面（相册 / 弹层 / 提示条）读的是 CameraTheme 静态令牌，
-        // 所以在构建子树之前就要把当前主题写进去。
-        ThemeStore.current = themeID.tokens
-
-        return ZStack {
-            themeScreen
-                .transition(.opacity)
+        ZStack {
+            RangefinderCameraView()
 
             // 权限引导（可操作，绝不空转/死锁）
             if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
@@ -49,24 +40,7 @@ struct CameraRoot: View {
             if manager.showFilmSheet { FilmSheet() }
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
-
-            // 主题切换入口（弹层 / 相册打开时收起，避免叠在内容上）
-            if !manager.showAlbum && !manager.showFilmSheet && !manager.showSettingsSheet {
-                VStack {
-                    HStack {
-                        ThemeSwitcher(selection: Binding(
-                            get: { themeID },
-                            set: { themeRaw = $0.rawValue }))
-                        Spacer(minLength: 0)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(.leading, 16)
-                .padding(.top, 6)
-                .ignoresSafeArea(edges: .top)
-            }
         }
-        .animation(.easeInOut(duration: 0.2), value: themeRaw)
         .animation(.easeInOut(duration: 0.22), value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
         .animation(.easeInOut(duration: 0.18), value: manager.activeParam)
@@ -77,9 +51,6 @@ struct CameraRoot: View {
         }
         .onAppear {
             #if DEBUG
-            if let forced = DebugHarness.themeArgument() {
-                themeRaw = forced
-            }
             DebugHarness.applyLaunchState(manager)
             if DebugHarness.shouldStubPreview { manager.enableStubPreview() }
             #endif
@@ -94,14 +65,6 @@ struct CameraRoot: View {
             default:
                 break
             }
-        }
-    }
-
-    @ViewBuilder private var themeScreen: some View {
-        switch themeID {
-        case .rangefinder: RangefinderCameraView()
-        case .cineRig:     CineRigCameraView()
-        case .labUnit:     LabUnitCameraView()
         }
     }
 }

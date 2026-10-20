@@ -7,6 +7,9 @@ import SwiftUI
 struct RangefinderCameraView: View {
     @EnvironmentObject var manager: CameraManager
 
+    /// 拖动快门盘时的基准值
+    @State private var dialBase: Double?
+
     private var lcdInk: Color { Color(hex: 0xF2F4F6) }
 
     var body: some View {
@@ -34,6 +37,9 @@ struct RangefinderCameraView: View {
     private func topPlate(_ t: ThemeTokens) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 8) {
+                ScrewHead(size: 7)
+                    .padding(.top, 6)
+
                 VStack(alignment: .leading, spacing: 1) {
                     Text("FILMCAM")
                         .font(t.labelFont(16, .medium))
@@ -44,7 +50,7 @@ struct RangefinderCameraView: View {
                 }
                 .padding(.top, 2)
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 2)
 
                 // 帧数窗
                 VStack(spacing: 2) {
@@ -56,20 +62,30 @@ struct RangefinderCameraView: View {
                     }
                     Silkscreen(text: "FRAME", color: t.ink.opacity(0.5), size: 5.5, tracking: 0.9)
                 }
-                .padding(.top, 2)
+                .padding(.top, 4)
 
-                TopDial(tokens: t, caption: "T")
-                TopDial(tokens: t, caption: "ISO")
+                // 快门速度盘：拖动改快门，点一下展开滑杆
+                TopDial(tokens: t,
+                        caption: "T",
+                        onTap: { manager.toggleParam(.shutter) },
+                        onRotate: rotateShutter,
+                        onEndRotate: { dialBase = nil })
+
+                // ISO 盘：点一下切档
+                TopDial(tokens: t,
+                        caption: "ISO",
+                        onTap: cycleISO)
+
+                ScrewHead(size: 7)
+                    .padding(.top, 6)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 14)
             .padding(.top, 8)
             .padding(.bottom, 10)
 
             GrooveLine()
         }
-        .background(
-            LinearGradient(colors: [t.faceTop, t.faceBottom], startPoint: .top, endPoint: .bottom)
-        )
+        .background(AluminumFace(tokens: t))
         .overlay(alignment: .bottom) {
             Rectangle().fill(.black.opacity(0.5)).frame(height: 1)
         }
@@ -135,8 +151,11 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 14)
 
-            HStack(alignment: .center, spacing: 14) {
-                albumWindow(t)
+            HStack(alignment: .bottom, spacing: 14) {
+                VStack(spacing: 3) {
+                    albumWindow(t)
+                    Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
+                }
                 Spacer(minLength: 0)
                 shutterDial(t)
                 Spacer(minLength: 0)
@@ -144,11 +163,17 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 2)
-            .padding(.bottom, 8)
+
+            HStack {
+                Silkscreen(text: "AL-6061 · CNC", color: t.ink.opacity(0.35), size: 5.5, tracking: 1.2)
+                Spacer()
+                Silkscreen(text: "SER. \(String(format: "%05d", manager.frameCount))",
+                           color: t.ink.opacity(0.35), size: 5.5, tracking: 1.2)
+            }
+            .padding(.horizontal, 18)
+            .padding(.bottom, 10)
         }
-        .background(
-            LinearGradient(colors: [t.faceTop, t.faceBottom], startPoint: .top, endPoint: .bottom)
-        )
+        .background(AluminumFace(tokens: t))
         .overlay(alignment: .top) {
             Rectangle().fill(.white.opacity(0.35)).frame(height: 1)
         }
@@ -282,18 +307,43 @@ struct RangefinderCameraView: View {
     private func toggleGroup() {
         manager.setParamMode(manager.paramMode == .exposure ? .whiteBalance : .exposure)
     }
+
+    /// 转盘横向拖动 = 改快门（对数刻度）
+    private func rotateShutter(_ dx: CGFloat) {
+        if dialBase == nil { dialBase = manager.shutterSeconds }
+        let base = dialBase ?? manager.shutterSeconds
+        let factor = exp(Double(dx) / 150)
+        manager.shutterSeconds = min(max(base * factor, 0.00025), 0.25)
+        manager.applyExposure()
+    }
+
+    /// ISO 盘点一下切档
+    private func cycleISO() {
+        let steps: [Double] = [100, 200, 400, 800, 1600]
+        let index = steps.firstIndex(of: manager.iso) ?? 1
+        manager.iso = steps[(index + 1) % steps.count]
+        manager.applyExposure()
+        Haptics.impact(.light)
+    }
 }
 
-/// 顶盖上的滚花盘
+/// 顶盖上的滚花盘：可点（切档 / 展开滑杆），T 盘还能横向拖动
 struct TopDial: View {
     let tokens: ThemeTokens
     let caption: String
+    var onTap: () -> Void
+    var onRotate: ((CGFloat) -> Void)? = nil
+    var onEndRotate: (() -> Void)? = nil
+
+    @State private var angle: Double = 0
+    @State private var dragging = false
 
     var body: some View {
         VStack(spacing: 2) {
             ZStack {
                 KnurledRing(tokens: tokens, teeth: 54, inner: 0.62)
                     .frame(width: 40, height: 40)
+                    .rotationEffect(.degrees(angle))
                     .shadow(color: .black.opacity(0.4), radius: 2, y: 2)
                 Circle()
                     .fill(LinearGradient(colors: [tokens.faceTop, tokens.faceBottom],
@@ -305,7 +355,28 @@ struct TopDial: View {
                     .frame(width: 1.5, height: 7)
                     .offset(y: -7)
             }
-            Silkscreen(text: caption, color: tokens.ink.opacity(0.65), size: 5.5, tracking: 1)
+            .contentShape(Circle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { v in
+                        guard let onRotate else { return }
+                        if abs(v.translation.width) > 3 { dragging = true }
+                        guard dragging else { return }
+                        onRotate(v.translation.width)
+                        angle = Double(v.translation.width) * 0.8
+                    }
+                    .onEnded { _ in
+                        if !dragging { Haptics.impact(.light); onTap() }
+                        dragging = false
+                        onEndRotate?()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) { angle = 0 }
+                    }
+            )
+
+            Silkscreen(text: caption, color: tokens.ink.opacity(0.55), size: 6, tracking: 1)
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(caption)
+        .accessibilityAddTraits(.isButton)
     }
 }

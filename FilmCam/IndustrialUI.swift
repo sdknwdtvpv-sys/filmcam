@@ -1,14 +1,13 @@
 import SwiftUI
 import UIKit
 
-// MARK: - 材质纹理
+// MARK: - 拉丝铝纹理
 
-/// 面板纹理只生成一次，之后按 pt 平铺 —— 用 Canvas 每帧重画满屏细纹会明显掉帧。
+/// 纹理只生成一次，之后按 pt 平铺 —— 每帧用 Canvas 重画满屏细纹会掉帧。
 enum TextureFactory {
 
-    nonisolated(unsafe) static var cache: [String: UIImage] = [:]
+    nonisolated(unsafe) private static var cache: [String: UIImage] = [:]
 
-    /// 通用缓存入口（器件纹理也走这里，只生成一次）
     static func cached(_ key: String, _ make: () -> UIImage) -> UIImage {
         if let hit = cache[key] { return hit }
         let image = make()
@@ -16,21 +15,12 @@ enum TextureFactory {
         return image
     }
 
-    static func tile(for kind: MaterialKind) -> UIImage {
-        cached(String(describing: kind)) {
-            switch kind {
-            case .brushed:  return makeBrushed()
-            case .graphite: return makeGraphite()
-            case .carbon:   return makeCarbon()
-            }
-        }
-    }
-
     /// 拉丝：横向 1pt 明暗细纹
-    private static func makeBrushed() -> UIImage {
+    static func brushed() -> UIImage { cached("brushed") {
         let size = CGSize(width: 48, height: 220)
         let renderer = UIGraphicsImageRenderer(size: size)
         return renderer.image { ctx in
+            let cg = ctx.cgContext
             var seed: UInt64 = 0x9E3779B97F4A7C15
             func next() -> Double {
                 seed = seed &* 6364136223846793005 &+ 1442695040888963407
@@ -40,117 +30,36 @@ enum TextureFactory {
             while y < size.height {
                 let v = next()
                 let alpha = 0.035 + 0.075 * v
-                if v > 0.52 {
-                    UIColor.white.withAlphaComponent(alpha).setFill()
-                } else {
-                    UIColor.black.withAlphaComponent(alpha * 0.9).setFill()
-                }
-                ctx.fill(CGRect(x: 0, y: y, width: size.width, height: 1))
+                let color = v > 0.52
+                    ? UIColor(white: 1, alpha: alpha)
+                    : UIColor(white: 0, alpha: alpha * 0.9)
+                cg.setFillColor(color.cgColor)
+                cg.fill(CGRect(x: 0, y: y, width: size.width, height: 1))
                 y += 1
             }
         }
-    }
-
-    /// 喷砂：细颗粒
-    private static func makeGraphite() -> UIImage {
-        let size = CGSize(width: 72, height: 72)
-        let renderer = UIGraphicsImageRenderer(size: size)
-        return renderer.image { ctx in
-            var seed: UInt64 = 0xD1B54A32D192ED03
-            func next() -> Double {
-                seed = seed &* 6364136223846793005 &+ 1442695040888963407
-                return Double((seed >> 33) & 0xFFFF) / 65535.0
-            }
-            for _ in 0..<1400 {
-                let x = next() * size.width
-                let y = next() * size.height
-                let a = 0.012 + 0.05 * next()
-                (next() > 0.5 ? UIColor.white : UIColor.black)
-                    .withAlphaComponent(a).setFill()
-                ctx.fill(CGRect(x: x, y: y, width: 1, height: 1))
-            }
-        }
-    }
-
-    /// 碳纤：4×4 斜纹编织
-    private static func makeCarbon() -> UIImage {
-        let cell: CGFloat = 5
-        let size = CGSize(width: cell * 8, height: cell * 8)
-        let renderer = UIGraphicsImageRenderer(size: size)
-        let space = CGColorSpaceCreateDeviceRGB()
-        return renderer.image { ctx in
-            let cg = ctx.cgContext
-            for row in 0..<8 {
-                for col in 0..<8 {
-                    let rect = CGRect(x: CGFloat(col) * cell, y: CGFloat(row) * cell,
-                                      width: cell, height: cell)
-                    let horizontal = (row / 2 + col / 2) % 2 == 0
-                    let c0 = UIColor(white: horizontal ? 0.16 : 0.07, alpha: 1).cgColor
-                    let c1 = UIColor(white: horizontal ? 0.07 : 0.16, alpha: 1).cgColor
-                    guard let gradient = CGGradient(colorsSpace: space,
-                                                    colors: [c0, c1] as CFArray,
-                                                    locations: [0, 1]) else { continue }
-                    cg.saveGState()
-                    cg.clip(to: rect)
-                    cg.drawLinearGradient(gradient,
-                                          start: horizontal ? CGPoint(x: rect.minX, y: rect.midY)
-                                                            : CGPoint(x: rect.midX, y: rect.minY),
-                                          end: horizontal ? CGPoint(x: rect.maxX, y: rect.midY)
-                                                          : CGPoint(x: rect.midX, y: rect.maxY),
-                                          options: [])
-                    cg.restoreGState()
-                }
-            }
-        }
-    }
+    } }
 }
 
-/// 面板底：底色渐变 + 材质纹理
-struct MetalSurface: View {
+/// 铝面板：底色渐变 + 拉丝纹理
+struct AluminumFace: View {
     let tokens: ThemeTokens
 
     var body: some View {
         ZStack {
             LinearGradient(colors: [tokens.faceTop, tokens.faceBottom],
                            startPoint: .top, endPoint: .bottom)
-            Image(uiImage: TextureFactory.tile(for: tokens.material))
+            Image(uiImage: TextureFactory.brushed())
                 .resizable(resizingMode: .tile)
-                .blendMode(tokens.material == .carbon ? .overlay : .softLight)
-                .opacity(tokens.material == .graphite ? 0.55 : 0.85)
+                .blendMode(.softLight)
+                .opacity(0.85)
         }
     }
 }
 
-// MARK: - 面板构件
+// MARK: - 构件
 
-/// 凸起面板：受光面渐变 + 顶部高光 + 底部投影
-struct RaisedFace<Content: View>: View {
-    let tokens: ThemeTokens
-    var radius: CGFloat? = nil
-    @ViewBuilder var content: () -> Content
-
-    var body: some View {
-        let r = radius ?? tokens.radius
-        content()
-            .background(
-                RoundedRectangle(cornerRadius: r, style: .continuous)
-                    .fill(LinearGradient(colors: [tokens.faceTop, tokens.faceBottom],
-                                         startPoint: .top, endPoint: .bottom))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: r, style: .continuous)
-                            .strokeBorder(
-                                LinearGradient(colors: [.white.opacity(0.55),
-                                                        .white.opacity(0.06),
-                                                        .black.opacity(0.42)],
-                                               startPoint: .top, endPoint: .bottom),
-                                lineWidth: 1)
-                    )
-                    .shadow(color: .black.opacity(0.38), radius: 5, x: 0, y: 2)
-            )
-    }
-}
-
-/// 凹陷井：取景窗 / 读数窗用，顶边暗、底边亮，模拟往里凹
+/// 凹陷井：读数窗、帧数窗，顶边暗、底边亮
 struct InsetWell<Content: View>: View {
     let tokens: ThemeTokens
     var radius: CGFloat? = nil
@@ -201,7 +110,6 @@ struct GrooveLine: View {
 
 /// 沉头螺丝
 struct ScrewHead: View {
-    let tokens: ThemeTokens
     var size: CGFloat = 9
 
     var body: some View {
@@ -233,35 +141,11 @@ struct LEDDot: View {
                     .frame(width: size * 0.32, height: size * 0.32)
                     .offset(x: -size * 0.16, y: -size * 0.16)
             )
-            .shadow(color: dimmed ? .clear : color.opacity(0.9),
-                    radius: size * 0.75)
+            .shadow(color: dimmed ? .clear : color.opacity(0.9), radius: size * 0.75)
     }
 }
 
-/// 蚀刻字：下方受光、上方背光，像从金属里刻出来
-struct EngravedText: View {
-    let text: String
-    let tokens: ThemeTokens
-    var size: CGFloat = 9
-    var weight: Font.Weight = .semibold
-    var tracking: CGFloat = 1.1
-
-    var body: some View {
-        ZStack {
-            Text(text)
-                .foregroundColor(.white.opacity(0.32))
-                .offset(y: 0.7)
-            Text(text)
-                .foregroundColor(tokens.ink)
-        }
-        .font(tokens.labelFont(size, weight))
-        .tracking(tracking)
-    }
-}
-
-// MARK: - 滚花
-
-/// 滚花盘面：外圈径向纹 + 中心受光
+/// 滚花环：逐齿绘制的机加工纹
 struct KnurledRing: View {
     let tokens: ThemeTokens
     var teeth: Int = 96
@@ -300,7 +184,7 @@ struct KnurledRing: View {
 
 // MARK: - 按键
 
-/// 物理按键：默认凸起，按下时下沉（渐变翻转 + 投影收紧）
+/// 物理按键：凸起 → 按下时渐变翻转、投影收紧
 struct PhysicalButton<Content: View>: View {
     let tokens: ThemeTokens
     var radius: CGFloat? = nil
@@ -350,7 +234,7 @@ struct PhysicalButtonStyle: ButtonStyle {
     }
 }
 
-/// 只负责按下缩放的样式（圆盘、镜头环用）
+/// 只负责按下缩放的样式（快门盘用）
 struct PressScaleStyle: ButtonStyle {
     var scale: CGFloat = 0.965
     func makeBody(configuration: Configuration) -> some View {
