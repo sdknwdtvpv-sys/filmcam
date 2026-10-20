@@ -76,6 +76,7 @@ struct CameraRoot: View {
             case .active:
                 manager.refreshAuthorization()
                 DetentFeedback.shared.prepare()
+                updateFeedbackSound()
             case .background:
                 manager.pauseCamera()
                 DetentFeedback.shared.suspend()
@@ -83,9 +84,13 @@ struct CameraRoot: View {
                 break
             }
         }
-        .onChange(of: manager.isRecording) { _, recording in
-            // 录像时喇叭声会被麦克风收进去，齿轮声先闭掉，触感留着
-            DetentFeedback.shared.soundEnabled = !recording
-        }
+        .onChange(of: manager.isRecording) { _, _ in updateFeedbackSound() }
+        .onChange(of: manager.mode) { _, _ in updateFeedbackSound() }
+    }
+
+    /// 视频模式下麦克风占着音频会话，会话被锁进 playAndRecord，静音键就管不住了；
+    /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
+    private func updateFeedbackSound() {
+        DetentFeedback.shared.soundEnabled = manager.mode != .video && !manager.isRecording
     }
 }

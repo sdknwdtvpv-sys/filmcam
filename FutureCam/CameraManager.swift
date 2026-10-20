@@ -472,7 +472,9 @@ final class CameraManager: NSObject, ObservableObject {
         controller.setDoubleExposureEnabled(m == .doubleExposure)
         controller.setTorch(m == .video && flashState == .on)
         if m != .doubleExposure { doubleExposureStep = 0 }
+        // 先收尾录像，再动麦克风：录着的时候摘输入会把这一条的后半段弄成无声
         if isRecording { isRecording = false; controller.stopRecording() }
+        controller.setWantsAudioInput(m == .video)
     }
 
     // MARK: - 手动参数

@@ -20,7 +20,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private let photoOutput = AVCapturePhotoOutput()
     nonisolated(unsafe) private var cameraInput: AVCaptureDeviceInput?
     nonisolated(unsafe) private var audioInput: AVCaptureDeviceInput?
-    nonisolated(unsafe) private var hasAudio = false
+    nonisolated(unsafe) private var audioAttached = false
+    nonisolated(unsafe) private var audioOutputAttached = false
     private let sessionQueue = DispatchQueue(label: "com.futurecam.session")
     private let processingQueue = DispatchQueue(label: "com.futurecam.processing")
     private let ciContext = CIContext()
@@ -66,9 +67,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     func configureAndStart() {
         sessionQueue.async { [weak self] in
             guard let self else { return }
+            // 会话所有权拿回来：否则 AVFoundation 会锁成 playAndRecord，静音键就管不住齿轮声
+            self.session.automaticallyConfiguresApplicationAudioSession = false
+            AudioRoute.capture()   // 麦克风输入只有在 playAndRecord 下才挂得上
             self.configureSession()
             self.observeSessionIfNeeded()
             if !self.session.isRunning { self.session.startRunning() }
+            self.refreshAudioRoute()   // 没挂麦克风就交还静音键
         }
     }
 
@@ -85,7 +90,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     func resume() {
         sessionQueue.async { [weak self] in
             guard let self, self.isConfigured, !self.session.isRunning else { return }
+            self.refreshAudioRoute()
             self.session.startRunning()
+            self.refreshAudioRoute()
         }
     }
 
@@ -144,19 +151,69 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 默认是 .balanced，白白丢掉一部分计算摄影画质
         photoOutput.maxPhotoQualityPrioritization = .quality
 
-        // 音频（需麦克风授权；未授权则静音录制）
-        if AVCaptureDevice.authorizationStatus(for: .audio) == .authorized,
-           let audioDevice = AVCaptureDevice.default(for: .audio),
-           let aInput = try? AVCaptureDeviceInput(device: audioDevice),
-           session.canAddInput(aInput) {
-            session.addInput(aInput)
-            audioInput = aInput
-            audioOutput.setSampleBufferDelegate(self, queue: processingQueue)
-            if session.canAddOutput(audioOutput) { session.addOutput(audioOutput) }
-            hasAudio = true
-        }
+        // 音频输出常挂：没有输入时不产生数据，也不会把会话类别锁进 playAndRecord。
+        // 麦克风输入只在视频模式下才挂（见 setWantsAudioInput），
+        // 音频对象在拍照模式下一个都不挂：只要会话里有麦克风输入，
+        // 系统就会把类别锁在 playAndRecord，静音键就管不住齿轮声了。
 
         isConfigured = true
+    }
+
+    // MARK: - 麦克风挂载
+
+    /// 挂着麦克风就必须是 .playAndRecord，没挂就交还 .ambient 让静音键生效。
+    private func refreshAudioRoute() {
+        if audioAttached { AudioRoute.capture() } else { AudioRoute.idle() }
+        #if DEBUG
+        print("[AudioRoute] mic=\(audioAttached) category=\(AVAudioSession.sharedInstance().category.rawValue)")
+        #endif
+    }
+
+    /// 视频模式才把麦克风挂到会话上：一旦挂着，系统会强制 playAndRecord，
+    /// 那个类别不跟随静音键；拍照模式下要保持 .ambient。
+    func setWantsAudioInput(_ wants: Bool) {
+        sessionQueue.async { [weak self] in
+            guard let self else { return }
+            if wants { self.attachAudioInput() } else { self.detachAudioInput() }
+        }
+    }
+
+    private func attachAudioInput() {
+        guard !audioAttached else { return }
+        AudioRoute.capture()
+        guard AVCaptureDevice.authorizationStatus(for: .audio) == .authorized,
+              let device = AVCaptureDevice.default(for: .audio),
+              let input = try? AVCaptureDeviceInput(device: device) else { return }
+
+        let started = CACurrentMediaTime()
+        session.beginConfiguration()
+        if session.canAddInput(input) {
+            session.addInput(input)
+            audioInput = input
+            audioAttached = true
+            audioOutput.setSampleBufferDelegate(self, queue: processingQueue)
+            if session.canAddOutput(audioOutput) {
+                session.addOutput(audioOutput)
+                audioOutputAttached = true
+            }
+        }
+        session.commitConfiguration()
+        #if DEBUG
+        print(String(format: "[AudioRoute] 麦克风挂载 %@ %.0f ms",
+                     audioAttached ? "成功" : "失败", (CACurrentMediaTime() - started) * 1000))
+        #endif
+    }
+
+    private func detachAudioInput() {
+        guard !recording, audioAttached, let audioInput else { return }
+        session.beginConfiguration()
+        session.removeInput(audioInput)
+        if audioOutputAttached { session.removeOutput(audioOutput) }
+        session.commitConfiguration()
+        self.audioInput = nil
+        audioAttached = false
+        audioOutputAttached = false
+        AudioRoute.idle()
     }
 
     // MARK: - 前后摄切换
@@ -347,6 +404,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
 
     // MARK: - 视频录制（实时 LUT 写入）
     func startRecording() {
+        // 录音期间必须是 playAndRecord，麦克风才有数据
+        AudioRoute.capture()
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("futurecam_\(Int(Date().timeIntervalSince1970)).mov")
         try? FileManager.default.removeItem(at: url)
@@ -369,7 +428,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         writer.add(input)
 
         // 音频轨（若会话已接入麦克风则写入 AAC）
-        if hasAudio {
+        if audioAttached {
             let audioSettings: [String: Any] = [
                 AVFormatIDKey: kAudioFormatMPEG4AAC,
                 AVSampleRateKey: 44100,
@@ -396,6 +455,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             guard let self, let url = self.recordedURL else { return }
             self.assetWriter = nil; self.videoInput = nil; self.audioWriterInput = nil; self.adapter = nil
             self.onVideoSaved?(url)
+            self.refreshAudioRoute()
         }
     }
 

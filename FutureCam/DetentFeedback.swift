@@ -89,7 +89,7 @@ final class DetentFeedback {
 
         var intensity: Float { self == .tooth ? 0.60 : 1.0 }
         var sharpness: Float { self == .tooth ? 0.95 : 0.62 }
-        var volume: Float { self == .tooth ? 0.62 : 0.88 }
+        var volume: Float { self == .tooth ? 0.62 : 0.92 }
     }
 
     /// 录像时关掉声音，免得齿轮声被麦克风收进片子
@@ -117,7 +117,7 @@ final class DetentFeedback {
     }
 
     func fire(_ weight: Weight = .tooth) {
-        if soundEnabled { playClick(volume: weight.volume) }
+        if soundEnabled { playClick(weight) }
         playHaptic(weight)
     }
 
@@ -147,15 +147,15 @@ final class DetentFeedback {
         #endif
     }
 
-    private func playClick(volume: Float) {
+    /// 会话处于 .ambient（见 AudioRoute）时，系统会自动按静音键闭嘴。
+    private func playClick(_ weight: Weight) {
         let now = CACurrentMediaTime()
-        guard now - lastClickAt >= minInterval else { return }
-        guard !players.isEmpty else { return }
+        guard now - lastClickAt >= minInterval, !players.isEmpty else { return }
         lastClickAt = now
 
         let player = players[nextPlayer % players.count]
         nextPlayer &+= 1
-        player.volume = volume
+        player.volume = weight.volume
         player.currentTime = 0
         player.play()
     }
