@@ -219,6 +219,19 @@ struct Viewfinder: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(CameraTheme.bgDeep)
 
+            // 上/下压暗：HUD 文字压在亮场景（白色桌面、屏幕）上会完全看不清，
+            // 真机取景时这个问题比模拟器明显得多。
+            VStack(spacing: 0) {
+                LinearGradient(colors: [.black.opacity(0.42), .clear],
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: 92)
+                Spacer(minLength: 0)
+                LinearGradient(colors: [.clear, .black.opacity(0.34)],
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: 78)
+            }
+            .allowsHitTesting(false)
+
             if manager.showGrid { GridOverlay() }
             if manager.showLevel { LevelIndicator() }
 
