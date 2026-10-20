@@ -5,6 +5,8 @@ import SwiftUI
 struct CameraRoot: View {
     @EnvironmentObject var manager: CameraManager
     @Environment(\.scenePhase) private var scenePhase
+    /// 顶盖胶片键的位置，胶片仓从那里长出来
+    @State private var filmAnchor: CGRect = .zero
 
     var body: some View {
         ZStack {
@@ -44,11 +46,13 @@ struct CameraRoot: View {
             if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
             // 弹层
-            if manager.showFilmSheet { FilmSheet() }
+            if manager.showFilmSheet { FilmSheet(anchor: filmAnchor) }
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
         }
-        .animation(.easeInOut(duration: 0.22), value: manager.showFilmSheet)
+        .onPreferenceChange(FilmAnchorKey.self) { filmAnchor = $0 }
+        .animation(.spring(response: 0.32, dampingFraction: 0.82),
+                   value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
         .animation(.easeInOut(duration: 0.18), value: manager.activeParam)
         .sheet(isPresented: $manager.showVideoShare) {

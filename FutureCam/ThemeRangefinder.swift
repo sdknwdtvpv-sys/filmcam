@@ -84,31 +84,39 @@ struct RangefinderCameraView: View {
                 .accessibilityLabel("闪光 \(manager.flashState.label)，点按切换，当前模式 \(manager.mode.label)")
                 .accessibilityAddTraits(.isButton)
 
-                // 胶片型号窗：像机背上的胶片确认窗，点一下开仓换片
-                Button {
-                    manager.showFilmSheet = true
-                    Haptics.impact(.light)
-                } label: {
-                    VStack(spacing: 2) {
-                        InsetWell(tokens: t, radius: 3) {
-                            Text(manager.selectedPreset.label)
-                                .font(t.monoFont(8, .bold))
-                                .foregroundColor(lcdInk)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                                .frame(width: 62, height: 17)
-                        }
-                        HStack(spacing: 3) {
-                            Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
+                // 胶片型号窗：和闪光键同一套按键质感，液晶窗嵌在键面里
+                VStack(spacing: 2) {
+                    PhysicalButton(tokens: t, radius: 4, action: {
+                        manager.showFilmSheet = true
+                    }) {
+                        HStack(spacing: 4) {
+                            InsetWell(tokens: t, radius: 2) {
+                                Text(manager.selectedPreset.label)
+                                    .font(t.monoFont(8, .bold))
+                                    .foregroundColor(lcdInk)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.62)
+                                    .frame(width: 58, height: 16)
+                            }
                             Image(systemName: "chevron.down")
-                                .font(.system(size: 5, weight: .bold))
-                                .foregroundColor(t.ink.opacity(0.45))
+                                .font(.system(size: 6, weight: .bold))
+                                .foregroundColor(t.inkDim)
                         }
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 5)
+                        .contentShape(Rectangle())
                     }
-                    .contentShape(Rectangle())
+                    Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
                 }
-                .buttonStyle(.plain)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear.preference(key: FilmAnchorKey.self,
+                                               value: proxy.frame(in: .global))
+                    }
+                )
+                .accessibilityElement(children: .ignore)
                 .accessibilityLabel("当前胶片 \(manager.selectedPreset.label)，点按更换")
+                .accessibilityAddTraits(.isButton)
 
                 ScrewHead(size: 7)
                     .padding(.top, 6)

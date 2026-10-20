@@ -3,82 +3,108 @@ import UIKit
 import CoreMotion
 import AVKit
 
+/// 胶片窗在顶盖上的位置：胶片仓从这里长出来，不从屏幕底下往上顶。
+struct FilmAnchorKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
 struct FilmSheet: View {
     @EnvironmentObject var manager: CameraManager
+
+    /// 顶盖胶片键在屏幕上的位置（全局坐标）
+    var anchor: CGRect
 
     var body: some View {
         let t = ThemeStore.current
 
-        ZStack(alignment: .bottom) {
-            Color.black.opacity(0.5).ignoresSafeArea()
-                .contentShape(Rectangle())
-                .onTapGesture { manager.showFilmSheet = false }
+        GeometryReader { geo in
+            let width = min(geo.size.width - 28, 318)
+            let top = anchor == .zero ? 62 : anchor.maxY + 7
+            let trailing = anchor == .zero ? 14 : max(geo.size.width - anchor.maxX - 2, 8)
 
-            VStack(spacing: 0) {
-                // 仓盖沿
-                HStack(spacing: 8) {
-                    ScrewHead(size: 7)
-                    Silkscreen(text: "FILM CHAMBER", color: .black.opacity(0.55),
-                               size: 7, tracking: 2.2)
-                    Spacer()
-                    Silkscreen(text: "\(FilmPreset.allCases.count) STOCKS  ·  TAP TO LOAD",
-                               color: .black.opacity(0.4), size: 6, tracking: 1.2)
-                    Button { manager.showFilmSheet = false } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.black.opacity(0.6))
-                            .frame(width: 28, height: 28)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    ScrewHead(size: 7)
-                }
-                .padding(.horizontal, 14)
-                .frame(height: 40)
-                .background(AluminumFace(tokens: t))
-                .overlay(alignment: .bottom) {
-                    Rectangle().fill(.black.opacity(0.45)).frame(height: 1)
-                }
+            ZStack(alignment: .topTrailing) {
+                Color.black.opacity(0.34)
+                    .contentShape(Rectangle())
+                    .onTapGesture { manager.showFilmSheet = false }
 
-                // 仓内：暗盒导轨
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(FilmPreset.allCases) { preset in
-                            FilmCanister(preset: preset,
-                                         loaded: manager.selectedPreset == preset,
-                                         tokens: t) {
-                                manager.selectedPreset = preset
-                                Haptics.impact(.medium)
-                                manager.showFilmSheet = false
-                            }
+                chamber(t, width: width)
+                    .padding(.top, top)
+                    .padding(.trailing, trailing)
+                    .transition(.scale(scale: 0.86, anchor: .topTrailing)
+                        .combined(with: .opacity))
+            }
+        }
+        .ignoresSafeArea()
+    }
+
+    private func chamber(_ t: ThemeTokens, width: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            // 仓盖沿
+            HStack(spacing: 8) {
+                ScrewHead(size: 6)
+                Silkscreen(text: "FILM CHAMBER", color: .black.opacity(0.55),
+                           size: 6.5, tracking: 1.8)
+                Spacer(minLength: 4)
+                Button { manager.showFilmSheet = false } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(.black.opacity(0.6))
+                        .frame(width: 22, height: 22)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                ScrewHead(size: 6)
+            }
+            .padding(.horizontal, 10)
+            .frame(height: 32)
+            .background(AluminumFace(tokens: t))
+            .overlay(alignment: .bottom) {
+                Rectangle().fill(.black.opacity(0.45)).frame(height: 1)
+            }
+
+            // 仓内：暗盒导轨
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(FilmPreset.allCases) { preset in
+                        FilmCanister(preset: preset,
+                                     loaded: manager.selectedPreset == preset,
+                                     tokens: t) {
+                            manager.selectedPreset = preset
+                            Haptics.impact(.medium)
+                            manager.showFilmSheet = false
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
                 }
-                .background(LeatherPanel())
-
-                // 仓底齿孔
-                HStack(spacing: 5) {
-                    ForEach(0..<30, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 1.5)
-                            .fill(.white.opacity(0.10))
-                            .frame(width: 7, height: 4)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 7)
-                .background(Color(hex: 0x141516))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
             }
-            .clipShape(TopRounded(radius: 14))
-            .overlay(TopRoundedBorder(radius: 14).stroke(.black.opacity(0.5), lineWidth: 1))
-            .transition(.move(edge: .bottom))
+            .background(LeatherPanel())
+
+            // 仓底齿孔
+            HStack(spacing: 4) {
+                ForEach(0..<24, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 1.5)
+                        .fill(.white.opacity(0.10))
+                        .frame(width: 7, height: 4)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(Color(hex: 0x141516))
         }
-        .ignoresSafeArea(edges: .bottom)
+        .frame(width: width)
+        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .strokeBorder(.black.opacity(0.55), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
     }
 }
-
-/// 一个胶片暗盒：金属罐身 + 彩色标签带 + 底部卷轴
 
 struct FilmCanister: View {
     let preset: FilmPreset
