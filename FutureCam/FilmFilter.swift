@@ -3,6 +3,8 @@ import UIKit
 
 /// 胶片预设（照片滤镜 & 视频 LUT 共用的风格定义）
 enum FilmPreset: String, CaseIterable, Identifiable {
+    /// 原生：不过 LUT、不加暗角漏光、不加颗粒。排最前，作为调色的干净底子
+    case neutral
     case kodakGold       // 琥珀 200
     case fuji400         // 松石 400
     case classicBnw      // 银盐 400
@@ -21,6 +23,14 @@ enum FilmPreset: String, CaseIterable, Identifiable {
     case nightStreet
     case fresh
     case moody
+    case glowSkin
+    case cream
+    case warmSoft
+    case glowField
+    case sunsetFilm
+    case forestGreen
+    case snow
+    case vintageFilm
 
     var id: String { rawValue }
 
@@ -29,7 +39,10 @@ enum FilmPreset: String, CaseIterable, Identifiable {
     enum Kind { case film, look }
     var kind: Kind {
         switch self {
-        case .clear, .nightStreet, .fresh, .moody: return .look
+        case .clear, .nightStreet, .fresh, .moody,
+             .glowSkin, .cream, .warmSoft, .glowField,
+             .sunsetFilm, .forestGreen, .snow, .vintageFilm:
+            return .look
         default: return .film
         }
     }
@@ -56,8 +69,20 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .nightStreet: return "夜街 800"
         case .fresh:       return "晴野 200"
         case .moody:       return "暗涌 400"
+        case .neutral:     return "原生"
+        case .glowSkin:    return "冷白 200"
+        case .cream:       return "奶油 400"
+        case .warmSoft:    return "暖柔 200"
+        case .glowField:   return "夏日 400"
+        case .sunsetFilm:  return "落日 200"
+        case .forestGreen: return "森野 400"
+        case .snow:        return "雪原 100"
+        case .vintageFilm: return "复古 200"
         }
     }
+
+    /// 原生底子不加颗粒（它要当调色的干净底）
+    var hasGrain: Bool { self != .neutral }
 
     /// 参数化调色（来自公开的滑块配方，按各自意图重新标定）。
     /// 注意：那些数值是相对 iPhone 照片 App 基线做的增量，直接照搬会走样，
@@ -85,6 +110,47 @@ enum FilmPreset: String, CaseIterable, Identifiable {
             return GradeSettings(exposure: -0.16, highlight: -0.20, shadow: 0.24,
                                  contrast: 1.10, brightness: -0.05, saturation: 0.82,
                                  tint: 0.14, vignette: 0.18, clarity: 0.14)
+        case .glowSkin:
+            // 冷白透光肌：提亮高光、压阴影、偏冷，皮肤发亮
+            return GradeSettings(exposure: 0.06, highlight: 0.30, shadow: -0.18,
+                                 contrast: 0.90, brightness: 0.05, tint: -0.14,
+                                 clarity: 0.08)
+        case .cream:
+            // 奶油淡颜：整体提亮、奶感偏暖、低对比
+            return GradeSettings(exposure: 0.06, shadow: 0.20, contrast: 0.90,
+                                 brightness: 0.05, temperature: 0.05, tint: 0.14,
+                                 sharpness: 0.10)
+        case .warmSoft:
+            // 暖柔氛围：大提亮、暖、压黑点
+            return GradeSettings(exposure: 0.14, shadow: 0.20, contrast: 0.90,
+                                 brightness: 0.05, blackPoint: -0.12,
+                                 temperature: 0.08, tint: 0.14, sharpness: 0.08, clarity: 0.12)
+        case .glowField:
+            // 夏日发光：大幅提阴影、微暖、通透
+            return GradeSettings(exposure: 0.03, highlight: -0.30, shadow: 0.60,
+                                 contrast: 0.86, brightness: 0.06, saturation: 1.06,
+                                 vibrance: 0.14, temperature: 0.10, tint: 0.12)
+        case .sunsetFilm:
+            // 落日电影：明显偏暖、压高光、提饱和
+            return GradeSettings(exposure: 0.18, highlight: -0.35, contrast: 1.06,
+                                 brightness: 0.03, saturation: 1.12,
+                                 temperature: 0.22, tint: 0.10, sharpness: 0.10, clarity: 0.10)
+        case .forestGreen:
+            // 森野：提阴影、微绿、饱和略高
+            return GradeSettings(exposure: 0.04, highlight: -0.24, shadow: 0.30,
+                                 contrast: 0.94, saturation: 1.06,
+                                 temperature: -0.05, tint: -0.06)
+        case .snow:
+            // 雪原：提亮、降饱和、偏冷，保住雪的层次
+            return GradeSettings(exposure: 0.10, highlight: -0.20, shadow: 0.24,
+                                 contrast: 0.94, saturation: 0.90,
+                                 temperature: -0.10, sharpness: 0.14, clarity: 0.10)
+        case .vintageFilm:
+            // 复古：压曝光、加深黑点、偏冷、略降饱和、轻暗角
+            return GradeSettings(exposure: -0.06, highlight: -0.08, shadow: -0.04,
+                                 contrast: 1.06, brightness: -0.04, blackPoint: -0.15,
+                                 saturation: 0.94, temperature: -0.16, tint: 0.06,
+                                 vignette: 0.12)
         default:
             return nil
         }
@@ -109,6 +175,15 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .nightStreet: return "800"
         case .fresh:       return "200"
         case .moody:       return "400"
+        case .neutral:     return "100"
+        case .glowSkin:    return "200"
+        case .cream:       return "400"
+        case .warmSoft:    return "200"
+        case .glowField:   return "400"
+        case .sunsetFilm:  return "200"
+        case .forestGreen: return "400"
+        case .snow:        return "100"
+        case .vintageFilm: return "200"
         }
     }
 }
@@ -439,7 +514,9 @@ struct FilmFilter {
                                 brightness: 0.0, vignette: 0.68, vignetteRadius: 1.2,
                                 leakColor: (0.75, 0.85, 1.0), leakAlpha: 0.12, lutIntensity: 0.95)
         // 配方类预设：不用 LUT、不加暗角与漏光，全部交给参数化调色层
-        case .clear, .nightStreet, .fresh, .moody:
+        case .neutral, .clear, .nightStreet, .fresh, .moody,
+             .glowSkin, .cream, .warmSoft, .glowField,
+             .sunsetFilm, .forestGreen, .snow, .vintageFilm:
             return FilterParams(proceduralColor: false, neutral: 6500, saturation: 1.0, contrast: 1.0,
                                 brightness: 0.0, vignette: 0.0, vignetteRadius: 1.0,
                                 leakColor: (1, 1, 1), leakAlpha: 0.0, lutIntensity: 0.0)

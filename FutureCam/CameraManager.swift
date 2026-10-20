@@ -435,7 +435,9 @@ final class CameraManager: NSObject, ObservableObject {
     private func syncGrain() {
         let traits = rolls.current.traits
         controller.rollTraits = traits
-        controller.grain = GrainSettings.make(iso: iso, traits: traits, seed: rolls.current.seed)
+        controller.grain = rolls.current.preset.hasGrain
+            ? GrainSettings.make(iso: iso, traits: traits, seed: rolls.current.seed)
+            : .none
     }
 
     /// 闪光循环：关 → 自动 → 开；视频模式下"开"同时点着手电

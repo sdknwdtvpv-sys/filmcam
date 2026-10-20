@@ -201,6 +201,15 @@ func canisterColor(_ preset: FilmPreset) -> Color {
     case .nightStreet: return Color(hex: 0x2B3A55)
     case .fresh:       return Color(hex: 0x6FA84E)
     case .moody:       return Color(hex: 0x6B4A3A)
+    case .glowSkin:    return Color(hex: 0xC9A9A2)
+    case .cream:       return Color(hex: 0xD9C9A8)
+    case .warmSoft:    return Color(hex: 0xB98A5E)
+    case .glowField:   return Color(hex: 0x8FA83F)
+    case .sunsetFilm:  return Color(hex: 0xD2763C)
+    case .forestGreen: return Color(hex: 0x3F6B4A)
+    case .snow:        return Color(hex: 0xAFC2CE)
+    case .vintageFilm: return Color(hex: 0x8A6F52)
+    case .neutral:     return Color(hex: 0x9BA1A6)
     }
 }
 
@@ -210,26 +219,7 @@ struct FilmCanister: View {
     let tokens: ThemeTokens
     let action: () -> Void
 
-    private var labelColor: Color {
-        switch preset {
-        case .kodakGold:   return Color(hex: 0xC8912B)
-        case .fuji400:     return Color(hex: 0x2E7D53)
-        case .classicBnw:  return Color(hex: 0x4A4A4A)
-        case .fadedCinema: return Color(hex: 0xB0706A)
-        case .cinematic:   return Color(hex: 0x2A6E7A)
-        case .duskGold:    return Color(hex: 0xC9752F)
-        case .slate:       return Color(hex: 0x5B6670)
-        case .mint:        return Color(hex: 0x4E8C7A)
-        case .rust:        return Color(hex: 0xA5533A)
-        case .frost:       return Color(hex: 0x7C8790)
-        case .ochre:       return Color(hex: 0xA8763C)
-        case .abyss:       return Color(hex: 0x35485E)
-        case .clear:       return Color(hex: 0x3E8FA8)
-        case .nightStreet: return Color(hex: 0x2B3A55)
-        case .fresh:       return Color(hex: 0x6FA84E)
-        case .moody:       return Color(hex: 0x6B4A3A)
-        }
-    }
+    private var labelColor: Color { canisterColor(preset) }
 
     private var iso: String { "ISO \(preset.nominalISO)" }
 
