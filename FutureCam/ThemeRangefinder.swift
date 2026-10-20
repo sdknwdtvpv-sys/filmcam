@@ -208,11 +208,13 @@ struct RangefinderCameraView: View {
                 .padding(.horizontal, 14)
                 .padding(.top, 8)
 
-            HStack(alignment: .bottom, spacing: 14) {
-                VStack(spacing: 3) {
-                    albumWindow(t)
-                    Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
-                }
+            // 三个控件按「圆心」对齐：丝印浮在按钮外面，不参与高度
+            HStack(alignment: .center, spacing: 14) {
+                albumWindow(t)
+                    .overlay(alignment: .bottom) {
+                        Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
+                            .offset(y: 11)
+                    }
                 Spacer(minLength: 0)
                 shutterDial(t)
                 Spacer(minLength: 0)
@@ -220,6 +222,7 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 2)
+            .padding(.bottom, 12)   // 给浮在外面的丝印留位置
 
             HStack {
                 Spacer()
@@ -429,15 +432,20 @@ struct RangefinderCameraView: View {
     }
 
     private func flipKey(_ t: ThemeTokens) -> some View {
-        LabeledKey(tokens: t, caption: manager.isFrontCamera ? "前置" : "后置",
-                   radius: 4, action: { manager.switchCamera() }) {
+        PhysicalButton(tokens: t, radius: 4, action: { manager.switchCamera() }) {
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 12, weight: .medium))
                 .foregroundColor(t.ink)
                 .rotationEffect(.degrees(manager.isFrontCamera ? 180 : 0))
                 .animation(.easeInOut(duration: 0.28), value: manager.isFrontCamera)
+                .frame(width: 54, height: 34)
+                .contentShape(Rectangle())
         }
-        .frame(width: 54)
+        .overlay(alignment: .bottom) {
+            Silkscreen(text: manager.isFrontCamera ? "前置" : "后置",
+                       color: t.inkDim, size: 6, tracking: 0.8)
+                .offset(y: 11)
+        }
         .disabled(manager.isRecording)
         .guideAnchor(.flip)
         .accessibilityLabel(manager.isFrontCamera ? "切换到后置摄像头" : "切换到前置摄像头")
