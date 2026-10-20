@@ -1,3 +1,4 @@
+import SwiftUI
 import AVFoundation
 import UIKit
 import Photos
@@ -151,7 +152,29 @@ final class CameraManager: NSObject, ObservableObject {
     /// 当前取景画面的宽高比（来自首帧，用于把点击坐标换算成设备坐标）
     @Published var previewAspect: CGFloat?
     /// 当前变焦倍率（1.0 = 1×）
+    /// 当前焦段（用户视角：0.5× / 1× / 2× / 5×…），由物理镜头切换实现
     @Published var zoomFactor: CGFloat = 1
+    /// 这台机型支持的光学焦段
+    var focalOptions: [CGFloat] { controller.focalLengthOptions }
+    /// 焦段切换时短暂显示的框线（取景范围提示）
+    @Published var frameFlashAt: CGFloat?
+
+    func selectFocalLength(_ value: CGFloat) {
+        zoomFactor = value
+        controller.setFocalLength(value)
+        Haptics.impact(.light)
+        // 400ms 框线提示：切换瞬间告诉用户画幅怎么变了
+        frameFlashAt = value
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 420_000_000)
+            guard let self, self.frameFlashAt == value else { return }
+            withAnimation(.easeOut(duration: 0.18)) { self.frameFlashAt = nil }
+        }
+    }
+    /// 当前焦段最接近的档位（用于高亮）
+    var nearestFocal: CGFloat {
+        focalOptions.min(by: { abs($0 - zoomFactor) < abs($1 - zoomFactor) }) ?? 1
+    }
     /// 是否前摄
     @Published var isFrontCamera = false
     /// 闪光 / 视频补光
@@ -237,6 +260,7 @@ final class CameraManager: NSObject, ObservableObject {
             Task { @MainActor in
                 self?.isFrontCamera = isFront
                 self?.zoomFactor = 1
+                self?.controller.setFocalLength(1)
             }
         }
         controller.onVideoSaved = { [weak self] url in

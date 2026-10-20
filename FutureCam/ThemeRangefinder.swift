@@ -180,6 +180,32 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 14)
             .overlay {
+                // 切焦段时的一闪：目标画幅的角标
+                if let focal = manager.frameFlashAt {
+                    GeometryReader { geo in
+                        let inset = max(0, (1 - 1 / max(focal, 0.5)) * geo.size.width / 2)
+                        CornerMarks(color: .white.opacity(0.55), length: 16)
+                            .frame(width: geo.size.width - inset * 2,
+                                   height: geo.size.height - inset * 2)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                    }
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                }
+            }
+            .overlay(alignment: .bottomLeading) {
+                // 焦段刻度：左下角，像印在机身上的镜头序列
+                FocalScale(options: manager.focalOptions,
+                           current: manager.nearestFocal,
+                           tokens: t) { value in
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        manager.selectFocalLength(value)
+                    }
+                }
+                .padding(.leading, 12)
+                .padding(.bottom, 12)
+            }
+            .overlay {
                 if let hud {
                     ParameterHUD(title: hud.title, value: hud.value,
                                  progress: hud.progress, tokens: t, hint: hud.hint)

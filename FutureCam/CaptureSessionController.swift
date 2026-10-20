@@ -149,8 +149,10 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         session.beginConfiguration()
         defer { session.commitConfiguration() }
 
-        // 广角后置优先，兜底任意视频设备（部分机型/占用时 default(.builtInWideAngleCamera) 可能为 nil）
-        let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
+        // 优先虚拟多摄：一台设备内部就能在超广角/广角/长焦之间切物理镜头，
+        // 比我们手动拆装 input 快得多，也不会黑屏。没有多摄的机型退回单广角。
+        let device = Self.backMultiCamera()
+            ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back)
             ?? AVCaptureDevice.default(for: .video)
         guard let device, let input = try? AVCaptureDeviceInput(device: device) else {
             NSLog("[FutureCam] 无法获取相机设备，会话未配置")
@@ -326,6 +328,11 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         } catch {}
     }
 
+    /// 锁定状态下重新套用当前焦段（会话重配后调用）
+    func reapplyFocalLength(_ userZoom: CGFloat) {
+        setFocalLength(userZoom)
+    }
+
     func setAutoExposure() {
         guard let device = videoDevice else { return }
         do { try device.lockForConfiguration()
@@ -404,10 +411,57 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     }
 
     /// 捏合变焦：factor 为绝对倍率（1.0 = 1×），内部 clamp 到设备能力
+    /// 后置多摄设备：三摄 > 双广角 > 单广角
+    private static func backMultiCamera() -> AVCaptureDevice? {
+        let types: [AVCaptureDevice.DeviceType] = [
+            .builtInTripleCamera, .builtInDualWideCamera, .builtInDualCamera
+        ]
+        let session = AVCaptureDevice.DiscoverySession(
+            deviceTypes: types, mediaType: .video, position: .back)
+        return session.devices.first
+    }
+
+    /// 虚拟设备倍率 1.0 对应哪一档用户焦段（多摄机型最广的是超广角＝0.5×）
+    private var zoomMultiplier: CGFloat {
+        guard let device = videoDevice else { return 1 }
+        if #available(iOS 18.0, *) {
+            return CGFloat(device.displayVideoZoomFactorMultiplier)
+        }
+        switch device.deviceType {
+        case .builtInTripleCamera, .builtInDualWideCamera: return 2
+        default: return 1
+        }
+    }
+
+    /// 这台设备支持的光学焦段（用户视角：0.5× / 1× / 2× / 5× 这类）
+    /// 虚拟多摄的 videoZoomFactor 以最广的那颗镜头为 1.0，
+    /// 用户看到的 1× 往往是它的 2.0，靠 displayVideoZoomFactorMultiplier 换算。
+    var focalLengthOptions: [CGFloat] {
+        guard let device = videoDevice else { return [1] }
+        let base = zoomMultiplier
+        var out: [CGFloat] = []
+        // 有超广角：最广那颗就是 0.5×（base 为 2 时）
+        if base > 1.5 { out.append(0.5) }
+        out.append(1)
+        // 切换点：虚拟设备在倍率超过某个值时换镜头，这些点就是"更长"的焦段
+        for factor in device.virtualDeviceSwitchOverVideoZoomFactors {
+            let user = CGFloat(truncating: factor) / max(base, 1)
+            if user > 1.15, out.allSatisfy({ abs($0 - user) > 0.15 }) {
+                out.append((user * 2).rounded() / 2)   // 归整到 0.5 的倍数
+            }
+        }
+        if out.count == 1 { out.append(2) }             // 无长焦：给一个 2× 数码档
+        return Array(out.prefix(4))
+    }
+
+    /// 切到某个光学焦段（用户视角的倍数）
+    func setFocalLength(_ userZoom: CGFloat) { setZoom(userZoom) }
+
+    /// factor 是用户视角倍数（0.5× / 1× / 2×…），内部换算成设备的 videoZoomFactor
     func setZoom(_ factor: CGFloat) {
         guard let device = videoDevice else { return }
-        let maxZ = min(device.maxAvailableVideoZoomFactor, 8)
-        let clamped = min(max(factor, device.minAvailableVideoZoomFactor), maxZ)
+        let maxZ = min(device.maxAvailableVideoZoomFactor, 8 * zoomMultiplier)
+        let clamped = min(max(factor * zoomMultiplier, device.minAvailableVideoZoomFactor), maxZ)
         // 变焦不动画面结构，走 ramp 更顺滑；直接赋值在捏合高频回调下会抖动
         if abs(device.videoZoomFactor - clamped) < 0.01 { return }
         do {
@@ -533,11 +587,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
-        let source = isFront ? mirroredHorizontally(oriented) : oriented
-        var filtered = FilmFilter.apply(source, preset: preset, traits: rollTraits)
-        if let look = lookPreset, let grade = look.grade {
-            filtered = FilmFilter.applyGrade(filtered, grade)
-        }
+        // 取景与录像同一条管线：都只过胶片，不叠调色与颗粒
+        let filtered = RenderPipeline.render(oriented, recipe: .video(
+            preset: preset, traits: rollTraits, mirrored: isFront))
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         writeVideoFrame(filtered, time: pts)
         guard let uiImage = renderToUIImage(filtered) else { return }
@@ -555,14 +607,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // CIImage(cgImage:) 会忽略 EXIF，必须像预览那样补一次 .right 旋转，
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
         let oriented = CIImage(cgImage: cg).oriented(.right)
-        let ci = isFront ? mirroredHorizontally(oriented) : oriented
         lastShotMetadata = photo.metadata
-        let base = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
+        // 底：只过胶片（+颗粒），换调色时从它重渲染
+        let base = RenderPipeline.render(oriented, recipe: .still(
+            preset: preset, traits: rollTraits, grain: grain,
+            grade: nil, mirrored: isFront))
         guard let baseImage = renderToUIImage(base) else { return }
-        var filtered = base
-        if let look = lookPreset, let grade = look.grade {
-            filtered = FilmFilter.applyGrade(filtered, grade)
-        }
+        let filtered = RenderPipeline.regrade(base, grade: lookPreset?.grade)
         guard let filteredImage = renderToUIImage(filtered) else { return }
 
         if doubleExposureEnabled {
