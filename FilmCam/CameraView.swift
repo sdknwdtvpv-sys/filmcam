@@ -78,6 +78,7 @@ struct CameraView: View {
 
             // 保存提示
             if manager.showVideoSaved { ToastVideoSaved() }
+            if manager.videoSaveBlocked { ToastVideoBlocked() }
             if manager.photoSaveBlocked { ToastPhotoBlocked() }
             if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
@@ -86,6 +87,11 @@ struct CameraView: View {
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
         }
+        .sheet(isPresented: $manager.showVideoShare) {
+            if let url = manager.recordedVideoURL {
+                ShareSheet(items: [url])
+            }
+        }
         .animation(.easeInOut(duration: 0.22), value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
         .animation(.easeInOut(duration: 0.18), value: manager.activeParam)
@@ -93,7 +99,15 @@ struct CameraView: View {
             manager.requestAccessAndConfigure()
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { manager.refreshAuthorization() }
+            switch phase {
+            case .active:
+                manager.refreshAuthorization()
+            case .background:
+                // 进后台主动停会话；回前台由 refreshAuthorization 恢复（否则黑屏）
+                manager.pauseCamera()
+            default:
+                break
+            }
         }
     }
 }
@@ -171,6 +185,13 @@ struct ModeTabs: View {
 
 struct Viewfinder: View {
     @EnvironmentObject var manager: CameraManager
+
+    // 对焦指示框状态
+    @State private var focusPoint: CGPoint?
+    @State private var focusLocked = false
+    @State private var focusToken = UUID()
+    // 捏合起始倍率
+    @State private var zoomBase: CGFloat = 1
 
     private var modeTag: String {
         switch manager.mode {
@@ -252,9 +273,51 @@ struct Viewfinder: View {
                         .padding(.bottom, 24)
                 }
             }
+
+            // ── 手势层放在最上层，保证任何装饰元素都挡不住对焦/变焦 ──
+            ViewfinderGestureLayer(
+                onTap: { point, size in handleFocus(point, size, lock: false) },
+                onLongPress: { point, size in handleFocus(point, size, lock: true) },
+                onPinchBegan: { zoomBase = manager.zoomFactor },
+                onPinchChanged: { scale in manager.applyZoom(base: zoomBase, scale: scale) },
+                onPinchEnded: { manager.endZoom() }
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // 对焦 / 锁定指示框
+            if let focusPoint {
+                FocusReticle(locked: focusLocked)
+                    .position(focusPoint)
+                    .task(id: focusToken) {
+                        guard !focusLocked else { return }
+                        try? await Task.sleep(nanoseconds: 900_000_000)
+                        guard !Task.isCancelled else { return }
+                        withAnimation(.easeOut(duration: 0.25)) { self.focusPoint = nil }
+                    }
+            }
+
+            // 变焦倍率角标
+            if manager.zoomFactor > 1.02 {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ZoomBadge(factor: manager.zoomFactor)
+                            .padding(.trailing, 26).padding(.bottom, 56)
+                    }
+                }
+            }
         }
         .frame(maxHeight: .infinity)
         .padding(.horizontal, 12)
+    }
+
+    private func handleFocus(_ point: CGPoint, _ size: CGSize, lock: Bool) {
+        manager.focus(at: point, in: size, lock: lock)
+        focusPoint = point
+        focusLocked = lock
+        focusToken = UUID()
+        Haptics.impact(lock ? .medium : .light)
     }
 }
 
@@ -660,33 +723,44 @@ struct BottomBar: View {
         .overlay(alignment: .leading) {
             LastShotThumbnail().padding(.leading, 26)
         }
+        .overlay(alignment: .trailing) {
+            FlipCameraButton().padding(.trailing, 26)
+        }
     }
 }
 
 /// 最近成片缩略图：琥珀金双环框（借鉴飓风的渐变框相册入口）
+/// 数据源是「应用内相册里最新的一张」，不再用显影层的临时图 —— 否则关掉显影后缩略图就是空的。
 struct LastShotThumbnail: View {
     @EnvironmentObject var manager: CameraManager
 
+    private var latest: AlbumItem? { manager.albumItems.first }
+
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(CameraTheme.amber, lineWidth: 2)
-                .frame(width: 46, height: 46)
-            if let image = manager.capturedImage {
-                Image(uiImage: image).resizable().scaledToFill()
-                    .frame(width: 34, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
+        Button { manager.openAlbum() } label: {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(CameraTheme.amber, lineWidth: 2)
+                    .frame(width: 46, height: 46)
                 RoundedRectangle(cornerRadius: 8)
                     .fill(CameraTheme.bgElevated)
                     .frame(width: 34, height: 34)
+                if let latest {
+                    MediaThumbnail(url: latest.url, maxPixel: 160, fill: true)
+                        .frame(width: 34, height: 34)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    Image(systemName: "photo")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
             }
+            .opacity(latest == nil ? 0.45 : 1)
+            .frame(width: 46, height: 46)
+            .contentShape(Rectangle())
         }
-        .opacity(manager.capturedImage == nil ? 0.45 : 1)
-        .contentShape(Rectangle())
-        .onTapGesture { manager.openAlbum() }
-        .accessibilityAddTraits(.isButton)
-        .accessibilityLabel("打开相册")
+        .buttonStyle(.plain)
+        .accessibilityLabel(latest == nil ? "打开相册" : "打开相册，查看最近一张照片")
     }
 }
 
@@ -967,18 +1041,23 @@ struct PermissionGate: View {
 
 // MARK: - Toast
 
-struct ToastVideoSaved: View {
-    @EnvironmentObject var manager: CameraManager
+/// 底部提示条底座：图标 + 文案 + 右侧动作。
+/// 视频/照片/双曝三条提示原本各写一份同样的底板，样式一改就漏改，统一到这里。
+struct ToastBar<Actions: View>: View {
+    let icon: String
+    let iconTint: Color
+    let message: String
+    @ViewBuilder var actions: () -> Actions
 
     var body: some View {
         VStack {
             Spacer()
             HStack(spacing: 10) {
-                Image(systemName: "checkmark.circle.fill").foregroundColor(.green)
-                Text("视频已保存到相册").foregroundColor(CameraTheme.ink)
-                Button("好") { manager.clearVideoSaved() }
-                    .foregroundColor(CameraTheme.amber)
-                    .font(CameraTheme.mono(13, weight: .semibold))
+                Image(systemName: icon).foregroundColor(iconTint)
+                Text(message)
+                    .foregroundColor(CameraTheme.ink)
+                    .font(CameraTheme.mono(13))
+                actions()
             }
             .padding(.horizontal, 20).padding(.vertical, 12)
             .background(CameraTheme.bgDeep.opacity(0.9))
@@ -987,6 +1066,44 @@ struct ToastVideoSaved: View {
             .padding(.bottom, 40)
         }
         .transition(.move(edge: .bottom))
+    }
+}
+
+/// 提示条上的文字按钮统一样式
+struct ToastAction: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(title, action: action)
+            .foregroundColor(CameraTheme.amber)
+            .font(CameraTheme.mono(13, weight: .semibold))
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+    }
+}
+
+struct ToastVideoSaved: View {
+    @EnvironmentObject var manager: CameraManager
+
+    var body: some View {
+        ToastBar(icon: "checkmark.circle.fill", iconTint: .green,
+                 message: "视频已保存到相册") {
+            ToastAction(title: "分享") { manager.openVideoShare() }
+            ToastAction(title: "好") { manager.clearVideoSaved() }
+        }
+    }
+}
+
+struct ToastVideoBlocked: View {
+    @EnvironmentObject var manager: CameraManager
+
+    var body: some View {
+        ToastBar(icon: "exclamationmark.triangle.fill", iconTint: CameraTheme.amber,
+                 message: "视频未保存：请在设置中允许访问照片") {
+            ToastAction(title: "去设置") { manager.openSystemSettings() }
+            ToastAction(title: "好") { manager.dismissVideoSaveBlocked() }
+        }
     }
 }
 
@@ -994,27 +1111,11 @@ struct ToastPhotoBlocked: View {
     @EnvironmentObject var manager: CameraManager
 
     var body: some View {
-        VStack {
-            Spacer()
-            HStack(spacing: 10) {
-                Image(systemName: "exclamationmark.triangle.fill").foregroundColor(CameraTheme.amber)
-                Text("照片未保存：请在设置中允许访问照片")
-                    .foregroundColor(CameraTheme.ink)
-                    .font(CameraTheme.mono(13))
-                Button("去设置") { manager.openSystemSettings() }
-                    .foregroundColor(CameraTheme.amber)
-                    .font(CameraTheme.mono(13, weight: .semibold))
-                Button("好") { manager.dismissPhotoSaveBlocked() }
-                    .foregroundColor(CameraTheme.amber)
-                    .font(CameraTheme.mono(13, weight: .semibold))
-            }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(CameraTheme.bgDeep.opacity(0.9))
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(CameraTheme.hairline, lineWidth: 1))
-            .padding(.bottom, 40)
+        ToastBar(icon: "exclamationmark.triangle.fill", iconTint: CameraTheme.amber,
+                 message: "照片未保存：请在设置中允许访问照片") {
+            ToastAction(title: "去设置") { manager.openSystemSettings() }
+            ToastAction(title: "好") { manager.dismissPhotoSaveBlocked() }
         }
-        .transition(.move(edge: .bottom))
     }
 }
 
@@ -1022,23 +1123,10 @@ struct ToastDoubleExposureFirst: View {
     @EnvironmentObject var manager: CameraManager
 
     var body: some View {
-        VStack {
-            Spacer()
-            HStack(spacing: 10) {
-                Image(systemName: "1.circle.fill").foregroundColor(CameraTheme.amber)
-                Text("第一张已曝光 · 请拍第二张").foregroundColor(CameraTheme.ink)
-                    .font(CameraTheme.mono(13, weight: .medium))
-                Button("好") { manager.clearDoubleExposureFirst() }
-                    .foregroundColor(CameraTheme.amber)
-                    .font(CameraTheme.mono(13, weight: .semibold))
-            }
-            .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(CameraTheme.bgDeep.opacity(0.9))
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(CameraTheme.hairline, lineWidth: 1))
-            .padding(.bottom, 40)
+        ToastBar(icon: "1.circle.fill", iconTint: CameraTheme.amber,
+                 message: "第一张已曝光 · 请拍第二张") {
+            ToastAction(title: "好") { manager.clearDoubleExposureFirst() }
         }
-        .transition(.move(edge: .bottom))
         .task {
             try? await Task.sleep(nanoseconds: 2_500_000_000)
             manager.clearDoubleExposureFirst()

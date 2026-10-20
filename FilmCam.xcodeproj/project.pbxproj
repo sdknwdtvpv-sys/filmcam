@@ -17,6 +17,8 @@
 		AEA22BF6AE594B2A98E62283 /* LUTs in Resources */ = {isa = PBXBuildFile; fileRef = 3CE4775A625D4391902D2990 /* LUTs */; };
 		ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 556B07AF6CF3412D8B342762 /* LUTFilter.swift */; };
 		F1A807516F3D4389960E4F50 /* CaptureSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */; };
+		C1E4D237F393F6B0AB7FA02F /* MediaThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22E2D1882BFEEBC0DD7E4BCF /* MediaThumbnail.swift */; };
+		2F8861FC56A066CB8BC62C9E /* ViewfinderGestures.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA372DF0532A535404A64FB /* ViewfinderGestures.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -31,6 +33,8 @@
 		75E8FE75C5784BFB98C1E319 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSessionController.swift; sourceTree = "<group>"; };
 		DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmCamApp.swift; sourceTree = "<group>"; };
+		22E2D1882BFEEBC0DD7E4BCF /* MediaThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaThumbnail.swift; sourceTree = "<group>"; };
+		CFA372DF0532A535404A64FB /* ViewfinderGestures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewfinderGestures.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +62,8 @@
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
 				3CAD9F247B4644DB8C366859 /* CameraView.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				CFA372DF0532A535404A64FB /* ViewfinderGestures.swift */,
+				22E2D1882BFEEBC0DD7E4BCF /* MediaThumbnail.swift */,
 				C8D2E3F4A50617283940ABC /* FilmPreview.swift */,
 				D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */,
 				DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */,
@@ -155,6 +161,8 @@
 				7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */,
 				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
 				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+				2F8861FC56A066CB8BC62C9E /* ViewfinderGestures.swift in Sources */,
+				C1E4D237F393F6B0AB7FA02F /* MediaThumbnail.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

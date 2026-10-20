@@ -16,6 +16,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private let videoOutput = AVCaptureVideoDataOutput()
     nonisolated(unsafe) private let audioOutput = AVCaptureAudioDataOutput()
     nonisolated(unsafe) private let photoOutput = AVCapturePhotoOutput()
+    nonisolated(unsafe) private var cameraInput: AVCaptureDeviceInput?
     nonisolated(unsafe) private var audioInput: AVCaptureDeviceInput?
     nonisolated(unsafe) private var hasAudio = false
     private let sessionQueue = DispatchQueue(label: "com.filmcam.session")
@@ -24,6 +25,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     private let presetLock = OSAllocatedUnfairLock<FilmPreset>(initialState: .kodakGold)
     nonisolated(unsafe) private var isConfigured = false
     nonisolated(unsafe) private var videoDevice: AVCaptureDevice?
+    /// 当前使用的摄像头方向（前后摄切换用）
+    nonisolated(unsafe) private var currentPosition: AVCaptureDevice.Position = .back
+    /// 是否前摄（sessionQueue 写 / processingQueue 读，故用锁）
+    private let frontLock = OSAllocatedUnfairLock<Bool>(initialState: false)
+    private var isFront: Bool { frontLock.withLock { $0 } }
+    /// 会话中断 / 运行时错误观察者只注册一次
+    nonisolated(unsafe) private var observingSession = false
 
     // 双重曝光
     nonisolated(unsafe) private var doubleExposureEnabled = false
@@ -42,6 +50,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     var onPhoto: (@Sendable (UIImage) -> Void)?
     var onDoubleExposureFirstShot: (@Sendable (UIImage) -> Void)?
     var onVideoSaved: (@Sendable (URL) -> Void)?
+    /// 切换摄像头成功后回调真实方向（true = 前摄），让 UI 与硬件状态保持一致
+    var onCameraSwitched: (@Sendable (Bool) -> Void)?
 
     var preset: FilmPreset {
         get { presetLock.withLock { $0 } }
@@ -51,9 +61,43 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     // MARK: - 启动
     func configureAndStart() {
         sessionQueue.async { [weak self] in
-            self?.configureSession()
-            self?.session.startRunning()
+            guard let self else { return }
+            self.configureSession()
+            self.observeSessionIfNeeded()
+            if !self.session.isRunning { self.session.startRunning() }
         }
+    }
+
+    /// 进后台 / 系统打断时主动停会话，省电并让系统能释放相机。
+    func pause() {
+        sessionQueue.async { [weak self] in
+            guard let self, self.isConfigured, self.session.isRunning else { return }
+            self.session.stopRunning()
+        }
+    }
+
+    /// 回前台恢复会话。注意 stopRunning 之后必须重新 startRunning，
+    /// 否则真机切回来是一片黑屏（旧代码 didStartCamera 一次性锁死，没有恢复路径）。
+    func resume() {
+        sessionQueue.async { [weak self] in
+            guard let self, self.isConfigured, !self.session.isRunning else { return }
+            self.session.startRunning()
+        }
+    }
+
+    /// 来电 / 其他 App 抢占 / 媒体服务重启后自动恢复。
+    private func observeSessionIfNeeded() {
+        guard !observingSession else { return }
+        observingSession = true
+        let nc = NotificationCenter.default
+        nc.addObserver(self, selector: #selector(sessionNeedsRestart),
+                       name: .AVCaptureSessionRuntimeError, object: session)
+        nc.addObserver(self, selector: #selector(sessionNeedsRestart),
+                       name: .AVCaptureSessionInterruptionEnded, object: session)
+    }
+
+    @objc private func sessionNeedsRestart(_ note: Notification) {
+        resume()
     }
 
     private func configureSession() {
@@ -69,8 +113,12 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             return
         }
         videoDevice = device
+        currentPosition = device.position
+        let isFrontDevice = device.position == .front
+        frontLock.withLock { $0 = isFrontDevice }
         if session.canAddInput(input) {
             session.addInput(input)
+            cameraInput = input
         } else {
             NSLog("[FilmCam] 无法加入相机输入")
             return
@@ -98,8 +146,52 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         isConfigured = true
     }
 
+    // MARK: - 前后摄切换
+    func switchCamera() {
+        sessionQueue.async { [weak self] in
+            guard let self, self.isConfigured, !self.recording else { return }
+            let target: AVCaptureDevice.Position = self.currentPosition == .back ? .front : .back
+            guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: target),
+                  let input = try? AVCaptureDeviceInput(device: device) else { return }
+
+            self.session.beginConfiguration()
+            let previous = self.cameraInput
+            if let previous { self.session.removeInput(previous) }
+            guard self.session.canAddInput(input) else {
+                // 回滚：切换失败时保持原摄像头可用
+                if let previous, self.session.canAddInput(previous) { self.session.addInput(previous) }
+                self.session.commitConfiguration()
+                return
+            }
+            self.session.addInput(input)
+            self.cameraInput = input
+            self.videoDevice = device
+            self.currentPosition = target
+            self.session.commitConfiguration()
+
+            self.frontLock.withLock { $0 = (target == .front) }
+            self.onCameraSwitched?(target == .front)
+            // 换镜头后旧的构图参数不再成立：清合成底图、重置对焦与变焦
+            self.doubleExposureBase = nil
+            self.resetFocusAndZoom(on: device)
+        }
+    }
+
+    private func resetFocusAndZoom(on device: AVCaptureDevice) {
+        guard (try? device.lockForConfiguration()) != nil else { return }
+        defer { device.unlockForConfiguration() }
+        if device.isFocusModeSupported(.continuousAutoFocus) {
+            device.focusMode = .continuousAutoFocus
+        }
+        if device.isExposureModeSupported(.continuousAutoExposure) {
+            device.exposureMode = .continuousAutoExposure
+        }
+        device.videoZoomFactor = device.minAvailableVideoZoomFactor
+    }
+
     // MARK: - 拍照
     func capture() {
+        guard session.isRunning else { return }
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .auto
         photoOutput.capturePhoto(with: settings, delegate: self)
@@ -157,6 +249,66 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         do { try device.lockForConfiguration()
              device.focusMode = .continuousAutoFocus
              device.unlockForConfiguration() } catch {}
+    }
+
+    // MARK: - 点按对焦 / 锁定 / 变焦
+    /// - Parameters:
+    ///   - point: 归一化设备坐标（传感器原生横图的 (0,0) 在左上）
+    ///   - lock: true = 长按锁定 AE/AF（.locked），false = 单次自动对焦
+    ///   - touchExposure: 手动曝光模式下不抢曝光控制，只对焦
+    func focus(at point: CGPoint, lock: Bool, touchExposure: Bool) {
+        guard let device = videoDevice else { return }
+        do {
+            try device.lockForConfiguration()
+            let p = CGPoint(x: min(max(point.x, 0), 1), y: min(max(point.y, 0), 1))
+
+            if device.isFocusPointOfInterestSupported {
+                device.focusPointOfInterest = p
+                let mode: AVCaptureDevice.FocusMode = lock ? .locked : .autoFocus
+                if device.isFocusModeSupported(mode) { device.focusMode = mode }
+            }
+            if touchExposure, device.isExposurePointOfInterestSupported {
+                device.exposurePointOfInterest = p
+                let mode: AVCaptureDevice.ExposureMode = lock ? .locked : .autoExpose
+                if device.isExposureModeSupported(mode) { device.exposureMode = mode }
+            }
+            device.unlockForConfiguration()
+        } catch {}
+    }
+
+    /// 解锁 AE/AF，回到连续自动
+    func unlockFocusAndExposure() {
+        guard let device = videoDevice else { return }
+        do {
+            try device.lockForConfiguration()
+            if device.isFocusModeSupported(.continuousAutoFocus) {
+                device.focusMode = .continuousAutoFocus
+            }
+            if device.isExposureModeSupported(.continuousAutoExposure) {
+                device.exposureMode = .continuousAutoExposure
+            }
+            device.unlockForConfiguration()
+        } catch {}
+    }
+
+    /// 捏合变焦：factor 为绝对倍率（1.0 = 1×），内部 clamp 到设备能力
+    func setZoom(_ factor: CGFloat) {
+        guard let device = videoDevice else { return }
+        let maxZ = min(device.maxAvailableVideoZoomFactor, 8)
+        let clamped = min(max(factor, device.minAvailableVideoZoomFactor), maxZ)
+        // 变焦不动画面结构，走 ramp 更顺滑；直接赋值在捏合高频回调下会抖动
+        if abs(device.videoZoomFactor - clamped) < 0.01 { return }
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = clamped
+            device.unlockForConfiguration()
+        } catch {}
+    }
+
+    /// 设备支持的倍率上限（UI 用来画指示条）
+    var maxZoomFactor: CGFloat {
+        guard let device = videoDevice else { return 8 }
+        return min(device.maxAvailableVideoZoomFactor, 8)
     }
 
     func setDoubleExposureEnabled(_ enabled: Bool) {
@@ -243,6 +395,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     }
 
     // MARK: - 渲染工具
+    /// 左右镜像（在已转正的图像空间里执行，保证自拍"照镜子"而不是上下颠倒）
+    private func mirroredHorizontally(_ image: CIImage) -> CIImage {
+        let extent = image.extent
+        return image
+            .transformed(by: CGAffineTransform(scaleX: -1, y: 1))
+            .transformed(by: CGAffineTransform(translationX: extent.minX + extent.maxX, y: 0))
+    }
     private func renderToUIImage(_ ciImage: CIImage) -> UIImage? {
         let extent = ciImage.extent.integral
         guard let cg = ciContext.createCGImage(ciImage, from: extent) else { return nil }
@@ -285,8 +444,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             return
         }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        let ciImage = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
-        let filtered = FilmFilter.apply(ciImage, preset: preset)
+        let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
+        let source = isFront ? mirroredHorizontally(oriented) : oriented
+        let filtered = FilmFilter.apply(source, preset: preset)
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         writeVideoFrame(filtered, time: pts)
         guard let uiImage = renderToUIImage(filtered) else { return }
@@ -303,7 +463,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 关键：JPEG 的像素是传感器原生（横向），方向信息只在 EXIF 里；
         // CIImage(cgImage:) 会忽略 EXIF，必须像预览那样补一次 .right 旋转，
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
-        let ci = CIImage(cgImage: cg).oriented(.right)
+        let oriented = CIImage(cgImage: cg).oriented(.right)
+        let ci = isFront ? mirroredHorizontally(oriented) : oriented
         let filtered = FilmFilter.apply(ci, preset: preset)
         guard let filteredImage = renderToUIImage(filtered) else { return }
 

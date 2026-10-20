@@ -65,15 +65,28 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var saveConfirmed = false
     /// 照片写入相册失败（相册权限被拒 / 写入失败）——用于引导去系统设置。
     @Published var photoSaveBlocked = false
+    /// 视频写入系统相册失败
+    @Published var videoSaveBlocked = false
+    /// 录制完成后的本地文件（供「分享」用，过期即失效）
+    @Published var recordedVideoURL: URL?
 
     @Published var selectedPreset: FilmPreset = .kodakGold { didSet { controller.preset = selectedPreset } }
     @Published var mode: CameraMode = .photo { didSet { modeChanged(mode) } }
     @Published var doubleExposureStep: Int = 0
     @Published var isRecording = false
-    @Published var recordedVideoURL: URL?
     @Published var showVideoSaved = false
+    /// 系统分享面板（录制完成的视频）
+    @Published var showVideoShare = false
     /// 双曝第一张已曝光提示（短暂出现，不弹显影层）
     @Published var showDoubleExposureFirst = false
+
+    // 取景手势状态（对焦/变焦/镜头）
+    /// 当前取景画面的宽高比（来自首帧，用于把点击坐标换算成设备坐标）
+    @Published var previewAspect: CGFloat?
+    /// 当前变焦倍率（1.0 = 1×）
+    @Published var zoomFactor: CGFloat = 1
+    /// 是否前摄
+    @Published var isFrontCamera = false
 
     // 手动参数（UI 状态，device 内部会 clamp 到支持范围）
     @Published var iso: Double = 200
@@ -136,11 +149,18 @@ final class CameraManager: NSObject, ObservableObject {
                 self?.showDoubleExposureFirst = true
             }
         }
+        controller.onCameraSwitched = { [weak self] isFront in
+            Task { @MainActor in
+                self?.isFrontCamera = isFront
+                self?.zoomFactor = 1
+            }
+        }
         controller.onVideoSaved = { [weak self] url in
             Task { @MainActor in
                 self?.isRecording = false
                 self?.recordedVideoURL = url
-                self?.showVideoSaved = true
+                // 真写进系统相册；成功后才提示「已保存」，失败走拦截引导
+                self?.saveVideoToLibrary(url)
             }
         }
     }
@@ -151,6 +171,9 @@ final class CameraManager: NSObject, ObservableObject {
             hasPreview = true
             previewStalled = false
             watchdog?.cancel(); watchdog = nil
+            if image.size.height > 0 {
+                previewAspect = image.size.width / image.size.height
+            }
         }
         previewFrames.send(image)
     }
@@ -177,12 +200,22 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
-    /// 回到前台时重新读取权限（用户可能刚在「设置」里改过），并补启动。
+    /// 回到前台时重新读取权限（用户可能刚在「设置」里改过），并补启动 / 恢复会话。
     func refreshAuthorization() {
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         if status != authorizationStatus { authorizationStatus = status }
-        if status == .authorized { startCameraIfNeeded() }
+        if status == .authorized {
+            startCameraIfNeeded()
+            // 已在运行过的情况下 startCameraIfNeeded 会直接 return，
+            // 这里必须显式恢复会话，否则切后台回来是黑屏。
+            controller.resume()
+        }
         refreshStorage()
+    }
+
+    /// 进入后台：主动停会话（系统也会停，但我们自己要能恢复）
+    func pauseCamera() {
+        controller.pause()
     }
 
     /// 读取可用空间，并按 1080p30（≈12 Mbps）估算剩余可录时长。
@@ -280,6 +313,45 @@ final class CameraManager: NSObject, ObservableObject {
     // MARK: - 控制
     func capturePhoto() { controller.capture() }
 
+    /// 前后摄切换（录制中不允许，避免把一条视频写成两种镜头）
+    func switchCamera() {
+        guard !isRecording else { return }
+        controller.switchCamera()   // 成功后由 onCameraSwitched 回写 isFrontCamera
+    }
+
+    /// 点按对焦 / 长按锁定。point 为取景器内的局部坐标（pt）。
+    func focus(at point: CGPoint, in size: CGSize, lock: Bool) {
+        guard let aspect = previewAspect, size.width > 0, size.height > 0 else { return }
+        // 预览图以 scaleAspectFill 铺满容器：先还原成图片内归一化坐标
+        let scale = max(size.width / aspect, size.height / 1)
+        let drawnW = aspect * scale
+        let drawnH = scale
+        let originX = (size.width - drawnW) / 2
+        let originY = (size.height - drawnH) / 2
+        let u = min(max((point.x - originX) / drawnW, 0), 1)
+        let v = min(max((point.y - originY) / drawnH, 0), 1)
+        // 竖屏图像坐标 → 传感器原生横图坐标（图像顺时针转了 90°）
+        // 前摄预览是镜像过的，横向要再反一次
+        let devicePoint = isFrontCamera
+            ? CGPoint(x: v, y: u)
+            : CGPoint(x: v, y: 1 - u)
+        controller.focus(at: devicePoint, lock: lock, touchExposure: autoExposure)
+    }
+
+    /// 解除 AE/AF 锁定
+    func clearFocusLock() {
+        controller.unlockFocusAndExposure()
+    }
+
+    /// 捏合变焦：传入相对倍率（1.0 = 不缩放）
+    func applyZoom(base: CGFloat, scale: CGFloat) {
+        let target = min(max(base * scale, 1), 8)
+        zoomFactor = target
+        controller.setZoom(target)
+    }
+
+    func endZoom() { controller.setZoom(zoomFactor) }
+
     func toggleRecording() {
         if isRecording {
             isRecording = false
@@ -321,6 +393,9 @@ final class CameraManager: NSObject, ObservableObject {
         controller.setAutoExposure()
         controller.setAutoWhiteBalance()
         controller.setAutoFocus()
+        // 复位变焦，避免「恢复自动」后画面还停在 3×
+        zoomFactor = 1
+        controller.setZoom(1)
     }
 
     // MARK: - 药丸 / 参数面板交互
@@ -362,4 +437,31 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func dismissPhotoSaveBlocked() { photoSaveBlocked = false }
+
+    // MARK: - 视频保存
+    /// 把录制完的视频写进系统相册。
+    /// 旧实现只把文件留在 tmp 就弹「视频已保存到相册」，退出 App 文件即丢 —— 提示与事实不符。
+    private func saveVideoToLibrary(_ url: URL) {
+        PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
+            guard status == .authorized || status == .limited else {
+                Task { @MainActor in self?.videoSaveBlocked = true }
+                return
+            }
+            PHPhotoLibrary.shared().performChanges({
+                PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
+            }) { success, _ in
+                Task { @MainActor in
+                    if success {
+                        self?.showVideoSaved = true
+                    } else {
+                        self?.videoSaveBlocked = true
+                    }
+                }
+            }
+        }
+    }
+
+    func dismissVideoSaveBlocked() { videoSaveBlocked = false }
+    func openVideoShare() { showVideoShare = true }
+    func closeVideoShare() { showVideoShare = false }
 }
