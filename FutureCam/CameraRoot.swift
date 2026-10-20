@@ -55,10 +55,12 @@ struct CameraRoot: View {
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
 
+            #if DEBUG
             // 调试：颗粒对照卡
             if DebugHarness.shouldShowGrainCard {
                 GrainTestCard().zIndex(30)
             }
+            #endif
 
             // 冷启动的开机页，放完让位给取景器
             if showLaunch {
