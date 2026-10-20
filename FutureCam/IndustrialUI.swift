@@ -234,13 +234,3 @@ struct PhysicalButtonStyle: ButtonStyle {
     }
 }
 
-/// 只负责按下缩放的样式（快门盘用）
-struct PressScaleStyle: ButtonStyle {
-    var scale: CGFloat = 0.965
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? scale : 1)
-            .animation(.spring(response: 0.22, dampingFraction: 0.7),
-                       value: configuration.isPressed)
-    }
-}

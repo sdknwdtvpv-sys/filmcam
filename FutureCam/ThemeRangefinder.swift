@@ -14,6 +14,12 @@ struct RangefinderCameraView: View {
     /// 上一次触感所在的齿
     @State private var lastTooth: Double = .nan
 
+    /// 快门键：按住不松手往左右拖就换模式
+    @State private var shutterPressed = false
+    @State private var shiftArmed = false
+    @State private var shiftStart: CameraMode?
+    @State private var shiftTarget: CameraMode?
+
     /// 滚花盘画了 96 颗齿，拖动 0.45°/pt，所以一颗齿 = 8.333pt 位移
     private let toothPitch: Double = 360.0 / 96.0 / 0.45
     /// 参数浮层（调参时在取景器里浮出）
@@ -182,18 +188,6 @@ struct RangefinderCameraView: View {
                 .padding(.horizontal, 14)
                 .padding(.top, 8)
 
-            HStack(spacing: 6) {
-                ForEach(CameraMode.allCases) { mode in
-                    LabeledKey(tokens: t, caption: mode.label, radius: 4, action: {
-                        withAnimation(.easeInOut(duration: 0.15)) { manager.mode = mode }
-                    }) {
-                        LEDDot(color: manager.mode == mode ? t.accent : t.inkDim,
-                               size: 5, dimmed: manager.mode != mode)
-                    }
-                }
-            }
-            .padding(.horizontal, 14)
-
             HStack(alignment: .bottom, spacing: 14) {
                 VStack(spacing: 3) {
                     albumWindow(t)
@@ -346,31 +340,70 @@ struct RangefinderCameraView: View {
                     nudgeShutter(direction == .increment ? -1 : 1)
                 }
 
-            // 中心：快门
-            Button {
-                Haptics.impact(.heavy)
-                if manager.mode == .video { manager.toggleRecording() } else { manager.capturePhoto() }
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(LinearGradient(colors: [t.faceTop, t.faceBottom],
-                                             startPoint: .top, endPoint: .bottom))
-                        .frame(width: 82, height: 82)
-                        .overlay(Circle().strokeBorder(.black.opacity(0.35), lineWidth: 1))
-                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
-                    if manager.isRecording && manager.mode == .video {
-                        RoundedRectangle(cornerRadius: 3).fill(t.recRed).frame(width: 18, height: 18)
-                    } else {
-                        Circle()
-                            .fill(t.accent)
-                            .frame(width: 9, height: 9)
-                            .shadow(color: t.accent.opacity(0.7), radius: 4)
-                    }
+            // 中心：快门 —— 原地松开是拍，按住左右拖是换模式
+            shutterButton(t)
+        }
+    }
+
+    private func shutterButton(_ t: ThemeTokens) -> some View {
+        ZStack {
+            Circle()
+                .fill(LinearGradient(colors: [t.faceTop, t.faceBottom],
+                                     startPoint: .top, endPoint: .bottom))
+                .overlay(Circle().strokeBorder(.black.opacity(0.35), lineWidth: 1))
+                .shadow(color: .black.opacity(shutterPressed ? 0.16 : 0.4),
+                        radius: shutterPressed ? 1 : 4,
+                        y: shutterPressed ? 0 : 2)
+            shutterGlyph(t)
+        }
+        .frame(width: 82, height: 82)
+        .contentShape(Circle())
+        .scaleEffect(shutterPressed ? 0.95 : 1)
+        .animation(.easeOut(duration: 0.12), value: shutterPressed)
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    if !shutterPressed { shutterPressed = true }
+                    handleShutterDrag(value.translation.width)
                 }
-                .contentShape(Circle())
+                .onEnded { _ in
+                    shutterPressed = false
+                    finishShutterDrag()
+                }
+        )
+        .accessibilityElement()
+        .accessibilityLabel(shutterVerb(manager))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction {
+            Haptics.impact(.heavy)
+            if manager.mode == .video { manager.toggleRecording() } else { manager.capturePhoto() }
+        }
+    }
+
+    /// 快门键面上的符号同时当模式指示：照片=点，双曝=点套环，视频=方框
+    @ViewBuilder
+    private func shutterGlyph(_ t: ThemeTokens) -> some View {
+        if manager.mode == .video {
+            RoundedRectangle(cornerRadius: 3)
+                .fill(manager.isRecording ? t.recRed : .clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3)
+                        .strokeBorder(t.recRed.opacity(manager.isRecording ? 0 : 0.9), lineWidth: 2)
+                )
+                .frame(width: 16, height: 16)
+                .shadow(color: manager.isRecording ? t.recRed.opacity(0.6) : .clear, radius: 4)
+        } else if manager.mode == .doubleExposure {
+            ZStack {
+                Circle().strokeBorder(t.accent.opacity(0.85), lineWidth: 1.8)
+                    .frame(width: 22, height: 22)
+                Circle().fill(t.accent).frame(width: 7, height: 7)
             }
-            .buttonStyle(PressScaleStyle(scale: 0.95))
-            .accessibilityLabel(shutterVerb(manager))
+            .shadow(color: t.accent.opacity(0.5), radius: 4)
+        } else {
+            Circle()
+                .fill(t.accent)
+                .frame(width: 9, height: 9)
+                .shadow(color: t.accent.opacity(0.7), radius: 4)
         }
     }
 
@@ -466,6 +499,58 @@ struct RangefinderCameraView: View {
             feedback(dx: dx, key: v, step: 10)
             showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
+    }
+
+    // MARK: 快门键上的模式切换
+
+    /// 横拖超过 22pt 才算换模式，避免按快门时手抖误切
+    private let shiftGate: CGFloat = 22
+    /// 之后每 26pt 换一档
+    private let shiftStep: CGFloat = 26
+
+    private func handleShutterDrag(_ dx: CGFloat) {
+        if !shiftArmed {
+            guard !manager.isRecording, abs(dx) > shiftGate else { return }
+            shiftArmed = true
+            shiftStart = manager.mode
+            shiftTarget = manager.mode
+            Haptics.impact(.medium)
+            showModeHUD(manager.mode)
+            return
+        }
+
+        guard let start = shiftStart else { return }
+        let target = start.cycled(steps: Int((dx / shiftStep).rounded()))
+        guard target != shiftTarget else { return }
+        shiftTarget = target
+        Haptics.impact(.light)
+        showModeHUD(target)
+    }
+
+    private func finishShutterDrag() {
+        defer {
+            shiftArmed = false
+            shiftStart = nil
+            shiftTarget = nil
+        }
+
+        if shiftArmed {
+            if let target = shiftTarget, target != manager.mode {
+                withAnimation(.easeInOut(duration: 0.15)) { manager.mode = target }
+                Haptics.impact(.medium)
+            }
+            return
+        }
+
+        Haptics.impact(.heavy)
+        if manager.mode == .video { manager.toggleRecording() } else { manager.capturePhoto() }
+    }
+
+    private func showModeHUD(_ mode: CameraMode) {
+        let all = CameraMode.allCases
+        let index = all.firstIndex(of: mode) ?? 0
+        showHUD("MODE", mode.label,
+                Double(index) / Double(max(all.count - 1, 1)))
     }
 
     /// 每帧最多给一次反馈：档位跳了就用「档」的力度，只划过了细牙就用「牙」的力度。

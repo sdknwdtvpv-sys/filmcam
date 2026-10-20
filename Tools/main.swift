@@ -1,7 +1,7 @@
 import Foundation
 import CoreGraphics
 
-// FutureCam 纯逻辑自检：xcrun swiftc FutureCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
+// FutureCam 纯逻辑自检：xcrun swiftc FutureCam/CameraMath.swift FutureCam/CameraMode.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
 
 var failures = 0
 var checks = 0
@@ -76,6 +76,14 @@ expect(CameraMath.shutterLabel(1.0 / 60) == "1/60", "快门标签 1/60", CameraM
 expect(CameraMath.shutterLabel(2.0) == "2.0s", "快门标签 2.0s", CameraMath.shutterLabel(2.0))
 expect(CameraMath.evLabel(0.30000000000000004) == "+0.3", "EV 标签 +0.3", CameraMath.evLabel(0.3))
 expect(CameraMath.evLabel(-1.5) == "-1.5", "EV 标签 -1.5", CameraMath.evLabel(-1.5))
+
+// MARK: 快门键拖拽换模式
+expect(CameraMode.photo.cycled(steps: 1) == .doubleExposure, "照片右拖一档到双曝")
+expect(CameraMode.photo.cycled(steps: 2) == .video, "照片右拖两档到视频")
+expect(CameraMode.photo.cycled(steps: -1) == .video, "照片左拖一档回到视频（循环）")
+expect(CameraMode.video.cycled(steps: 1) == .photo, "视频右拖一档回到照片")
+expect(CameraMode.doubleExposure.cycled(steps: 0) == .doubleExposure, "零位移不改模式")
+expect(CameraMode.video.cycled(steps: -5) == .photo, "负向多档循环仍落在合法模式")
 
 // MARK: 结果
 

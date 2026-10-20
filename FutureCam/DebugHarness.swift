@@ -7,6 +7,7 @@ import CoreImage
 /// 靠启动参数直达某个界面 / 塞一帧合成预览，方便截图检查布局。
 ///
 ///     -fcScreen album|albumDetail|film|settings
+///     -fcMode video|double|photo   启动即切到某个拍摄模式（检查快门键模式符号）
 ///     -fcStubPreview        合成一帧假预览（仅用于布局自检，绝不能用于商店截图）
 ///
 /// Release 构建里整个文件不参与编译。
@@ -21,6 +22,12 @@ enum DebugHarness {
     }
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
+
+    /// 取 `-fcMode xxx` 的值
+    static func modeArgument() -> String? {
+        guard let index = arguments.firstIndex(of: "-fcMode"), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
 
     /// `-fcShowHUD`：启动即浮出参数读数，方便截图检查（模拟器没法脚本拖动）
     static var shouldShowHUD: Bool { arguments.contains("-fcShowHUD") }
@@ -62,6 +69,13 @@ enum DebugHarness {
     /// 启动时按参数切到指定界面
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {
+        switch modeArgument() {
+        case "photo": manager.mode = .photo
+        case "double": manager.mode = .doubleExposure
+        case "video": manager.mode = .video
+        default: break
+        }
+
         guard let screen = screenArgument() else { return }
         switch screen {
         case "album", "albumDetail", "albumPhoto": manager.showAlbum = true
