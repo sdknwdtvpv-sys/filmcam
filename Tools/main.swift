@@ -54,7 +54,9 @@ let slow = CameraMath.shutterProgress(1.0 / 8)
 expect(fast < mid && mid < slow, "快门进度单调递增", "\(fast) \(mid) \(slow)")
 expect((0...1).contains(fast) && (0...1).contains(slow), "进度落在 0…1", "\(fast) \(slow)")
 expect(close(CameraMath.shutterProgress(1.0 / 4000), 0, 1e-9), "最快档在最左")
-expect(close(CameraMath.shutterProgress(0.25), 1, 1e-9), "最慢档在最右")
+expect(close(CameraMath.shutterProgress(30), 1, 1e-9), "最慢档在最右（30s 长曝光）")
+expect(close(CameraMath.shutterProgress(0.25), 0.5906, 0.01), "1/4 秒落在刻度 0.59")
+expect(CameraMath.shutterProgress(60) == 1, "超过 30s 夹到最右")
 
 // 1/3 档进位
 let stepped = CameraMath.steppedStop(1.0 / 60, direction: 1, range: 1.0 / 4000...0.25)
@@ -73,7 +75,7 @@ expect(close(CameraMath.quantize(13, step: 0), 13), "步长为 0 时原样返回
 // MARK: 读数格式
 
 expect(CameraMath.shutterLabel(1.0 / 60) == "1/60", "快门标签 1/60", CameraMath.shutterLabel(1.0 / 60))
-expect(CameraMath.shutterLabel(2.0) == "2.0s", "快门标签 2.0s", CameraMath.shutterLabel(2.0))
+expect(CameraMath.shutterLabel(2.0) == "2s", "快门标签 2s", CameraMath.shutterLabel(2.0))
 expect(CameraMath.evLabel(0.30000000000000004) == "+0.3", "EV 标签 +0.3", CameraMath.evLabel(0.3))
 expect(CameraMath.evLabel(-1.5) == "-1.5", "EV 标签 -1.5", CameraMath.evLabel(-1.5))
 

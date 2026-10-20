@@ -367,11 +367,23 @@ struct RangefinderCameraView: View {
                         .offset(y: 1)
                         .rotationEffect(.degrees(collarAngle))
                 }
+                .overlay {
+                    // 长曝光进行中：外圈走一圈红弧，读数在中间
+                    if manager.isLongExposing {
+                        Circle()
+                            .trim(from: 0, to: max(0.001, manager.longExposureProgress))
+                            .stroke(t.accent, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                            .padding(2)
+                            .allowsHitTesting(false)
+                    }
+                }
                 .guideAnchor(.collar)
                 .contentShape(Circle())
                 .gesture(
                     DragGesture(minimumDistance: 1)
                         .onChanged { value in
+                            guard !manager.isLongExposing else { return }
                             turnCollar(value.translation.width)
                             collarAngle = Double(value.translation.width) * 0.45
                         }

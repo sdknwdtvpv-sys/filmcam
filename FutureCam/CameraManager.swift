@@ -152,6 +152,13 @@ final class CameraManager: NSObject, ObservableObject {
     /// 当前取景画面的宽高比（来自首帧，用于把点击坐标换算成设备坐标）
     @Published var previewAspect: CGFloat?
     /// 当前变焦倍率（1.0 = 1×）
+    /// 三脚架检测
+    private let stability = StabilityMonitor()
+    private var longExposureWarned = false
+    /// 长曝光进行中：按钮转红、盘面显示积分进度
+    @Published var isLongExposing = false
+    @Published var longExposureProgress: Double = 0
+
     /// 当前焦段（用户视角：0.5× / 1× / 2× / 5×…），由物理镜头切换实现
     @Published var zoomFactor: CGFloat = 1
     /// 这台机型支持的光学焦段
@@ -458,7 +465,63 @@ final class CameraManager: NSObject, ObservableObject {
             Haptics.impact(.heavy)
             return
         }
+        guard !isLongExposing else { return }
+
+        // 快门超过 1 秒：走多帧堆栈（设备单帧上限约 1 秒）
+        if shutterSeconds >= CameraMath.longExposureThreshold {
+            startLongExposure()
+            return
+        }
         controller.capture()
+    }
+
+    /// 长曝光：积分期间按快门可提前结束
+    private func startLongExposure() {
+        isLongExposing = true
+        longExposureProgress = 0
+        stability.start()
+        Haptics.impact(.rigid)
+
+        longExposureWarned = false
+        controller.onLongExposureProgress = { [weak self] progress in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.longExposureProgress = progress
+                // 长时间积分且没架稳：提醒一次，别等拍完才发现糊了
+                if !self.longExposureWarned, self.shutterSeconds >= 8,
+                   progress > 0.25, !self.stability.isSteady {
+                    self.longExposureWarned = true
+                    self.notice = CameraNotice(title: "画面在动", value: "架稳再拍")
+                    Haptics.impact(.rigid)
+                }
+            }
+        }
+        controller.startLongExposure(seconds: shutterSeconds) { [weak self] stacked in
+            guard let self else { return }
+            self.stability.stop()
+            self.isLongExposing = false
+            // 积分完再走成片管线：胶片 + 颗粒 + 当前调色
+            let roll = self.rolls.current
+            let recipe = RenderPipeline.Recipe.still(
+                preset: roll.preset,
+                traits: roll.traits,
+                grain: roll.preset.hasGrain
+                    ? GrainSettings.make(iso: self.iso, traits: roll.traits, seed: roll.seed)
+                    : .none,
+                grade: nil,
+                mirrored: self.isFrontCamera)
+            let base = RenderPipeline.render(stacked, recipe: recipe)
+            guard let rendered = FilmFilter.render(base) else { return }
+            let final = self.finalized(rendered.0)
+            self.capturedImage = final
+            self.capturedBase = rendered.0
+            self.capturedAlbumItem = nil
+            self.pendingLibrarySave = (final, self.controller.reencodeJPEG(final))
+            self.selectedLook = nil
+            self.bumpFrameCount()
+            self.saveToAlbumOnly(final, jpeg: nil, rollID: self.rolls.current.id)
+            Haptics.impact(.heavy)
+        }
     }
 
     /// 当前这卷

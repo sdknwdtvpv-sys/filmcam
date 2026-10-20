@@ -52,6 +52,15 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private var recordedURL: URL?
 
     var onPreview: (@Sendable (UIImage) -> Void)?
+    // MARK: 长曝光
+    private var integrator: LongExposureIntegrator?
+    private var longSeconds: Double = 0
+    private var longStartedAt: Date?
+    private var longLastFeed: Date?
+    private var longCompletion: ((CIImage) -> Void)?
+    /// 曝光进度（0…1），主线程回调
+    var onLongExposureProgress: (@Sendable (Double) -> Void)?
+
     /// 最近一张的原始 EXIF，换调色重编码时带回去，避免丢元数据
     private var lastShotMetadata: [String: Any] = [:]
 
@@ -312,7 +321,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     }
 
     // MARK: - 手动参数
+    /// 记住最近一次的曝光参数，长曝光时要用
+    private var lastISO: Float = 100
+    private var lastBias: Float = 0
+
     func setManualExposure(iso: Float, shutterSeconds: Double, bias: Float) {
+        lastISO = iso
+        lastBias = bias
         guard let device = videoDevice else { return }
         do {
             try device.lockForConfiguration()
@@ -590,6 +605,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 取景与录像同一条管线：都只过胶片，不叠调色与颗粒
         let filtered = RenderPipeline.render(oriented, recipe: .video(
             preset: preset, traits: rollTraits, mirrored: isFront))
+        if integrator != nil {
+            feedLongExposure(isFront ? mirroredHorizontally(oriented) : oriented, at: Date())
+        }
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         writeVideoFrame(filtered, time: pts)
         guard let uiImage = renderToUIImage(filtered) else { return }
@@ -632,6 +650,39 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
 
     /// 把成片重新编码成 JPEG，并把原始 EXIF 带回去。
     /// 旧实现直接传 UIImage 给 Photos，重渲染后元数据全丢（相册里看不到机型/ISO/GPS）。
+    /// 开始一次长曝光：用多帧堆栈攒出等效的长时间曝光
+    func startLongExposure(seconds: Double, completion: @escaping (CIImage) -> Void) {
+        guard integrator == nil else { return }
+        let integ = LongExposureIntegrator()
+        integ.begin()
+        integrator = integ
+        longSeconds = max(seconds, 1)
+        longStartedAt = Date()
+        longLastFeed = nil
+        longCompletion = completion
+        onLongExposureProgress?(0)
+        // 长曝光时把单帧曝光压短，靠积累时间而不是单帧亮度
+        setManualExposure(iso: lastISO, shutterSeconds: min(1.0 / 30.0, seconds), bias: lastBias)
+    }
+
+    private func feedLongExposure(_ frame: CIImage, at now: Date) {
+        guard let integrator, let started = longStartedAt else { return }
+        // 每 0.25 秒取一帧，30fps 全喂会白烧 CPU
+        if let last = longLastFeed, now.timeIntervalSince(last) < 0.25 { return }
+        longLastFeed = now
+        integrator.add(frame)
+        let progress = min(now.timeIntervalSince(started) / longSeconds, 1)
+        onLongExposureProgress?(progress)
+
+        if progress >= 1 {
+            self.integrator = nil
+            self.longStartedAt = nil
+            guard let result = integrator.finish(), let completion = longCompletion else { return }
+            longCompletion = nil
+            completion(result)
+        }
+    }
+
     /// 换调色后重新编码：带上原片的 EXIF
     func reencodeJPEG(_ image: UIImage) -> Data? {
         jpegWithMetadata(image, metadata: lastShotMetadata)

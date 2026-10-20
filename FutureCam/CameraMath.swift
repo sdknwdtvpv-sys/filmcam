@@ -37,10 +37,11 @@ enum CameraMath {
 
     // MARK: 快门刻度
 
-    /// 快门速度（秒）在 1/4000 … 1/4 之间的对数位置，0…1
+    /// 快门速度（秒）在 1/4000 … 30s 之间的对数位置，0…1。
+    /// 超过 1 秒的部分是长曝光，靠多帧堆栈实现，设备单帧仍不超过 1 秒。
     static func shutterProgress(_ seconds: Double) -> Double {
         guard seconds > 0 else { return 0 }
-        let lo = log2(4000.0), hi = log2(4.0)
+        let lo = log2(4000.0), hi = log2(1.0 / 30.0)
         return min(max((log2(1 / seconds) - lo) / (hi - lo), 0), 1)
     }
 
@@ -75,9 +76,15 @@ enum CameraMath {
     // MARK: 读数格式
 
     static func shutterLabel(_ value: Double) -> String {
-        if value >= 1 { return String(format: "%.1fs", value) }
+        if value >= 1 { return String(format: "%.0fs", value.rounded()) }
         return "1/\(Int((1 / value).rounded()))"
     }
+
+    /// 长曝光的整数档位（秒）
+    static let longExposureSteps: [Double] = [1, 2, 4, 8, 15, 30]
+
+    /// 超过这个值就走多帧堆栈
+    static let longExposureThreshold: Double = 1.05
 
     static func evLabel(_ value: Double) -> String {
         String(format: "%+.1f", value)
@@ -100,6 +107,9 @@ extension CameraMath {
 
     /// 快门：开得越久越亮，也越容易糊
     static func shutterHint(_ seconds: Double) -> String {
+        if seconds >= 1.05 {
+            return seconds >= 8 ? "必须架稳，长时间积分" : "长曝光，最好架稳"
+        }
         let inverse = 1 / max(seconds, 0.0001)
         switch inverse {
         case 250...: return "能定格动作"
