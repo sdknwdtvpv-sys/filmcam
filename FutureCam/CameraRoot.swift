@@ -75,11 +75,17 @@ struct CameraRoot: View {
             switch phase {
             case .active:
                 manager.refreshAuthorization()
+                DetentFeedback.shared.prepare()
             case .background:
                 manager.pauseCamera()
+                DetentFeedback.shared.suspend()
             default:
                 break
             }
+        }
+        .onChange(of: manager.isRecording) { _, recording in
+            // 录像时喇叭声会被麦克风收进去，齿轮声先闭掉，触感留着
+            DetentFeedback.shared.soundEnabled = !recording
         }
     }
 }

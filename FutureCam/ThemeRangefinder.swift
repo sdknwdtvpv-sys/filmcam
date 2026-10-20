@@ -11,6 +11,11 @@ struct RangefinderCameraView: View {
     @State private var collarBase: Double?
     @State private var collarAngle: Double = 0
     @State private var lastBucket: Double = .nan
+    /// 上一次触感所在的齿
+    @State private var lastTooth: Double = .nan
+
+    /// 滚花盘画了 96 颗齿，拖动 0.45°/pt，所以一颗齿 = 8.333pt 位移
+    private let toothPitch: Double = 360.0 / 96.0 / 0.45
     /// 参数浮层（调参时在取景器里浮出）
     @State private var hud: (title: String, value: String, progress: Double)?
     @State private var hudToken = UUID()
@@ -36,6 +41,7 @@ struct RangefinderCameraView: View {
             DeviceEdge(radius: 0, intensity: 1)
         }
         .onAppear {
+            DetentFeedback.shared.prepare()
             #if DEBUG
             if DebugHarness.shouldShowHUD { announceArmed() }
             #endif
@@ -411,6 +417,7 @@ struct RangefinderCameraView: View {
         if collarBase == nil {
             collarBase = value(of: armed)
             lastBucket = .nan
+            lastTooth = .nan
         }
         let base = collarBase ?? value(of: armed)
 
@@ -419,7 +426,7 @@ struct RangefinderCameraView: View {
             let v = min(max(base * exp(Double(dx) / 130), 1.0 / 4000), 0.25)
             manager.shutterSeconds = v
             manager.applyExposure()
-            tick(at: log2(1 / v), step: 1.0 / 3.0)
+            feedback(dx: dx, key: log2(1 / v), step: 1.0 / 3.0)
             showHUD("SHUTTER", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
 
         case .iso:
@@ -429,7 +436,7 @@ struct RangefinderCameraView: View {
             let v = stops[index]
             manager.iso = v
             manager.applyExposure()
-            tick(at: Double(index), step: 1)
+            feedback(dx: dx, key: Double(index), step: 1)
             showHUD("ISO", "\(Int(v))", Double(index) / Double(stops.count - 1))
 
         case .bias:
@@ -437,7 +444,7 @@ struct RangefinderCameraView: View {
             let v = min(max(CameraMath.quantize(raw, step: 0.3), -2), 2)
             manager.bias = v
             manager.applyExposure()
-            tick(at: v, step: 0.3)
+            feedback(dx: dx, key: v, step: 0.3)
             showHUD("EXPOSURE", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
 
         case .temperature:
@@ -445,7 +452,7 @@ struct RangefinderCameraView: View {
             let v = min(max(CameraMath.quantize(raw, step: 100), 3000), 8000)
             manager.temperature = v
             manager.applyWhiteBalance()
-            tick(at: v, step: 100)
+            feedback(dx: dx, key: v, step: 100)
             showHUD("TEMP", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
 
         case .tint:
@@ -453,17 +460,32 @@ struct RangefinderCameraView: View {
             let v = min(max(CameraMath.quantize(raw, step: 10), -150), 150)
             manager.tint = v
             manager.applyWhiteBalance()
-            tick(at: v, step: 10)
+            feedback(dx: dx, key: v, step: 10)
             showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
     }
 
-    /// 跨过一个档位就给一次棘轮触感
-    private func tick(at key: Double, step: Double) {
+    /// 每帧最多给一次反馈：档位跳了就用「档」的力度，只划过了细牙就用「牙」的力度。
+    /// 齿的密度对齐滚花画出来的 96 齿，所以手上和眼里是同一套齿。
+    private func feedback(dx: CGFloat, key: Double, step: Double) {
         let bucket = (key / step).rounded()
+        let tooth = (Double(dx) / toothPitch).rounded()
+
+        // 落指第一帧只对位，不当作跳档，只轻咬一颗齿
+        if lastBucket.isNaN {
+            lastBucket = bucket
+            lastTooth = tooth
+            DetentFeedback.shared.fire(.tooth)
+            return
+        }
+
         if bucket != lastBucket {
             lastBucket = bucket
-            Haptics.impact(.light)
+            lastTooth = tooth
+            DetentFeedback.shared.fire(.detent)
+        } else if tooth != lastTooth {
+            lastTooth = tooth
+            DetentFeedback.shared.fire(.tooth)
         }
     }
 
@@ -486,7 +508,7 @@ struct RangefinderCameraView: View {
                             1.0 / 4000), 0.25)
         manager.shutterSeconds = value
         manager.applyExposure()
-        Haptics.impact(.light)
+        DetentFeedback.shared.fire(.detent)
         showHUD("SHUTTER", shutterLabel(value), CameraMath.shutterProgress(value))
     }
 
