@@ -19,6 +19,10 @@ struct RangefinderCameraView: View {
     @State private var shiftArmed = false
     @State private var shiftStart: CameraMode?
     @State private var shiftTarget: CameraMode?
+    /// 按住时键面被手带着走的位移（带阻尼，最大 9pt）
+    @State private var shutterDragOffset: CGFloat = 0
+    /// 已经顶到档位尽头
+    @State private var shiftHitEnd = false
 
     /// 滚花盘画了 96 颗齿，拖动 0.45°/pt，所以一颗齿 = 8.333pt 位移
     private let toothPitch: Double = 360.0 / 96.0 / 0.45
@@ -357,6 +361,7 @@ struct RangefinderCameraView: View {
             shutterGlyph(t)
         }
         .frame(width: 82, height: 82)
+        .offset(x: shutterDragOffset)
         .contentShape(Circle())
         .scaleEffect(shutterPressed ? 0.95 : 1)
         .animation(.easeOut(duration: 0.12), value: shutterPressed)
@@ -503,35 +508,62 @@ struct RangefinderCameraView: View {
 
     // MARK: 快门键上的模式切换
 
-    /// 横拖超过 22pt 才算换模式，避免按快门时手抖误切
-    private let shiftGate: CGFloat = 22
-    /// 之后每 26pt 换一档
-    private let shiftStep: CGFloat = 26
+    /// 先要横拖过 26pt 才算「上膛」，这是防手抖的死区
+    private let shiftGate: CGFloat = 26
+    /// 上膛之后还得再走满 32pt 才换一档 —— 这个行程就是阻尼
+    private let shiftStep: CGFloat = 32
 
     private func handleShutterDrag(_ dx: CGFloat) {
+        guard !manager.isRecording else { return }
+
+        // 键面被手带着走，但越走越沉：最多只让出 9pt
+        withAnimation(.easeOut(duration: 0.1)) {
+            shutterDragOffset = min(max(dx * 0.14, -9), 9)
+        }
+
         if !shiftArmed {
-            guard !manager.isRecording, abs(dx) > shiftGate else { return }
+            guard abs(dx) > shiftGate else { return }
             shiftArmed = true
             shiftStart = manager.mode
             shiftTarget = manager.mode
-            Haptics.impact(.medium)
+            shiftHitEnd = false
+            DetentFeedback.shared.fire(.tooth)
             showModeHUD(manager.mode)
             return
         }
 
         guard let start = shiftStart else { return }
-        let target = start.shifted(byDragSteps: Int((dx / shiftStep).rounded()))
-        guard target != shiftTarget else { return }
-        shiftTarget = target
-        Haptics.impact(.light)
-        showModeHUD(target)
+        let travel = max(0, abs(dx) - shiftGate)
+        let steps = Int((travel / shiftStep).rounded(.down))
+        let target = start.shifted(byDragSteps: dx < 0 ? -steps : steps)
+
+        if target != shiftTarget {
+            shiftTarget = target
+            shiftHitEnd = false
+            // 落档要像撞进一个定位槽：用重的那一记，而不是轻点
+            DetentFeedback.shared.fire(.detent)
+            showModeHUD(target)
+            return
+        }
+
+        // 已经在尽头还继续往外推：给一记闷响，说明顶住了
+        let raw = start.stripIndex + (dx < 0 ? -steps : steps)
+        let beyond = raw < 0 || raw > CameraMode.strip.count - 1
+        if beyond, !shiftHitEnd {
+            shiftHitEnd = true
+            DetentFeedback.shared.fire(.tooth)
+        }
     }
 
     private func finishShutterDrag() {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.55)) {
+            shutterDragOffset = 0
+        }
         defer {
             shiftArmed = false
             shiftStart = nil
             shiftTarget = nil
+            shiftHitEnd = false
         }
 
         if shiftArmed {
