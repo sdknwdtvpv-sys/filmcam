@@ -222,19 +222,18 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 18)
             .padding(.top, 12)      // 和上面的读数条拉开
-            .padding(.bottom, 6)
-
-            HStack {
-                Spacer()
-                Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
-                           color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
-            }
-            .padding(.horizontal, 18)
-            .padding(.bottom, 4 + bottomInset)
+            .padding(.bottom, bottomInset)   // 整排压到底边
         }
         .background(AluminumFace(tokens: t))
         .overlay(alignment: .top) {
             Rectangle().fill(.white.opacity(0.35)).frame(height: 1)
+        }
+        // 卷号不再占布局高度，钉在右下角，这样整排可以更靠下
+        .overlay(alignment: .bottomTrailing) {
+            Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
+                       color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
+                .padding(.trailing, 18)
+                .padding(.bottom, 2 + bottomInset)
         }
     }
 
