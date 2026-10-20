@@ -63,6 +63,12 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         set { presetLock.withLock { $0 = newValue } }
     }
 
+    /// 叠在胶片之上的调色预设（可选）
+    var lookPreset: FilmPreset? {
+        get { traitsLock.lock(); defer { traitsLock.unlock() }; return lookStorage }
+        set { traitsLock.lock(); lookStorage = newValue; traitsLock.unlock() }
+    }
+
     /// 当前这卷的随机性格与颗粒参数（由主线程写入，两条渲染路径读取）
     var rollTraits: RollTraits? {
         get { traitsLock.lock(); defer { traitsLock.unlock() }; return traitsStorage }
@@ -77,6 +83,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     private let traitsLock = NSLock()
     private var traitsStorage: RollTraits?
     private var grainStorage: GrainSettings = .none
+    private var lookStorage: FilmPreset?
 
     // MARK: - 启动
     func configureAndStart() {
@@ -550,7 +557,10 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
         let source = isFront ? mirroredHorizontally(oriented) : oriented
-        let filtered = FilmFilter.apply(source, preset: preset, traits: rollTraits)
+        var filtered = FilmFilter.apply(source, preset: preset, traits: rollTraits)
+        if let look = lookPreset, let grade = look.grade {
+            filtered = FilmFilter.applyGrade(filtered, grade)
+        }
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         writeVideoFrame(filtered, time: pts)
         guard let uiImage = renderToUIImage(filtered) else { return }
@@ -569,7 +579,10 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
         let oriented = CIImage(cgImage: cg).oriented(.right)
         let ci = isFront ? mirroredHorizontally(oriented) : oriented
-        let filtered = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
+        var filtered = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
+        if let look = lookPreset, let grade = look.grade {
+            filtered = FilmFilter.applyGrade(filtered, grade)
+        }
         guard let filteredImage = renderToUIImage(filtered) else { return }
 
         if doubleExposureEnabled {

@@ -57,10 +57,16 @@ struct FilmSheet: View {
                 Rectangle().fill(.black.opacity(0.45)).frame(height: 1)
             }
 
-            // 仓内：暗盒导轨
+            // 仓内：胶卷导轨
+            Silkscreen(text: "胶卷 · 决定介质与张数", color: .white.opacity(0.32),
+                       size: 5.5, tracking: 1.6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 12)
+                .padding(.top, 10)
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
-                    ForEach(FilmPreset.allCases) { preset in
+                    ForEach(FilmPreset.films) { preset in
                         FilmCanister(preset: preset,
                                      loaded: manager.selectedPreset == preset,
                                      tokens: t) {
@@ -76,6 +82,33 @@ struct FilmSheet: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
+            }
+            .background(LeatherPanel())
+
+            // 调色导轨：叠在胶片之上，可关掉
+            Silkscreen(text: "调色 · 叠在胶片之上", color: .white.opacity(0.32),
+                       size: 5.5, tracking: 1.6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 12)
+                .padding(.top, 4)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    LookChip(title: "原色", color: .white.opacity(0.25),
+                             selected: manager.selectedLook == nil, tokens: t) {
+                        manager.selectedLook = nil
+                        Haptics.impact(.light)
+                    }
+                    ForEach(FilmPreset.looks) { preset in
+                        LookChip(title: preset.label, color: canisterColor(preset),
+                                 selected: manager.selectedLook == preset, tokens: t) {
+                            manager.selectedLook = preset
+                            Haptics.impact(.light)
+                        }
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
             }
             .background(LeatherPanel())
 
@@ -114,6 +147,60 @@ struct FilmSheet: View {
                 .strokeBorder(.black.opacity(0.55), lineWidth: 1)
         )
         .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
+    }
+}
+
+/// 调色导轨上的小胶囊
+struct LookChip: View {
+    let title: String
+    let color: Color
+    let selected: Bool
+    let tokens: ThemeTokens
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Circle().fill(color).frame(width: 7, height: 7)
+                Text(title)
+                    .font(tokens.monoFont(9, .bold))
+                    .foregroundColor(selected ? .white : .white.opacity(0.62))
+            }
+            .padding(.horizontal, 9)
+            .frame(height: 26)
+            .background(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(selected ? Color.white.opacity(0.16) : Color.white.opacity(0.05))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(selected ? tokens.accent : .white.opacity(0.12),
+                                  lineWidth: selected ? 1 : 0.5)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// 暗盒上的标签色（调色也能用同一套配色）
+func canisterColor(_ preset: FilmPreset) -> Color {
+    switch preset {
+    case .kodakGold:   return Color(hex: 0xC8912B)
+    case .fuji400:     return Color(hex: 0x2E7D53)
+    case .classicBnw:  return Color(hex: 0x4A4A4A)
+    case .fadedCinema: return Color(hex: 0xB0706A)
+    case .cinematic:   return Color(hex: 0x2A6E7A)
+    case .duskGold:    return Color(hex: 0xC9752F)
+    case .slate:       return Color(hex: 0x5B6670)
+    case .mint:        return Color(hex: 0x4E8C7A)
+    case .rust:        return Color(hex: 0xA5533A)
+    case .frost:       return Color(hex: 0x7C8790)
+    case .ochre:       return Color(hex: 0xA8763C)
+    case .abyss:       return Color(hex: 0x35485E)
+    case .clear:       return Color(hex: 0x3E8FA8)
+    case .nightStreet: return Color(hex: 0x2B3A55)
+    case .fresh:       return Color(hex: 0x6FA84E)
+    case .moody:       return Color(hex: 0x6B4A3A)
     }
 }
 

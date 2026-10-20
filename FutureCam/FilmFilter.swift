@@ -24,6 +24,19 @@ enum FilmPreset: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// 胶片：决定介质（LUT + 暗角 + 漏光 + 颗粒 + 张数）
+    /// 调色：只做参数化调色，可以叠在任意胶片上
+    enum Kind { case film, look }
+    var kind: Kind {
+        switch self {
+        case .clear, .nightStreet, .fresh, .moody: return .look
+        default: return .film
+        }
+    }
+
+    static var films: [FilmPreset] { allCases.filter { $0.kind == .film } }
+    static var looks: [FilmPreset] { allCases.filter { $0.kind == .look } }
+
     /// 全部自造名：不出现任何胶片厂商的注册商标
     var label: String {
         switch self {

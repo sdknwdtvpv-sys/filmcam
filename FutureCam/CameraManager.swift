@@ -115,6 +115,8 @@ final class CameraManager: NSObject, ObservableObject {
     /// 录制完成后的本地文件（供「分享」用，过期即失效）
     @Published var recordedVideoURL: URL?
 
+    /// 叠在胶片上的调色（nil = 不调色）
+    @Published var selectedLook: FilmPreset? { didSet { controller.lookPreset = selectedLook } }
     /// 胶卷仓库：当前装着的这卷 + 已拍完的卷
     let rolls = RollStore.shared
     /// 一次性提示（本卷拍完 / 已换卷），视图消费后清空
@@ -187,6 +189,7 @@ final class CameraManager: NSObject, ObservableObject {
     override init() {
         super.init()
         selectedPreset = rolls.current.preset
+        selectedLook = nil
         syncGrain()
         refreshStorage()
         loadAlbum()
