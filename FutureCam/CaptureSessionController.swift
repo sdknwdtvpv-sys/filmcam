@@ -52,6 +52,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private var recordedURL: URL?
 
     var onPreview: (@Sendable (UIImage) -> Void)?
+    /// 最近一张的原始 EXIF，换调色重编码时带回去，避免丢元数据
+    private var lastShotMetadata: [String: Any] = [:]
+
     /// base 是「只过了胶片、没叠调色」的底，用于拍完再换调色
     var onPhoto: (@Sendable (UIImage, Data?, UIImage) -> Void)?
     var onDoubleExposureFirstShot: (@Sendable (UIImage) -> Void)?
@@ -520,34 +523,6 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         return UIImage(cgImage: cg)
     }
 
-    /// 给成片加白色边框 + 拍摄日期戳（拍立得风：上下细边、底部粗边）
-    /// 加白色边框 + 日期戳。换调色重渲染后也要走一遍，否则边框会丢
-    static func stampImage(_ image: UIImage) -> UIImage {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy.MM.dd  HH:mm"
-        let dateStr = formatter.string(from: Date())
-
-        let w = image.size.width
-        let h = image.size.height
-        let side = w * 0.06          // 上/左/右细白边
-        let bottom = w * 0.20        // 底部粗白边（拍立得标志）
-        let totalSize = CGSize(width: w + side * 2, height: h + side + bottom)
-        let renderer = UIGraphicsImageRenderer(size: totalSize)
-        return renderer.image { ctx in
-            UIColor.white.setFill()
-            ctx.fill(CGRect(origin: .zero, size: totalSize))
-            image.draw(in: CGRect(x: side, y: side, width: w, height: h))
-            let font = UIFont.monospacedDigitSystemFont(ofSize: w * 0.05, weight: .medium)
-            let attrs: [NSAttributedString.Key: Any] = [.font: font,
-                                                        .foregroundColor: UIColor.black]
-            let text = dateStr as NSString
-            let textSize = text.size(withAttributes: attrs)
-            let point = CGPoint(x: (totalSize.width - textSize.width) / 2,
-                               y: side + h + (bottom - textSize.height) / 2)
-            text.draw(at: point, withAttributes: attrs)
-        }
-    }
-
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
     func captureOutput(_ output: AVCaptureOutput,
                        didOutput sampleBuffer: CMSampleBuffer,
@@ -581,6 +556,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
         let oriented = CIImage(cgImage: cg).oriented(.right)
         let ci = isFront ? mirroredHorizontally(oriented) : oriented
+        lastShotMetadata = photo.metadata
         let base = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
         guard let baseImage = renderToUIImage(base) else { return }
         var filtered = base
@@ -593,18 +569,23 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             if let base = doubleExposureBase {
                 let blended = FilmFilter.doubleExposure(base: base, overlay: filteredImage)
                 doubleExposureBase = nil
-                deliver(Self.stampImage(blended), metadata: photo.metadata, base: baseImage)
+                deliver(blended, metadata: photo.metadata, base: baseImage)
             } else {
                 doubleExposureBase = filteredImage
                 onDoubleExposureFirstShot?(filteredImage)
             }
         } else {
-            deliver(Self.stampImage(filteredImage), metadata: photo.metadata, base: baseImage)
+            deliver(filteredImage, metadata: photo.metadata, base: baseImage)
         }
     }
 
     /// 把成片重新编码成 JPEG，并把原始 EXIF 带回去。
     /// 旧实现直接传 UIImage 给 Photos，重渲染后元数据全丢（相册里看不到机型/ISO/GPS）。
+    /// 换调色后重新编码：带上原片的 EXIF
+    func reencodeJPEG(_ image: UIImage) -> Data? {
+        jpegWithMetadata(image, metadata: lastShotMetadata)
+    }
+
     private func deliver(_ image: UIImage, metadata: [String: Any], base: UIImage) {
         onPhoto?(image, jpegWithMetadata(image, metadata: metadata), base)
     }

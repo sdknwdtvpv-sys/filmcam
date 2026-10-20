@@ -519,12 +519,12 @@ final class CameraManager: NSObject, ObservableObject {
             out = FilmFilter.applyGrade(out, grade)
         }
         guard let rendered = FilmFilter.render(out) else { return }
-        // 重渲染的底没有拍立得边框，这里补回来
-        let stamped = CaptureSessionController.stampImage(rendered.0)
-        let jpeg = stamped.jpegData(compressionQuality: 0.92)
-        capturedImage = stamped
+        // 用原片的 EXIF 重新编码，换调色不会丢元数据
+        let jpeg = controller.reencodeJPEG(rendered.0)
+            ?? rendered.0.jpegData(compressionQuality: 0.92)
+        capturedImage = rendered.0
         selectedLook = look
-        pendingLibrarySave = (stamped, jpeg)
+        pendingLibrarySave = (rendered.0, jpeg)
 
         guard let item = capturedAlbumItem, let jpeg else { return }
         let albumCopy = jpeg

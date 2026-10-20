@@ -1,218 +1,215 @@
 import SwiftUI
 import UIKit
 
-/// 撕拉片：拍完不是「等显影」，而是一张相纸从仓里被拉出来。
-/// 手指往下拉 → 相纸从槽口滑出；拉到底出片完成，轻触关闭。
+/// 显影：拍完不是「等」，而是一张相纸在显影盘里慢慢浮上来。
+/// 画面从暗而灰的潜影逐渐显出色密度，显影完成后才能关闭，也可以这时换调色。
 struct DevelopingPhotoView: View {
     @EnvironmentObject var manager: CameraManager
     let image: UIImage
     let onDismiss: () -> Void
+    /// 调试用：>= 0.97 表示直接给已显影的成品（方便截图）
     var initialPull: Double = 0
 
-    @State private var pull: Double
-    @State private var dragBase: Double?
-    @State private var lastTick: Int = -1
+    @State private var density: Double
+    @State private var done: Bool
+    @State private var started = false
+
+    private let developDuration: Double = 1.7
 
     init(image: UIImage, initialPull: Double = 0, onDismiss: @escaping () -> Void) {
         self.image = image
         self.onDismiss = onDismiss
         self.initialPull = initialPull
-        _pull = State(initialValue: initialPull > 0 ? initialPull : 0.12)
+        let preDeveloped = initialPull >= 0.97
+        _density = State(initialValue: preDeveloped ? 1 : 0)
+        _done = State(initialValue: preDeveloped)
     }
-
-    private var done: Bool { pull >= 0.97 }
 
     var body: some View {
         let t = ThemeStore.current
 
         ZStack {
             LeatherPanel().ignoresSafeArea()
-            Color.black.opacity(0.62).ignoresSafeArea()
-                .onTapGesture { if done { onDismiss() } }
+            Color.black.opacity(0.55).ignoresSafeArea()
 
+            VStack(spacing: 14) {
+                header(t)
+                Spacer(minLength: 0)
+                plate(t)
+                Spacer(minLength: 0)
+                caption(t)
+                if done {
+                    lookStrip(t)
+                }
+                hint(t)
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 22)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { if done { onDismiss() } }
+        .task {
+            guard !done, !started else { return }
+            started = true
+            withAnimation(.easeOut(duration: developDuration)) { density = 1 }
+            try? await Task.sleep(nanoseconds: UInt64(developDuration * 1_000_000_000) + 120_000_000)
+            withAnimation(.easeOut(duration: 0.25)) { done = true }
+            Haptics.impact(.rigid)
+        }
+    }
+
+    // MARK: 顶部：显影状态
+
+    private func header(_ t: ThemeTokens) -> some View {
+        VStack(spacing: 7) {
+            HStack(spacing: 6) {
+                LEDDot(color: done ? t.glow : t.accent, size: 4, dimmed: false)
+                Silkscreen(text: done ? "FIXED" : "DEVELOPING",
+                           color: .white.opacity(0.62), size: 6.5, tracking: 2.4)
+                Spacer()
+                Silkscreen(text: manager.selectedPreset.label,
+                           color: .white.opacity(0.4), size: 6.5, tracking: 1.8)
+            }
+
+            // 显影进度：一条细发丝线
             GeometryReader { geo in
-                VStack(spacing: 0) {
-                    pack.frame(height: max(88, geo.size.height * 0.22))
-                    slotLip
-                    emerging(t, areaHeight: geo.size.height * 0.66)
-                    footer(t)
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(.white.opacity(0.12))
+                    Rectangle().fill(t.accent.opacity(0.85))
+                        .frame(width: geo.size.width * density)
                 }
-                .padding(.horizontal, 22)
             }
+            .frame(height: 1)
         }
     }
 
-    // MARK: 相纸仓
+    // MARK: 相纸
 
-    private var pack: some View {
-        ZStack {
-            LinearGradient(colors: [Color(hex: 0x2B2E31), Color(hex: 0x121416)],
-                           startPoint: .top, endPoint: .bottom)
-            Text("PEEL-APART")
-                .font(.custom("Futura-Medium", size: 11))
-                .tracking(3.2)
-                .foregroundColor(.white.opacity(0.35))
-        }
-        .frame(height: 92)
-        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
-                .strokeBorder(LinearGradient(colors: [.white.opacity(0.22), .black.opacity(0.55)],
-                                             startPoint: .top, endPoint: .bottom), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.55), radius: 12, y: 6)
-    }
-
-    private var slotLip: some View {
-        ZStack {
-            LinearGradient(colors: [Color(hex: 0x0A0B0C), Color(hex: 0x1D1F22)],
-                           startPoint: .top, endPoint: .bottom)
-            Rectangle()
-                .fill(.white.opacity(0.16))
-                .frame(height: 1)
-                .frame(maxHeight: .infinity, alignment: .bottom)
-        }
-        .frame(height: 13)
-        .overlay(alignment: .top) {
-            Rectangle().fill(.black.opacity(0.8)).frame(height: 2)
-        }
-    }
-
-    // MARK: 出片区
-
-    private func emerging(_ t: ThemeTokens, areaHeight: CGFloat) -> some View {
+    private func plate(_ t: ThemeTokens) -> some View {
         GeometryReader { geo in
-            let maxW = geo.size.width - 18
-            let aspect = image.size.height / max(image.size.width, 1)
-            let naturalH = maxW * aspect
-            let printH = min(naturalH, areaHeight - 6)
-            let printW = printH / max(aspect, 0.01)
-
-            ZStack(alignment: .top) {
-                LinearGradient(colors: [Color(hex: 0x050607), Color(hex: 0x0B0D0F)],
-                               startPoint: .top, endPoint: .bottom)
-
-                // 相纸：顶端贴着槽口，随拉动向下展开
-                Image(uiImage: image)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: printW, height: printH)
-                    .offset(y: -(1 - pull) * printH)
-                    .shadow(color: .black.opacity(0.7), radius: 10, y: 4)
-
-                // 槽口投影
-                LinearGradient(colors: [.black.opacity(0.65), .clear],
-                               startPoint: .top, endPoint: .bottom)
-                    .frame(height: 16)
-                    .allowsHitTesting(false)
-
-                // 往下流动的箭头：不用文字也能看懂"往下拉"
-                if pull < 0.55 {
-                    PullHint(tokens: t)
-                        // 箭头跟着相纸的可抓边一起走
-                        .padding(.top, pull * printH + 22)
-                        .opacity(max(0, 1 - pull * 2.2))
-                        .allowsHitTesting(false)
-                        .transition(.opacity)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .contentShape(Rectangle())
-            .gesture(
-                DragGesture(minimumDistance: 2)
-                    .onChanged { value in
-                        if dragBase == nil { dragBase = pull }
-                        let base = dragBase ?? pull
-                        let next = min(max(base + value.translation.height / max(printH, 1), 0), 1)
-                        pull = next
-                        let bucket = Int(next * 4)
-                        if bucket != lastTick {
-                            lastTick = bucket
-                            Haptics.impact(.light)
-                        }
-                    }
-                    .onEnded { _ in
-                        dragBase = nil
-                        // 拉过三成就吸附到底，否则退回到"露一条边"
-                        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                            pull = pull > 0.3 ? 1 : 0.12
-                        }
-                        Haptics.impact(.medium)
-                    }
-            )
-        }
-    }
-
-    private func footer(_ t: ThemeTokens) -> some View {
-        VStack(spacing: 8) {
-            if done {
-                // 出片之后还能换调色：从「只过胶片的底」重渲染
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        LookChip(title: "原色", color: .white.opacity(0.25),
-                                 selected: manager.selectedLook == nil, tokens: t) {
-                            manager.regradeCaptured(to: nil)
-                            Haptics.impact(.light)
-                        }
-                        ForEach(FilmPreset.looks) { preset in
-                            LookChip(title: preset.label, color: canisterColor(preset),
-                                     selected: manager.selectedLook == preset, tokens: t) {
-                                manager.regradeCaptured(to: preset)
-                                Haptics.impact(.light)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 2)
-                    .padding(.vertical, 2)
-                }
-                .transition(.opacity)
-            }
+            let aspect = max(0.6, image.size.width / max(image.size.height, 1))
+            let maxW = geo.size.width
+            let maxH = geo.size.height
+            let w = min(maxW, maxH * aspect)
+            let h = w / aspect
 
             ZStack {
-                if done {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(width: 30, height: 30)
-                        .background(Circle().fill(t.accent.opacity(0.85)))
-                        .transition(.scale.combined(with: .opacity))
+                // 相纸底：显影完成前是一张灰白的片基
+                Rectangle()
+                    .fill(.white.opacity(0.06))
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: w, height: h)
+                    .clipped()
+                    // 潜影 → 显影：暗、灰、低对比，逐渐恢复
+                    .brightness(-0.24 * (1 - density))
+                    .saturation(0.25 + 0.75 * density)
+                    .contrast(0.72 + 0.28 * density)
+                    .opacity(0.35 + 0.65 * density)
+
+                // 取景角标：显影完成后描绘框角
+                CornerMarks(color: .white.opacity(0.5 * density), length: 14)
+                    .frame(width: w, height: h)
+
+                Rectangle()
+                    .strokeBorder(.white.opacity(0.10 + 0.06 * density), lineWidth: 0.5)
+                    .frame(width: w, height: h)
+            }
+            .frame(width: maxW, height: maxH)
+        }
+    }
+
+    // MARK: 底部说明
+
+    private func caption(_ t: ThemeTokens) -> some View {
+        let roll = manager.roll
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd HH:mm"
+
+        return HStack(spacing: 8) {
+            Silkscreen(text: "VOL.\(String(format: "%02d", roll.number)) · \(roll.countText)",
+                       color: .white.opacity(0.4), size: 6, tracking: 1.6)
+            Rectangle().fill(.white.opacity(0.14)).frame(width: 1, height: 8)
+            Silkscreen(text: formatter.string(from: Date()),
+                       color: .white.opacity(0.4), size: 6, tracking: 1.6)
+            Spacer(minLength: 0)
+        }
+        .opacity(done ? 1 : 0.4)
+    }
+
+    private func lookStrip(_ t: ThemeTokens) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                LookChip(title: "原色", color: .white.opacity(0.25),
+                         selected: manager.selectedLook == nil, tokens: t) {
+                    manager.regradeCaptured(to: nil)
+                    Haptics.impact(.light)
+                }
+                ForEach(FilmPreset.looks) { preset in
+                    LookChip(title: preset.label, color: canisterColor(preset),
+                             selected: manager.selectedLook == preset, tokens: t) {
+                        manager.regradeCaptured(to: preset)
+                        Haptics.impact(.light)
+                    }
                 }
             }
-            .frame(height: 34)
+            .padding(.vertical, 2)
         }
-        .frame(maxWidth: .infinity)
+        .frame(height: 34)
+        .transition(.opacity)
+    }
+
+    private func hint(_ t: ThemeTokens) -> some View {
+        Button {
+            if done { onDismiss() }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: done ? "checkmark" : "hourglass")
+                    .font(.system(size: 10, weight: .bold))
+                Text(done ? "轻触关闭" : "显影中…")
+                    .font(t.monoFont(10, .medium))
+            }
+            .foregroundColor(done ? .white.opacity(0.75) : .white.opacity(0.35))
+            .padding(.horizontal, 14)
+            .frame(height: 30)
+            .background(Capsule().fill(.white.opacity(done ? 0.12 : 0.05)))
+        }
+        .buttonStyle(.plain)
+        .disabled(!done)
         .animation(.easeOut(duration: 0.25), value: done)
-        .accessibilityLabel(done ? "已出片，可换调色，轻触关闭" : "下拉相纸取片")
     }
 }
 
-/// 从槽口往下流动的箭头：只靠动效提示"往下拉"
-struct PullHint: View {
-    let tokens: ThemeTokens
-    @State private var phase = false
+/// 四角取景角标（只画角，不画整框）
+struct CornerMarks: View {
+    var color: Color
+    var length: CGFloat = 14
+    var lineWidth: CGFloat = 1
 
     var body: some View {
-        VStack(spacing: -2) {
-            ForEach(0..<3, id: \.self) { i in
-                Image(systemName: "chevron.compact.down")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundColor(tokens.accent)
-                    .opacity(phase ? 0.95 : 0.18)
-                    .animation(
-                        .easeInOut(duration: 0.85)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(i) * 0.13),
-                        value: phase
-                    )
+        GeometryReader { geo in
+            let w = geo.size.width, h = geo.size.height
+            Path { p in
+                p.move(to: CGPoint(x: 0, y: length));      p.addLine(to: .zero)
+                p.addLine(to: CGPoint(x: length, y: 0))
+
+                p.move(to: CGPoint(x: w - length, y: 0));  p.addLine(to: CGPoint(x: w, y: 0))
+                p.addLine(to: CGPoint(x: w, y: length))
+
+                p.move(to: CGPoint(x: 0, y: h - length));  p.addLine(to: CGPoint(x: 0, y: h))
+                p.addLine(to: CGPoint(x: length, y: h))
+
+                p.move(to: CGPoint(x: w - length, y: h));  p.addLine(to: CGPoint(x: w, y: h))
+                p.addLine(to: CGPoint(x: w, y: h - length))
             }
+            .stroke(color, lineWidth: lineWidth)
         }
-        .shadow(color: tokens.accent.opacity(0.5), radius: 6)
-        .onAppear { phase = true }
     }
 }
 
-/// 系统分享面板（保存/分享当前成片）
+/// 系统分享面板（相册里分享成片用）
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {
