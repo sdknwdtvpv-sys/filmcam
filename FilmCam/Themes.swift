@@ -3,17 +3,17 @@ import SwiftUI
 // MARK: - 主题标识
 
 enum ThemeID: String, CaseIterable, Identifiable {
-    case precision
-    case cockpit
-    case rig
+    case rangefinder
+    case cineRig
+    case labUnit
 
     var id: String { rawValue }
 
     var tokens: ThemeTokens {
         switch self {
-        case .precision: return .precision
-        case .cockpit:   return .cockpit
-        case .rig:       return .rig
+        case .rangefinder: return .rangefinder
+        case .cineRig:     return .cineRig
+        case .labUnit:     return .labUnit
         }
     }
 }
@@ -73,94 +73,94 @@ struct ThemeTokens: Sendable {
     let monoFont: @Sendable (CGFloat, Font.Weight) -> Font
 }
 
-// MARK: - 三套工业主题
+// MARK: - 三台机身
 
 extension ThemeTokens {
 
-    /// A · 精密仪器：拉丝铝面板，橙色安全标记，滚花转盘
-    static let precision = ThemeTokens(
-        id: .precision,
-        name: "精密仪器",
-        blurb: "拉丝铝机身，读数窗与滚花转盘",
+    /// A · 机加工测距仪：铝上盖 + 黑蒙皮 + 顶部两个滚花盘
+    static let rangefinder = ThemeTokens(
+        id: .rangefinder,
+        name: "测距仪",
+        blurb: "铝盖黑皮机身，顶部滚花盘",
         material: .brushed,
-        background: Color(hex: 0xB4B9BE),
-        panel: Color(hex: 0xC9CED2),
-        elevated: Color(hex: 0xDFE3E6),
-        faceTop: Color(hex: 0xE6EAED),
-        faceBottom: Color(hex: 0xADB3B9),
-        wellTop: Color(hex: 0x2E3338),
-        wellBottom: Color(hex: 0x1A1E22),
-        ink: Color(hex: 0x1D2125),
-        inkDim: Color(hex: 0x1D2125, opacity: 0.5),
-        accent: Color(hex: 0xE85D1F),
-        accentDeep: Color(hex: 0xA83F11),
-        accentGlow: Color(hex: 0xFF8A4A),
-        glow: Color(hex: 0xFF7A33),
-        hairline: Color(hex: 0x1D2125, opacity: 0.22),
-        recRed: Color(hex: 0xC8321F),
-        radius: 7,
+        background: Color(hex: 0x1A1B1C),
+        panel: Color(hex: 0xD7DBDE),
+        elevated: Color(hex: 0xC2C7CB),
+        faceTop: Color(hex: 0xEDF0F2),
+        faceBottom: Color(hex: 0xAFB5BA),
+        wellTop: Color(hex: 0x121314),
+        wellBottom: Color(hex: 0x070808),
+        ink: Color(hex: 0x1B1E20),
+        inkDim: Color(hex: 0x1B1E20, opacity: 0.52),
+        accent: Color(hex: 0xC0392B),
+        accentDeep: Color(hex: 0x84241A),
+        accentGlow: Color(hex: 0xFF6A5A),
+        glow: Color(hex: 0xFF5C4A),
+        hairline: Color(hex: 0x1B1E20, opacity: 0.2),
+        recRed: Color(hex: 0xC0392B),
+        radius: 6,
         hairWidth: 1,
         inset: 14,
-        displayFont: { size, _ in .custom("DINAlternate-Bold", size: size) },
-        labelFont: { size, weight in .custom("DINAlternate-Bold", size: size) },
+        displayFont: { size, _ in .custom("Futura-Medium", size: size) },
+        labelFont: { size, _ in .custom("Futura-Medium", size: size) },
         monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
     )
 
-    /// B · 驾驶舱：喷砂石墨 + 凹陷仪表井 + 青色 LED
-    static let cockpit = ThemeTokens(
-        id: .cockpit,
-        name: "驾驶舱",
-        blurb: "石墨仪表台，凹玻璃井，LED 读数条",
-        material: .graphite,
-        background: Color(hex: 0x0C0F11),
-        panel: Color(hex: 0x171B1F),
-        elevated: Color(hex: 0x242B31),
-        faceTop: Color(hex: 0x262E34),
-        faceBottom: Color(hex: 0x11161A),
-        wellTop: Color(hex: 0x05070A),
-        wellBottom: Color(hex: 0x0A0E12),
-        ink: Color(hex: 0xD6DEE4),
-        inkDim: Color(hex: 0xD6DEE4, opacity: 0.46),
-        accent: Color(hex: 0x3FD8D2),
-        accentDeep: Color(hex: 0x1B7E7A),
-        accentGlow: Color(hex: 0x8AF6F1),
-        glow: Color(hex: 0x5FF3EC),
-        hairline: Color(hex: 0xD6DEE4, opacity: 0.14),
-        recRed: Color(hex: 0xFF5A4E),
-        radius: 4,
-        hairWidth: 1,
-        inset: 12,
-        displayFont: { size, _ in .custom("Menlo-Bold", size: size) },
-        labelFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) },
-        monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
-    )
-
-    /// C · 模块机架：碳纤 + 机加工铝框 + 红色标记 + 大镜头环
-    static let rig = ThemeTokens(
-        id: .rig,
-        name: "模块机架",
-        blurb: "碳纤机身，铝框，镜头环快门",
+    /// B · 模块化摄影机：碳纤 + 铝框 + 红色标记
+    static let cineRig = ThemeTokens(
+        id: .cineRig,
+        name: "摄影机",
+        blurb: "碳纤机身，铝框快装，红色录制",
         material: .carbon,
         background: Color(hex: 0x07080A),
-        panel: Color(hex: 0x13161A),
-        elevated: Color(hex: 0x1E2227),
-        faceTop: Color(hex: 0x22272D),
-        faceBottom: Color(hex: 0x0C0E11),
+        panel: Color(hex: 0x14171B),
+        elevated: Color(hex: 0x1F2429),
+        faceTop: Color(hex: 0x272D33),
+        faceBottom: Color(hex: 0x0D1013),
         wellTop: Color(hex: 0x040506),
-        wellBottom: Color(hex: 0x08090C),
+        wellBottom: Color(hex: 0x090B0D),
         ink: Color(hex: 0xECEEF1),
-        inkDim: Color(hex: 0xECEEF1, opacity: 0.45),
+        inkDim: Color(hex: 0xECEEF1, opacity: 0.46),
         accent: Color(hex: 0xE23A2E),
         accentDeep: Color(hex: 0x8C1C14),
         accentGlow: Color(hex: 0xFF6A5E),
         glow: Color(hex: 0xFF4A3D),
         hairline: Color(hex: 0xFFFFFF, opacity: 0.12),
         recRed: Color(hex: 0xFF3B2F),
-        radius: 10,
+        radius: 8,
         hairWidth: 1,
         inset: 13,
         displayFont: { size, _ in .custom("HelveticaNeue-CondensedBold", size: size) },
-        labelFont: { size, weight in .custom("HelveticaNeue-Medium", size: size) },
+        labelFont: { size, _ in .custom("HelveticaNeue-Medium", size: size) },
+        monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
+    )
+
+    /// C · 实验室仪器：半透壳 + 可见电路板 + 荧光绿读数
+    static let labUnit = ThemeTokens(
+        id: .labUnit,
+        name: "实验室",
+        blurb: "半透外壳，看得见电路板",
+        material: .graphite,
+        background: Color(hex: 0xDDE3DF),
+        panel: Color(hex: 0xEFF3F0),
+        elevated: Color(hex: 0xCFD6D1),
+        faceTop: Color(hex: 0xFFFFFF),
+        faceBottom: Color(hex: 0xC8D0CA),
+        wellTop: Color(hex: 0x0A1410),
+        wellBottom: Color(hex: 0x050C09),
+        ink: Color(hex: 0x1A221E),
+        inkDim: Color(hex: 0x1A221E, opacity: 0.5),
+        accent: Color(hex: 0x12A56F),
+        accentDeep: Color(hex: 0x0A6B47),
+        accentGlow: Color(hex: 0x4DFFA6),
+        glow: Color(hex: 0x4DFFA6),
+        hairline: Color(hex: 0x1A221E, opacity: 0.18),
+        recRed: Color(hex: 0xD6452F),
+        radius: 10,
+        hairWidth: 1,
+        inset: 15,
+        displayFont: { size, _ in .custom("Menlo-Bold", size: size) },
+        labelFont: { size, _ in .custom("Futura-Medium", size: size) },
         monoFont: { size, weight in .system(size: size, weight: weight, design: .monospaced) }
     )
 }
@@ -168,7 +168,7 @@ extension ThemeTokens {
 // MARK: - 当前主题
 
 enum ThemeStore {
-    nonisolated(unsafe) static var current: ThemeTokens = .precision
+    nonisolated(unsafe) static var current: ThemeTokens = .rangefinder
 }
 
 // MARK: - 主题选择器

@@ -6,19 +6,24 @@ import UIKit
 /// 面板纹理只生成一次，之后按 pt 平铺 —— 用 Canvas 每帧重画满屏细纹会明显掉帧。
 enum TextureFactory {
 
-    nonisolated(unsafe) private static var cache: [String: UIImage] = [:]
+    nonisolated(unsafe) static var cache: [String: UIImage] = [:]
 
-    static func tile(for kind: MaterialKind) -> UIImage {
-        let key = String(describing: kind)
+    /// 通用缓存入口（器件纹理也走这里，只生成一次）
+    static func cached(_ key: String, _ make: () -> UIImage) -> UIImage {
         if let hit = cache[key] { return hit }
-        let image: UIImage
-        switch kind {
-        case .brushed:  image = makeBrushed()
-        case .graphite: image = makeGraphite()
-        case .carbon:   image = makeCarbon()
-        }
+        let image = make()
         cache[key] = image
         return image
+    }
+
+    static func tile(for kind: MaterialKind) -> UIImage {
+        cached(String(describing: kind)) {
+            switch kind {
+            case .brushed:  return makeBrushed()
+            case .graphite: return makeGraphite()
+            case .carbon:   return makeCarbon()
+            }
+        }
     }
 
     /// 拉丝：横向 1pt 明暗细纹
