@@ -97,6 +97,10 @@ struct CameraView: View {
         .animation(.easeInOut(duration: 0.18), value: manager.activeParam)
         .onAppear {
             manager.requestAccessAndConfigure()
+            #if DEBUG
+            DebugHarness.applyLaunchState(manager)
+            if DebugHarness.shouldStubPreview { manager.enableStubPreview() }
+            #endif
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
@@ -267,7 +271,7 @@ struct Viewfinder: View {
             if manager.hasPreview {
                 VStack {
                     Spacer()
-                    Text(Date.now, style: .date)
+                    Text(AlbumDateFormat.day(Date()))
                         .font(CameraTheme.mono(12, weight: .medium))
                         .foregroundColor(CameraTheme.inkDim)
                         .padding(.bottom, 24)
@@ -746,7 +750,7 @@ struct LastShotThumbnail: View {
                     .fill(CameraTheme.bgElevated)
                     .frame(width: 34, height: 34)
                 if let latest {
-                    MediaThumbnail(url: latest.url, maxPixel: 160, fill: true)
+                    MediaThumbnail(item: latest, maxPixel: 160, fill: true)
                         .frame(width: 34, height: 34)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                 } else {
@@ -815,9 +819,26 @@ struct ShutterButton: View {
     }
 }
 
-// MARK: - 胶片选择弹层
-
 // MARK: - 顶部圆角形状
+
+/// 只描三条边（左 / 上 / 右）的圆角描边：
+/// 弹层面板贴屏幕底部时，底边不该出现一条横线。
+struct TopRoundedBorder: Shape {
+    var radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        path.addQuadCurve(to: CGPoint(x: rect.minX + radius, y: rect.minY),
+                          control: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        path.addQuadCurve(to: CGPoint(x: rect.maxX, y: rect.minY + radius),
+                          control: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        return path
+    }
+}
 
 /// 只有上方两角为圆角的矩形：底部贴屏幕边缘的弹层用，底部保持直角与屏幕齐平
 struct TopRounded: Shape {
@@ -886,7 +907,7 @@ struct FilmSheet: View {
                                     Text(descriptions[preset] ?? "")
                                         .font(CameraTheme.mono(11))
                                         .foregroundColor(CameraTheme.inkDim)
-                                        .lineLimit(2)
+                                        .lineLimit(2, reservesSpace: true)
                                         .multilineTextAlignment(.leading)
                                         .fixedSize(horizontal: false, vertical: true)
                                 }
@@ -905,14 +926,16 @@ struct FilmSheet: View {
                     }
                     .padding(.horizontal, 20)
                 }
-                Color.clear.frame(height: 26)
+                Color.clear.frame(height: 34)
             }
             .frame(maxWidth: .infinity)
             .background(CameraTheme.bgPanel)
             .clipShape(TopRounded(radius: 22))
-            .overlay(TopRounded(radius: 22).stroke(CameraTheme.hairline, lineWidth: 1))
+            .overlay(TopRoundedBorder(radius: 22).stroke(CameraTheme.hairline, lineWidth: 1))
             .transition(.move(edge: .bottom))
         }
+        // 面板贴到屏幕物理底边，底部留白由内层的 34pt 承担（避开 home indicator）
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -980,15 +1003,16 @@ struct SettingsSheet: View {
                 Divider().overlay(CameraTheme.hairline)
                 settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
 
-                Color.clear.frame(height: 26)
+                Color.clear.frame(height: 34)
             }
             .padding(.horizontal, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(CameraTheme.bgPanel)
             .clipShape(TopRounded(radius: 22))
-            .overlay(TopRounded(radius: 22).stroke(CameraTheme.hairline, lineWidth: 1))
+            .overlay(TopRoundedBorder(radius: 22).stroke(CameraTheme.hairline, lineWidth: 1))
             .transition(.move(edge: .bottom))
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 
     private func settingsToggle(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
@@ -1223,150 +1247,6 @@ struct DevelopingPhotoView: View {
             model.start()
             withAnimation(.easeInOut(duration: 0.18).repeatForever(autoreverses: true)) { shakePhase = true }
         }
-    }
-}
-
-// MARK: - 应用内相册
-
-struct AlbumView: View {
-    @EnvironmentObject var manager: CameraManager
-    @State private var selectedIndex: Int = 0
-    @State private var showDetail = false
-    private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
-
-    var body: some View {
-        ZStack {
-            CameraTheme.bgDeep.ignoresSafeArea()
-            VStack(spacing: 0) {
-                HStack {
-                    Text("相册").foregroundColor(CameraTheme.ink)
-                        .font(CameraTheme.mono(18, weight: .semibold))
-                    Spacer()
-                    Button(action: { manager.closeAlbum() }) {
-                        Image(systemName: "xmark").foregroundColor(CameraTheme.ink)
-                            .frame(width: 32, height: 32)
-                    }
-                }
-                .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 12)
-
-                if manager.albumItems.isEmpty {
-                    Spacer()
-                    Text("还没有照片，先拍一张吧").foregroundColor(CameraTheme.ink.opacity(0.6))
-                        .font(CameraTheme.mono(14))
-                    Spacer()
-                } else {
-                    ScrollView {
-                        LazyVGrid(columns: columns, spacing: 10) {
-                            ForEach(Array(manager.albumItems.enumerated()), id: \.element.id) { idx, item in
-                                Button { selectedIndex = idx; showDetail = true } label: {
-                                    AlbumThumb(url: item.url)
-                                        .frame(height: 116)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                }
-                            }
-                        }
-                        .padding(16)
-                    }
-                }
-            }
-
-            if showDetail, selectedIndex < manager.albumItems.count {
-                AlbumDetail(items: manager.albumItems,
-                           index: $selectedIndex,
-                           onClose: { showDetail = false })
-            }
-        }
-        .onAppear { manager.loadAlbum() }
-    }
-}
-
-/// 相册网格缩略图：从本地文件按需加载
-struct AlbumThumb: View {
-    let url: URL
-    @State private var image: UIImage?
-
-    var body: some View {
-        ZStack {
-            Color.white.opacity(0.06)
-            if let image {
-                Image(uiImage: image).resizable().scaledToFit()
-            }
-        }
-        .onAppear { image = UIImage(contentsOfFile: url.path) }
-    }
-}
-
-/// 全屏看大图（应用内，不跳出 App）：左右滑动/箭头切换、可分享
-struct AlbumDetail: View {
-    let items: [AlbumItem]
-    @Binding var index: Int
-    let onClose: () -> Void
-    @State private var image: UIImage?
-    @State private var showShare = false
-
-    private var current: AlbumItem { items[index] }
-    private var hasPrev: Bool { index > 0 }
-    private var hasNext: Bool { index < items.count - 1 }
-
-    var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
-            if let image {
-                Image(uiImage: image).resizable().scaledToFit()
-                    .padding(24)
-                    .shadow(color: .black.opacity(0.5), radius: 24, x: 0, y: 12)
-            } else {
-                ProgressView().tint(.white)
-            }
-            VStack {
-                HStack {
-                    Spacer()
-                    Button { onClose() } label: {
-                        Image(systemName: "xmark").foregroundColor(.white)
-                            .frame(width: 38, height: 38)
-                            .background(Circle().fill(Color.white.opacity(0.16)))
-                    }
-                    .padding(16)
-                }
-                Spacer()
-                HStack(spacing: 44) {
-                    Button { move(-1) } label: {
-                        Image(systemName: "chevron.left").font(.title2).foregroundColor(.white)
-                    }
-                    .opacity(hasPrev ? 1 : 0.3)
-                    .disabled(!hasPrev)
-                    Button { showShare = true } label: {
-                        Image(systemName: "square.and.arrow.up").font(.title2).foregroundColor(.white)
-                    }
-                    Button { move(1) } label: {
-                        Image(systemName: "chevron.right").font(.title2).foregroundColor(.white)
-                    }
-                    .opacity(hasNext ? 1 : 0.3)
-                    .disabled(!hasNext)
-                }
-                .padding(.bottom, 42)
-            }
-        }
-        .gesture(DragGesture().onEnded { value in
-            if value.translation.width < -40 { move(1) }
-            else if value.translation.width > 40 { move(-1) }
-        })
-        .onAppear { loadCurrent() }
-        .sheet(isPresented: $showShare) {
-            if let image { ShareSheet(items: [image]) }
-        }
-    }
-
-    private func move(_ delta: Int) {
-        let next = index + delta
-        guard next >= 0, next < items.count else { return }
-        index = next
-        image = nil
-        loadCurrent()
-    }
-
-    private func loadCurrent() {
-        image = UIImage(contentsOfFile: current.url.path)
     }
 }
 

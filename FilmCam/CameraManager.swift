@@ -41,10 +41,18 @@ enum ParamKey: String, CaseIterable, Identifiable {
     }
 }
 
-/// 应用内相册里的一张照片（本地沙盒存储，不依赖系统相册权限）
-struct AlbumItem: Identifiable {
-    let id: String        // 文件名
-    let url: URL          // 本地文件路径
+/// 相册媒体类型
+enum AlbumMediaKind: String, Sendable {
+    case photo
+    case video
+}
+
+/// 应用内相册里的一条媒体（本地沙盒存储，不依赖系统相册权限）
+struct AlbumItem: Identifiable, Hashable {
+    let id: String          // 文件名
+    let url: URL            // 本地文件路径
+    let kind: AlbumMediaKind
+    let createdAt: Date
 }
 
 /// 主线程相机视图模型：只持有 UI 状态，把相机硬件操作委托给后台 CaptureSessionController。
@@ -159,7 +167,9 @@ final class CameraManager: NSObject, ObservableObject {
             Task { @MainActor in
                 self?.isRecording = false
                 self?.recordedVideoURL = url
-                // 真写进系统相册；成功后才提示「已保存」，失败走拦截引导
+                // 本地相册（应用内）立刻可见；同时真写进系统相册，
+                // 成功后才提示「已保存」，失败走拦截引导
+                self?.persistVideoLocally(url)
                 self?.saveVideoToLibrary(url)
             }
         }
@@ -177,6 +187,14 @@ final class CameraManager: NSObject, ObservableObject {
         }
         previewFrames.send(image)
     }
+
+    #if DEBUG
+    /// 仅 Debug：没有相机的模拟器里垫一帧合成画面，用来检查叠加层布局
+    func enableStubPreview() {
+        guard !hasPreview, let frame = DebugHarness.stubPreviewFrame() else { return }
+        handlePreviewFrame(frame)
+    }
+    #endif
 
     // MARK: - 权限 & 启动
     /// 首次/主动请求：只处理 notDetermined。
@@ -245,13 +263,7 @@ final class CameraManager: NSObject, ObservableObject {
     /// 启动时从本地沙盒读取已拍照片，填充相册
     func loadAlbum() {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let fm = FileManager.default
-            guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first?
-                    .appendingPathComponent("filmcam_photos", isDirectory: true),
-                  let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
-            let items = files.filter { $0.pathExtension.lowercased() == "jpg" }
-                .map { AlbumItem(id: $0.lastPathComponent, url: $0) }
-                .sorted { $0.id > $1.id }
+            let items = AlbumStore.loadAll()
             DispatchQueue.main.async { self?.albumItems = items }
         }
     }
@@ -259,19 +271,25 @@ final class CameraManager: NSObject, ObservableObject {
     /// 把一张成片写入本地沙盒，供应用内相册展示（不依赖系统相册权限）
     private func persistLocally(_ image: UIImage) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let fm = FileManager.default
-            guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first?
-                    .appendingPathComponent("filmcam_photos", isDirectory: true) else { return }
-            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
-            let name = "filmcam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
-            let url = dir.appendingPathComponent(name)
-            guard let data = image.jpegData(compressionQuality: 0.9) else { return }
-            try? data.write(to: url)
-            let item = AlbumItem(id: name, url: url)
+            guard let item = AlbumStore.savePhoto(image) else { return }
             DispatchQueue.main.async {
                 if self?.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
                     self?.albumItems.insert(item, at: 0)
                 }
+            }
+        }
+    }
+
+    /// 录制完成的视频：复制进相册目录（tmp 会被系统清掉），并让「分享」指向本地副本
+    private func persistVideoLocally(_ tmpURL: URL) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let item = AlbumStore.saveVideo(from: tmpURL)
+            DispatchQueue.main.async {
+                guard let self, let item else { return }
+                if self.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
+                    self.albumItems.insert(item, at: 0)
+                }
+                self.recordedVideoURL = item.url
             }
         }
     }
@@ -462,6 +480,20 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func dismissVideoSaveBlocked() { videoSaveBlocked = false }
+
+    // MARK: - 删除
+    /// 从应用内相册删除一条媒体。
+    /// 只删沙盒副本；系统「照片」里已保存的副本删不掉（我们只有 addOnly 权限），
+    /// 所以确认弹窗里必须把这一点说清楚。
+    func delete(_ item: AlbumItem) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            AlbumStore.delete(item)
+            DispatchQueue.main.async {
+                self?.albumItems.removeAll { $0.id == item.id }
+                MediaThumbnailLoader.evictAll()
+            }
+        }
+    }
     func openVideoShare() { showVideoShare = true }
     func closeVideoShare() { showVideoShare = false }
 }
