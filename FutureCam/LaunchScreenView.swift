@@ -22,6 +22,8 @@ struct LaunchScreenView: View {
     @State private var markFrame: CGRect = .zero
 
     private let wordmark = "FUTURE CAM"
+    /// 个人标识：改这一个常量即可
+    private let maker = "ELLIOT"
 
     // 时间轴（秒）
     private let revealEnd: Double = 0.45
@@ -39,7 +41,8 @@ struct LaunchScreenView: View {
         // 用 TimelineView 而不是 withAnimation：进度要逐帧驱动 Canvas，
         // SwiftUI 的隐式动画不会为它插值，会直接跳到终态。
         TimelineView(.animation(minimumInterval: 1.0 / 60, paused: fixedProgress != nil)) { context in
-            let elapsed = fixedProgress == nil ? context.date.timeIntervalSince(start) : 0
+            // 定格模式下把时间轴推到末尾，否则按时间淡入的元素会是空的
+            let elapsed = fixedProgress == nil ? context.date.timeIntervalSince(start) : total
             let reveal = fixedProgress == nil ? min(1, elapsed / revealEnd) : 1
             let converge = fixedProgress ?? min(max((elapsed - convergeStart) / convergeDuration, 0), 1)
             let led = fixedProgress != nil ? true : elapsed > ledAt
@@ -64,10 +67,17 @@ struct LaunchScreenView: View {
                     wordmarkView(t, reveal: reveal, converge: converge)
                     progressLine(t, progress: converge)
                         .opacity(reveal)
-                    HStack(spacing: 6) {
-                        LEDDot(color: t.glow, size: 4, dimmed: !led)
-                        Silkscreen(text: "M-01 RANGEFINDER",
-                                   color: t.ink.opacity(0.5), size: 6.5, tracking: 2.2)
+                    VStack(spacing: 5) {
+                        HStack(spacing: 6) {
+                            LEDDot(color: t.glow, size: 4, dimmed: !led)
+                            Silkscreen(text: "M-01 RANGEFINDER",
+                                       color: t.ink.opacity(0.5), size: 6.5, tracking: 2.2)
+                        }
+
+                        // 制作者落款：比型号再弱一级，只做气质不做信息
+                        Silkscreen(text: "BY \(maker)",
+                                   color: t.ink.opacity(0.3), size: 5.5, tracking: 2.8)
+                            .opacity(min(max((elapsed - (ledAt - 0.25)) / 0.4, 0), 1))
                     }
                     .opacity(reveal)
                 }
