@@ -1,173 +1,173 @@
 import SwiftUI
 import UIKit
-import CoreMotion
-import AVKit
 
-final class DevelopingModel: ObservableObject, @unchecked Sendable {
-    @Published var progress: Double = 0
-    @Published var done = false
-    @Published var useMotion = false
-
-    private let motion = CMMotionManager()
-    private let motionQueue = OperationQueue()
-    private var timer: Timer?
-
-    func start() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] t in
-            guard let self else { t.invalidate(); return }
-            DispatchQueue.main.async {
-                if self.progress < 1 { self.progress = min(1, self.progress + 0.012) }
-                if self.progress >= 1 { self.finish() }
-            }
-        }
-        guard motion.isAccelerometerAvailable else { return }
-        useMotion = true
-        motion.accelerometerUpdateInterval = 0.05
-        motion.startAccelerometerUpdates(to: motionQueue) { [weak self] data, _ in
-            guard let self, let data else { return }
-            let a = data.acceleration
-            let mag = sqrt(a.x * a.x + a.y * a.y + a.z * a.z)
-            let energy = max(0, mag - 1.3)
-            if energy > 0 {
-                DispatchQueue.main.async {
-                    if self.progress < 1 {
-                        self.progress = min(1, self.progress + Double(energy) * 0.18)
-                        if self.progress >= 1 { self.finish() }
-                    }
-                }
-            }
-        }
-    }
-
-    func finish() {
-        timer?.invalidate(); timer = nil
-        if motion.isAccelerometerActive { motion.stopAccelerometerUpdates() }
-        withAnimation(.easeInOut(duration: 0.4)) { done = true; progress = 1 }
-    }
-
-    deinit {
-        timer?.invalidate()
-        if motion.isAccelerometerActive { motion.stopAccelerometerUpdates() }
-    }
-}
-
+/// 撕拉片：拍完不是「等显影」，而是一张相纸从仓里被拉出来。
+/// 手指往下拉 → 相纸从槽口滑出；拉到底出片完成，轻触关闭。
 struct DevelopingPhotoView: View {
     let image: UIImage
     let onDismiss: () -> Void
-    @StateObject private var model = DevelopingModel()
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    var initialPull: Double = 0
 
-    /// 封条滑出比例
-    private var slide: Double { reduceMotion ? 1 : model.progress }
+    @State private var pull: Double
+    @State private var dragBase: Double?
+    @State private var lastTick: Int = -1
+
+    init(image: UIImage, initialPull: Double = 0, onDismiss: @escaping () -> Void) {
+        self.image = image
+        self.onDismiss = onDismiss
+        self.initialPull = initialPull
+        _pull = State(initialValue: initialPull)
+    }
+
+    private var done: Bool { pull >= 0.97 }
 
     var body: some View {
         let t = ThemeStore.current
 
         ZStack {
             LeatherPanel().ignoresSafeArea()
-            Color.black.opacity(0.55).ignoresSafeArea()
-                .onTapGesture { if model.done { onDismiss() } }
+            Color.black.opacity(0.62).ignoresSafeArea()
+                .onTapGesture { if done { onDismiss() } }
 
-            VStack(spacing: 16) {
-                // 相纸托盘 + 压在上面的封条
-                ZStack(alignment: .top) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFit()
-                        .blur(radius: model.done ? 0 : (1 - model.progress) * 9)
-                        .opacity(0.35 + 0.65 * model.progress)
-                        .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
-                        .shadow(color: .black.opacity(0.6), radius: 22, y: 12)
+            VStack(spacing: 0) {
+                pack
+                slotLip
+                emerging(t)
+                footer(t)
+            }
+            .padding(.horizontal, 22)
+        }
+    }
 
-                    GeometryReader { geo in
-                        VStack(spacing: 0) {
-                            Spacer(minLength: 0)
-                            ZStack(alignment: .top) {
-                                LinearGradient(colors: [Color(hex: 0x2A2C2E), Color(hex: 0x111213)],
-                                               startPoint: .top, endPoint: .bottom)
-                                VStack(spacing: 6) {
-                                    HStack(spacing: 6) {
-                                        ForEach(0..<12, id: \.self) { _ in
-                                            Circle().fill(.white.opacity(0.07))
-                                                .frame(width: 2.5, height: 2.5)
-                                        }
-                                    }
-                                    Text("PULL TO DEVELOP")
-                                        .font(.system(size: 8, weight: .bold, design: .monospaced))
-                                        .tracking(2.4)
-                                        .foregroundColor(.white.opacity(0.4))
-                                    Image(systemName: "chevron.down")
-                                        .font(.system(size: 10, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.3))
-                                }
-                                .padding(.top, 14)
-                            }
-                            .frame(height: geo.size.height * 0.62)
-                            .overlay(alignment: .bottom) {
-                                TornEdge()
-                                    .fill(Color(hex: 0x111213))
-                                    .frame(height: 6)
-                                    .offset(y: 5)
-                            }
-                            .offset(y: geo.size.height * 0.62 * slide)
-                            .opacity(model.done ? 0 : 1)
-                        }
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .clipped()
-                    }
+    // MARK: 相纸仓
+
+    private var pack: some View {
+        ZStack {
+            LinearGradient(colors: [Color(hex: 0x2B2E31), Color(hex: 0x121416)],
+                           startPoint: .top, endPoint: .bottom)
+            VStack(spacing: 3) {
+                Text("PEEL-APART")
+                    .font(.custom("Futura-Medium", size: 11))
+                    .tracking(3.2)
+                    .foregroundColor(.white.opacity(0.4))
+                Text("INSTANT FILM PACK")
+                    .font(.system(size: 6, weight: .bold, design: .monospaced))
+                    .tracking(2)
+                    .foregroundColor(.white.opacity(0.22))
+            }
+        }
+        .frame(height: 92)
+        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.22), .black.opacity(0.55)],
+                                             startPoint: .top, endPoint: .bottom), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.55), radius: 12, y: 6)
+    }
+
+    private var slotLip: some View {
+        ZStack {
+            LinearGradient(colors: [Color(hex: 0x0A0B0C), Color(hex: 0x1D1F22)],
+                           startPoint: .top, endPoint: .bottom)
+            Rectangle()
+                .fill(.white.opacity(0.16))
+                .frame(height: 1)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+        }
+        .frame(height: 13)
+        .overlay(alignment: .top) {
+            Rectangle().fill(.black.opacity(0.8)).frame(height: 2)
+        }
+    }
+
+    // MARK: 出片区
+
+    private func emerging(_ t: ThemeTokens) -> some View {
+        GeometryReader { geo in
+            let travel = max(geo.size.height - 6, 1)
+
+            ZStack(alignment: .top) {
+                LinearGradient(colors: [Color(hex: 0x050607), Color(hex: 0x0B0D0F)],
+                               startPoint: .top, endPoint: .bottom)
+
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: geo.size.width - 18)
+                    .offset(y: (1 - pull) * travel)
+                    .shadow(color: .black.opacity(0.7), radius: 10, y: 4)
+
+                // 槽口投影
+                LinearGradient(colors: [.black.opacity(0.6), .clear],
+                               startPoint: .top, endPoint: .bottom)
+                    .frame(height: 26)
                     .allowsHitTesting(false)
-                }
-                .padding(.horizontal, 18)
 
-                if model.done {
-                    HStack(spacing: 6) {
-                        LEDDot(color: t.glow, size: 5)
-                        Text("已显影 · 轻触关闭")
-                            .font(t.monoFont(11, .medium))
-                            .foregroundColor(.white.opacity(0.75))
-                    }
-                } else {
-                    VStack(spacing: 7) {
-                        Text(model.useMotion
-                             ? "摇一摇 · 显影 \(Int(model.progress * 100))%"
-                             : "显影中… \(Int(model.progress * 100))%")
-                            .font(t.monoFont(11, .medium))
-                            .foregroundColor(.white.opacity(0.7))
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(.white.opacity(0.12)).frame(width: 150, height: 2)
-                            Capsule().fill(t.accent)
-                                .frame(width: max(2, 150 * model.progress), height: 2)
+                if !done {
+                    VStack {
+                        Spacer()
+                        HStack(spacing: 5) {
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9, weight: .bold))
+                            Text("下拉取片")
+                                .font(t.monoFont(10, .medium))
+                        }
+                        .foregroundColor(.white.opacity(0.65))
+                        .padding(.bottom, 12)
+                        .opacity(max(0, 1 - pull * 1.6))
+                        .onTapGesture {
+                            withAnimation(.easeOut(duration: 0.45)) { pull = 1 }
                         }
                     }
                 }
             }
-            .padding(.vertical, 24)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 2)
+                    .onChanged { value in
+                        if dragBase == nil { dragBase = pull }
+                        let base = dragBase ?? pull
+                        let next = min(max(base + value.translation.height / travel, 0), 1)
+                        pull = next
+                        let bucket = Int(next * 4)
+                        if bucket != lastTick {
+                            lastTick = bucket
+                            Haptics.impact(.light)
+                        }
+                    }
+                    .onEnded { _ in
+                        dragBase = nil
+                        // 拉过一半就吸附到底，否则退回仓里
+                        withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
+                            pull = pull > 0.5 ? 1 : 0
+                        }
+                        Haptics.impact(.medium)
+                    }
+            )
         }
-        .onAppear { model.start() }
+    }
+
+    private func footer(_ t: ThemeTokens) -> some View {
+        HStack(spacing: 6) {
+            if done {
+                LEDDot(color: t.glow, size: 5)
+                Text("已出片 · 轻触关闭")
+                    .font(t.monoFont(11, .medium))
+                    .foregroundColor(.white.opacity(0.75))
+            } else {
+                Text("按住相纸往下拉")
+                    .font(t.monoFont(10, .regular))
+                    .foregroundColor(.white.opacity(0.45))
+            }
+        }
+        .frame(height: 44)
+        .frame(maxWidth: .infinity)
     }
 }
 
-/// 撕裂边：一排锯齿
-
-struct TornEdge: Shape {
-    var teeth: Int = 22
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-        let step = rect.width / CGFloat(teeth)
-        var x = rect.minX
-        var up = false
-        while x < rect.maxX {
-            path.addLine(to: CGPoint(x: x + step / 2, y: up ? rect.maxY : rect.minY))
-            x += step / 2
-            up.toggle()
-        }
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.closeSubpath()
-        return path
-    }
-}
-
+/// 系统分享面板（保存/分享当前成片）
 struct ShareSheet: UIViewControllerRepresentable {
     let items: [Any]
     func makeUIViewController(context: Context) -> UIActivityViewController {
@@ -175,8 +175,3 @@ struct ShareSheet: UIViewControllerRepresentable {
     }
     func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
-
-// MARK: - 预览渲染
-
-/// 订阅 Combine 帧流直接改 UIImageView.image，绕过 SwiftUI 的状态观察 ——
-/// 避免每帧重算整棵视图树（真机流畅度的关键）。

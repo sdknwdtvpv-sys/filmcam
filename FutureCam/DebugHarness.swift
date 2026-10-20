@@ -31,6 +31,12 @@ enum DebugHarness {
     /// `-fcTestEXIF`：用真实编码器写一张带 EXIF 的样片到 Documents，供外部核对元数据
     static var shouldTestEXIF: Bool { arguments.contains("-fcTestEXIF") }
 
+    /// `-fcPull 0.6`：把撕拉片定格在拉出 60%，方便截图检查
+    static var pullArgument: Double? {
+        guard let index = arguments.firstIndex(of: "-fcPull"), index + 1 < arguments.count else { return nil }
+        return Double(arguments[index + 1])
+    }
+
     static func writeEXIFSample() {
         guard let image = stubPreviewFrame() else { return }
         let metadata: [String: Any] = [

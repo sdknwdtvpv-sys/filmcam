@@ -25,9 +25,16 @@ struct CameraRoot: View {
                     action: { manager.requestAccessAndConfigure() })
             }
 
-            // 成片：拍立得摇一摇显影
+            // 成片：撕拉片，往下拉出片
             if let captured = manager.capturedImage {
+                #if DEBUG
+                DevelopingPhotoView(image: captured,
+                                    initialPull: DebugHarness.pullArgument ?? 0) {
+                    manager.clearCaptured()
+                }
+                #else
                 DevelopingPhotoView(image: captured) { manager.clearCaptured() }
+                #endif
             }
 
             // 保存提示
@@ -55,10 +62,14 @@ struct CameraRoot: View {
             if DebugHarness.shouldStubPreview { manager.enableStubPreview() }
             if DebugHarness.shouldTestEXIF { DebugHarness.writeEXIFSample() }
             if DebugHarness.shouldShowDeveloping {
+                // 截图检查撕拉片时不要弹相机权限
                 manager.capturedImage = DebugHarness.stubPreviewFrame()
+            } else {
+                manager.requestAccessAndConfigure()
             }
-            #endif
+            #else
             manager.requestAccessAndConfigure()
+            #endif
         }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
