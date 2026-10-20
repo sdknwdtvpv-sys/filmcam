@@ -69,8 +69,6 @@ final class CameraManager: NSObject, ObservableObject {
 
     @Published var capturedImage: UIImage?
     @Published var authorizationStatus: AVAuthorizationStatus = .notDetermined
-    @Published var isSaving = false
-    @Published var saveConfirmed = false
     /// 照片写入相册失败（相册权限被拒 / 写入失败）——用于引导去系统设置。
     @Published var photoSaveBlocked = false
     /// 视频写入系统相册失败
@@ -437,7 +435,6 @@ final class CameraManager: NSObject, ObservableObject {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
-                    self?.isSaving = false
                     self?.photoSaveBlocked = true   // 相册权限被拒：引导去设置
                 }
                 return
@@ -446,8 +443,7 @@ final class CameraManager: NSObject, ObservableObject {
                 PHAssetChangeRequest.creationRequestForAsset(from: image)
             }) { success, _ in
                 Task { @MainActor in
-                    self?.isSaving = false
-                    self?.saveConfirmed = success
+                    // 成功不弹窗（应用内相册里已经能看到），失败才引导
                     if !success { self?.photoSaveBlocked = true }
                 }
             }

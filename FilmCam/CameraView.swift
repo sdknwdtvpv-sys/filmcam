@@ -169,8 +169,12 @@ struct ModeTabs: View {
                                         .offset(y: 6)
                                 }
                             }
+                            .padding(.vertical, 12)
+                            .padding(.horizontal, 2)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(manager.mode == mode ? [.isSelected] : [])
                 }
             }
             Spacer(minLength: 8)
@@ -421,6 +425,7 @@ struct ParamPills: View {
                     .foregroundColor(manager.activeParam == key ? CameraTheme.bgDeep : CameraTheme.inkDim)
                     .overlay(Capsule().stroke(CameraTheme.hairline, lineWidth: 1))
                     .clipShape(Capsule())
+                    .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
@@ -641,6 +646,9 @@ struct ToolDock: View {
             }
         }
         .buttonStyle(.plain)
+        .frame(minWidth: 52, minHeight: 56)
+        .contentShape(Rectangle())
+        .accessibilityAddTraits(active ? [.isSelected] : [])
     }
 }
 
@@ -806,6 +814,14 @@ struct ShutterButton: View {
             .shadow(color: glowColor, radius: 12)
         }
         .frame(width: 74, height: 74)
+        .accessibilityLabel(shutterLabel)
+    }
+
+    private var shutterLabel: String {
+        guard mode == .video else {
+            return mode == .doubleExposure ? "拍摄双重曝光" : "拍照"
+        }
+        return isRecording ? "停止录制视频" : "开始录制视频"
     }
 
     private var innerFill: some ShapeStyle {
@@ -1023,6 +1039,7 @@ struct SettingsSheet: View {
             }
             Spacer()
             Toggle("", isOn: isOn).labelsHidden().tint(CameraTheme.amber)
+                .accessibilityLabel(title)
         }
         .padding(.vertical, 8)
     }
@@ -1090,6 +1107,9 @@ struct ToastBar<Actions: View>: View {
             .padding(.bottom, 40)
         }
         .transition(.move(edge: .bottom))
+        .onAppear {
+            UIAccessibility.post(notification: .announcement, argument: message)
+        }
     }
 }
 
@@ -1213,6 +1233,7 @@ struct DevelopingPhotoView: View {
     let onDismiss: () -> Void
     @StateObject private var model = DevelopingModel()
     @State private var shakePhase = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -1229,7 +1250,7 @@ struct DevelopingPhotoView: View {
                     .padding(.horizontal, 18)
                     .opacity(model.done ? 1 : max(0.3, model.progress))
                     .blur(radius: model.done ? 0 : (1 - model.progress) * 9)
-                    .rotationEffect(.degrees(model.useMotion && !model.done ? (shakePhase ? 3.5 : -3.5) : 0))
+                    .rotationEffect(.degrees(shakeRotation))
                 if !model.done {
                     Text(model.useMotion ? "摇一摇 · 显影 \(Int(model.progress * 100))%" : "显影中…")
                         .foregroundColor(.white).padding(.bottom, 30)
@@ -1245,8 +1266,15 @@ struct DevelopingPhotoView: View {
         }
         .onAppear {
             model.start()
+            guard !reduceMotion else { return }
             withAnimation(.easeInOut(duration: 0.18).repeatForever(autoreverses: true)) { shakePhase = true }
         }
+    }
+
+    /// 「减少动态效果」开启时不晃，只保留显影进度
+    private var shakeRotation: Double {
+        guard !reduceMotion, model.useMotion, !model.done else { return 0 }
+        return shakePhase ? 3.5 : -3.5
     }
 }
 

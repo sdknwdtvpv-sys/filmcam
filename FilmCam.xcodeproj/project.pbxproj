@@ -22,6 +22,7 @@
 		0F8B4543E58B56F8F025A864 /* AlbumStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3131F30C9231F8A388732A14 /* AlbumStore.swift */; };
 		731FEF07560AD75327ABE924 /* AlbumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD406509C48E705FA108DECF /* AlbumView.swift */; };
 		2940E748D12770955A1351A7 /* DebugHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32BA7486E881596CC07CE47 /* DebugHarness.swift */; };
+		0B986C876E3EC44800452396 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		3131F30C9231F8A388732A14 /* AlbumStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumStore.swift; sourceTree = "<group>"; };
 		BD406509C48E705FA108DECF /* AlbumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumView.swift; sourceTree = "<group>"; };
 		F32BA7486E881596CC07CE47 /* DebugHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHarness.swift; sourceTree = "<group>"; };
+		C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -68,6 +70,7 @@
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
 				3CAD9F247B4644DB8C366859 /* CameraView.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */,
 				F32BA7486E881596CC07CE47 /* DebugHarness.swift */,
 				BD406509C48E705FA108DECF /* AlbumView.swift */,
 				3131F30C9231F8A388732A14 /* AlbumStore.swift */,
@@ -152,6 +155,7 @@
 			files = (
 				8FDA73025AF74208B94F66BC /* Assets.xcassets in Resources */,
 				AEA22BF6AE594B2A98E62283 /* LUTs in Resources */,
+				0B986C876E3EC44800452396 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
