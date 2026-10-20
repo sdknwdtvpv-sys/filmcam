@@ -70,6 +70,13 @@ struct LUTFilter {
         .kodakGold: "warm-negative.cube",
         .fuji400:   "vintage-slide.cube",
         .cinematic: "classic-slide.cube",
+        .duskGold:  "dusk-gold-100.cube",
+        .slate:     "slate-800.cube",
+        .mint:      "mint-400.cube",
+        .rust:      "rust-400.cube",
+        .frost:     "frost-400.cube",
+        .ochre:     "ochre-200.cube",
+        .abyss:     "abyss-1600.cube",
         // .classicBnw / .fadedCinema 走纯算法；cool-chrome.cube 已内置可随时映射
     ]
 

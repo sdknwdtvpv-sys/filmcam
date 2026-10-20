@@ -3,21 +3,55 @@ import UIKit
 
 /// 胶片预设（照片滤镜 & 视频 LUT 共用的风格定义）
 enum FilmPreset: String, CaseIterable, Identifiable {
-    case kodakGold
-    case fuji400
-    case classicBnw
-    case fadedCinema
-    case cinematic
+    case kodakGold       // 琥珀 200
+    case fuji400         // 松石 400
+    case classicBnw      // 银盐 400
+    case fadedCinema     // 褪色电影
+    case cinematic       // 钴蓝 200
+    // 以下是自造 LUT（Tools/make_luts.py 生成，无第三方数据）
+    case duskGold
+    case slate
+    case mint
+    case rust
+    case frost
+    case ochre
+    case abyss
 
     var id: String { rawValue }
 
+    /// 全部自造名：不出现任何胶片厂商的注册商标
     var label: String {
         switch self {
-        case .kodakGold:   return "柯达金 200"
-        case .fuji400:     return "富士 400"
-        case .classicBnw:  return "经典黑白"
+        case .kodakGold:   return "琥珀 200"
+        case .fuji400:     return "松石 400"
+        case .classicBnw:  return "银盐 400"
         case .fadedCinema: return "褪色电影"
-        case .cinematic:   return "电影 LUT"
+        case .cinematic:   return "钴蓝 200"
+        case .duskGold:    return "暮金 100"
+        case .slate:       return "石板 800"
+        case .mint:        return "薄荷 400"
+        case .rust:        return "铁锈 400"
+        case .frost:       return "霜白 400"
+        case .ochre:       return "赭石 200"
+        case .abyss:       return "深潭 1600"
+        }
+    }
+
+    /// 标称感光度：既显示在暗盒上，也决定颗粒与手动 ISO 的默认值
+    var nominalISO: String {
+        switch self {
+        case .kodakGold:   return "200"
+        case .fuji400:     return "400"
+        case .classicBnw:  return "400"
+        case .fadedCinema: return "200"
+        case .cinematic:   return "200"
+        case .duskGold:    return "100"
+        case .slate:       return "800"
+        case .mint:        return "400"
+        case .rust:        return "400"
+        case .frost:       return "400"
+        case .ochre:       return "200"
+        case .abyss:       return "1600"
         }
     }
 }
@@ -220,6 +254,34 @@ struct FilmFilter {
             return FilterParams(proceduralColor: false, neutral: 5200, saturation: 1.0, contrast: 1.0,
                                 brightness: 0.0, vignette: 0.5, vignetteRadius: 1.0,
                                 leakColor: (1.0, 0.85, 0.7), leakAlpha: 0.10, lutIntensity: 0.85)
+        case .duskGold:
+            return FilterParams(proceduralColor: false, neutral: 5200, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.62, vignetteRadius: 1.15,
+                                leakColor: (1.0, 0.78, 0.42), leakAlpha: 0.26, lutIntensity: 0.95)
+        case .slate:
+            return FilterParams(proceduralColor: false, neutral: 6000, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.55, vignetteRadius: 1.05,
+                                leakColor: (0.8, 0.85, 1.0), leakAlpha: 0.10, lutIntensity: 0.95)
+        case .mint:
+            return FilterParams(proceduralColor: false, neutral: 5800, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.5, vignetteRadius: 1.0,
+                                leakColor: (0.7, 1.0, 0.85), leakAlpha: 0.14, lutIntensity: 0.92)
+        case .rust:
+            return FilterParams(proceduralColor: false, neutral: 5400, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.58, vignetteRadius: 1.1,
+                                leakColor: (1.0, 0.6, 0.35), leakAlpha: 0.22, lutIntensity: 0.92)
+        case .frost:
+            return FilterParams(proceduralColor: false, neutral: 6200, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.6, vignetteRadius: 1.1,
+                                leakColor: (1.0, 1.0, 1.0), leakAlpha: 0.0, lutIntensity: 0.95)
+        case .ochre:
+            return FilterParams(proceduralColor: false, neutral: 5400, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.55, vignetteRadius: 1.05,
+                                leakColor: (1.0, 0.82, 0.55), leakAlpha: 0.20, lutIntensity: 0.92)
+        case .abyss:
+            return FilterParams(proceduralColor: false, neutral: 6100, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.68, vignetteRadius: 1.2,
+                                leakColor: (0.75, 0.85, 1.0), leakAlpha: 0.12, lutIntensity: 0.95)
         }
     }
 }

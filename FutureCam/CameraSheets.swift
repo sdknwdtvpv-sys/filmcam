@@ -130,18 +130,17 @@ struct FilmCanister: View {
         case .classicBnw:  return Color(hex: 0x4A4A4A)
         case .fadedCinema: return Color(hex: 0xB0706A)
         case .cinematic:   return Color(hex: 0x2A6E7A)
+        case .duskGold:    return Color(hex: 0xC9752F)
+        case .slate:       return Color(hex: 0x5B6670)
+        case .mint:        return Color(hex: 0x4E8C7A)
+        case .rust:        return Color(hex: 0xA5533A)
+        case .frost:       return Color(hex: 0x7C8790)
+        case .ochre:       return Color(hex: 0xA8763C)
+        case .abyss:       return Color(hex: 0x35485E)
         }
     }
 
-    private var iso: String {
-        switch preset {
-        case .kodakGold:   return "ISO 200"
-        case .fuji400:     return "ISO 400"
-        case .classicBnw:  return "ISO 400"
-        case .fadedCinema: return "ISO 200"
-        case .cinematic:   return "ISO 500"
-        }
-    }
+    private var iso: String { "ISO \(preset.nominalISO)" }
 
     var body: some View {
         Button(action: action) {

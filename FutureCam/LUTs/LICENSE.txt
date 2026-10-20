@@ -1,13 +1,41 @@
-FilmCam 内置 LUT 资源（FilmCam/LUTs/）
-来源：scernst13/HaldCLUT-Cube-Files（GitHub）
-原始为 HaldCLUT 胶片模拟，已转换为 Adobe/IRIDAS .cube 格式。
-许可证：CC0-1.0（公有领域，https://creativecommons.org/publicdomain/zero/1.0/）
+FutureCam 内置 LUT 资源（FutureCam/LUTs/）
+==========================================
 
-文件映射（原文件名 → 本工程描述性文件名，规避商标使用）：
-- Kodak Portra 400.cube            → warm-negative.cube
-- Kodak Ektachrome 100 VS.cube     → vintage-slide.cube
-- Kodak Kodachrome 64 Generic.cube → classic-slide.cube
-- Kodak Elite Chrome 200.cube      → cool-chrome.cube
+本目录有两类文件，来源与授权分别如下。全部可用于商业发布。
 
-说明：HaldCLUT 为社区开源胶片模拟数据；胶片名称（Kodak 等）为其各自所有者的商标，
-此处仅用于描述所模拟的对象。本 App 内的 UI 预设名称采用描述性中文，不直接使用商标名。
+
+一、基础 LUT（CC0，直接下载）
+------------------------------
+warm-negative.cube      ← Kodak Portra 400.cube
+vintage-slide.cube      ← Kodak Ektachrome 100 VS.cube
+classic-slide.cube      ← Kodak Kodachrome 64 Generic.cube
+cool-chrome.cube        ← Kodak Elite Chrome 200.cube
+
+来源：https://github.com/scernst13/HaldCLUT-Cube-Files
+许可：CC0-1.0（公有领域，可商用、可修改、可再分发，无需署名）
+获取日期：2026-10-20
+处理：原始为 HaldCLUT 胶片模拟，已转为 Adobe/IRIDAS .cube；
+      文件名为本工程改写的描述性名称，不保留原文件名中的商标。
+
+
+二、衍生 LUT（本项目生成，随本项目条款）
+----------------------------------------
+dusk-gold-100.cube   暮金 100    底子 warm-negative
+slate-800.cube       石板 800    底子 cool-chrome
+mint-400.cube        薄荷 400    底子 vintage-slide
+rust-400.cube        铁锈 400    底子 warm-negative
+frost-400.cube       霜白 400    底子 classic-slide
+ochre-200.cube       赭石 200    底子 classic-slide
+abyss-1600.cube      深潭 1600   底子 cool-chrome
+
+生成方式：Tools/make_luts.py，以第一类 CC0 文件为底，叠加本项目自写的分级参数
+（饱和度 / 分离调色 / 密度曲线）。CC0 允许派生，派生结果归本项目所有。
+可复现：`python3 Tools/make_luts.py`
+
+
+三、商标说明
+------------
+胶片厂商名称（Kodak、Fujifilm 等）为其各自所有者的注册商标。
+本 App 的界面、商店页、截图、关键词中【不使用】任何厂商名称或型号，
+全部预设均采用自造名称（琥珀 200、松石 400、银盐 400 等）。
+本目录第一类文件的原文件名仅在此内部文档中作为来源记录保留。
