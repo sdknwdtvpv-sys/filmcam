@@ -63,6 +63,21 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         set { presetLock.withLock { $0 = newValue } }
     }
 
+    /// 当前这卷的随机性格与颗粒参数（由主线程写入，两条渲染路径读取）
+    var rollTraits: RollTraits? {
+        get { traitsLock.lock(); defer { traitsLock.unlock() }; return traitsStorage }
+        set { traitsLock.lock(); traitsStorage = newValue; traitsLock.unlock() }
+    }
+
+    var grain: GrainSettings {
+        get { traitsLock.lock(); defer { traitsLock.unlock() }; return grainStorage }
+        set { traitsLock.lock(); grainStorage = newValue; traitsLock.unlock() }
+    }
+
+    private let traitsLock = NSLock()
+    private var traitsStorage: RollTraits?
+    private var grainStorage: GrainSettings = .none
+
     // MARK: - 启动
     func configureAndStart() {
         sessionQueue.async { [weak self] in
@@ -535,7 +550,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
         let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
         let source = isFront ? mirroredHorizontally(oriented) : oriented
-        let filtered = FilmFilter.apply(source, preset: preset)
+        let filtered = FilmFilter.apply(source, preset: preset, traits: rollTraits)
         let pts = CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
         writeVideoFrame(filtered, time: pts)
         guard let uiImage = renderToUIImage(filtered) else { return }
@@ -554,7 +569,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
         let oriented = CIImage(cgImage: cg).oriented(.right)
         let ci = isFront ? mirroredHorizontally(oriented) : oriented
-        let filtered = FilmFilter.apply(ci, preset: preset)
+        let filtered = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
         guard let filteredImage = renderToUIImage(filtered) else { return }
 
         if doubleExposureEnabled {

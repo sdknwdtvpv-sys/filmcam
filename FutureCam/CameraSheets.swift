@@ -64,15 +64,35 @@ struct FilmSheet: View {
                         FilmCanister(preset: preset,
                                      loaded: manager.selectedPreset == preset,
                                      tokens: t) {
-                            manager.selectedPreset = preset
-                            Haptics.impact(.medium)
-                            manager.showFilmSheet = false
+                            // 点另一卷 = 装新卷：当前这卷会被收起来，成片仍按卷归档
+                            if manager.selectedPreset == preset {
+                                manager.showFilmSheet = false
+                            } else {
+                                manager.loadRoll(preset)
+                                manager.showFilmSheet = false
+                            }
                         }
                     }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 12)
             }
+            .background(LeatherPanel())
+
+            // 当前这卷：型号 · 张数
+            HStack(spacing: 6) {
+                Silkscreen(text: manager.roll.numberText, color: .white.opacity(0.38),
+                           size: 5.5, tracking: 1.4)
+                Rectangle().fill(.white.opacity(0.16)).frame(width: 1, height: 7)
+                Silkscreen(text: manager.roll.isFull ? "本卷拍完 · 换一卷" : "还剩 \(manager.roll.remaining) 张",
+                           color: .white.opacity(0.38), size: 5.5, tracking: 1.4)
+                Spacer(minLength: 0)
+                Text(manager.roll.countText)
+                    .font(t.monoFont(7.5, .bold))
+                    .foregroundColor(manager.roll.isFull ? t.accent : .white.opacity(0.5))
+            }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 8)
             .background(LeatherPanel())
 
             // 仓底齿孔

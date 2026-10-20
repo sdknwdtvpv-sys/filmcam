@@ -34,10 +34,12 @@ enum AlbumStore {
     static func loadAll() -> [AlbumItem] {
         migrateLegacyFoldersIfNeeded()
         let photos = items(in: photosURL, ext: "jpg") { name, url in
-            AlbumItem(id: name, url: url, kind: .photo, createdAt: timestamp(from: name, fallback: url))
+            AlbumItem(id: name, url: url, kind: .photo,
+                      createdAt: timestamp(from: name, fallback: url), rollID: rollID(from: name))
         }
         let videos = items(in: videosURL, ext: "mov") { name, url in
-            AlbumItem(id: name, url: url, kind: .video, createdAt: timestamp(from: name, fallback: url))
+            AlbumItem(id: name, url: url, kind: .video,
+                      createdAt: timestamp(from: name, fallback: url), rollID: rollID(from: name))
         }
         return (photos + videos).sorted { $0.createdAt > $1.createdAt }
     }
@@ -51,14 +53,23 @@ enum AlbumStore {
             .map { make($0.lastPathComponent, $0) }
     }
 
-    /// 文件名里带毫秒时间戳（futurecam_1740000000000.jpg），解析失败则退回文件修改时间
+    /// 文件名里带毫秒时间戳（fc_r1a2b_1740000000000.jpg），取最后一段数字；
+    /// 解析失败则退回文件修改时间
     private static func timestamp(from name: String, fallback url: URL) -> Date {
-        let digits = name.drop { !$0.isNumber }.prefix { $0.isNumber }
-        if let ms = Double(digits), ms > 1_000_000_000_000 {
+        let stem = (name as NSString).deletingPathExtension
+        let trailing = stem.reversed().prefix { $0.isNumber }.reversed()
+        if let ms = Double(String(trailing)), ms > 1_000_000_000_000 {
             return Date(timeIntervalSince1970: ms / 1000)
         }
         let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
         return values?.contentModificationDate ?? .distantPast
+    }
+
+    /// 从文件名里取卷 id：fc_<rollID>_<毫秒>.jpg / .mov
+    static func rollID(from name: String) -> String? {
+        let parts = name.split(separator: "_")
+        guard parts.count >= 3, parts[0] == "fc" else { return nil }
+        return String(parts[1])
     }
 
     static func fileURL(id: String, kind: AlbumMediaKind) -> URL {
@@ -69,14 +80,15 @@ enum AlbumStore {
     // MARK: - 写入
 
     @discardableResult
-    static func savePhoto(_ image: UIImage, jpeg: Data? = nil) -> AlbumItem? {
+    static func savePhoto(_ image: UIImage, jpeg: Data? = nil, rollID: String? = nil) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: photosURL, withIntermediateDirectories: true)
-        let name = "futurecam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
+        let stamp = Int(Date().timeIntervalSince1970 * 1000)
+        let name = rollID.map { "fc_\($0)_\(stamp).jpg" } ?? "futurecam_\(stamp).jpg"
         let url = photosURL.appendingPathComponent(name)
         guard let data = jpeg ?? image.jpegData(compressionQuality: 0.9) else { return nil }
         do {
             try data.write(to: url)
-            return AlbumItem(id: name, url: url, kind: .photo, createdAt: Date())
+            return AlbumItem(id: name, url: url, kind: .photo, createdAt: Date(), rollID: rollID)
         } catch {
             return nil
         }
@@ -84,16 +96,17 @@ enum AlbumStore {
 
     /// 把录制完成的临时文件复制进相册目录（tmp 文件随时可能被系统清掉）
     @discardableResult
-    static func saveVideo(from tmpURL: URL) -> AlbumItem? {
+    static func saveVideo(from tmpURL: URL, rollID: String? = nil) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: videosURL, withIntermediateDirectories: true)
-        let name = "futurecam_\(Int(Date().timeIntervalSince1970 * 1000)).mov"
+        let stamp = Int(Date().timeIntervalSince1970 * 1000)
+        let name = rollID.map { "fc_\($0)_\(stamp).mov" } ?? "futurecam_\(stamp).mov"
         let url = videosURL.appendingPathComponent(name)
         do {
             if FileManager.default.fileExists(atPath: url.path) {
                 try FileManager.default.removeItem(at: url)
             }
             try FileManager.default.copyItem(at: tmpURL, to: url)
-            return AlbumItem(id: name, url: url, kind: .video, createdAt: Date())
+            return AlbumItem(id: name, url: url, kind: .video, createdAt: Date(), rollID: rollID)
         } catch {
             NSLog("[FutureCam] 视频落地失败: \(error.localizedDescription)")
             return nil

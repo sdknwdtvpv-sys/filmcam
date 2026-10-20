@@ -116,31 +116,99 @@ struct AlbumView: View {
         .frame(maxWidth: .infinity)
     }
 
+    /// 按卷分组的相册：一卷一段，像翻底片袋
     private var grid: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(Array(manager.albumItems.enumerated()), id: \.element.id) { index, item in
-                    Button { detailItem = item } label: {
-                        MediaThumbnail(item: item, maxPixel: 420)
-                            .aspectRatio(0.7, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 2))
-                            .shadow(color: .black.opacity(0.55), radius: 4, y: 2)
-                            .overlay(alignment: .bottomTrailing) {
-                                // 洗印编号
-                                Text(String(format: "%02d", manager.albumItems.count - index))
-                                    .font(.system(size: 6.5, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.white.opacity(0.8))
-                                    .padding(.horizontal, 4).padding(.vertical, 1)
-                                    .background(Capsule().fill(.black.opacity(0.6)))
-                                    .padding(4)
+            LazyVStack(alignment: .leading, spacing: 16) {
+                ForEach(sections) { section in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            Silkscreen(text: section.title, color: .white.opacity(0.62),
+                                       size: 6.5, tracking: 1.8)
+                            Rectangle().fill(.white.opacity(0.16)).frame(height: 1)
+                            Text(section.countText)
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .padding(.horizontal, 12)
+
+                        LazyVGrid(columns: columns, spacing: 10) {
+                            ForEach(section.items) { item in
+                                Button { detailItem = item } label: {
+                                    MediaThumbnail(item: item, maxPixel: 420)
+                                        .aspectRatio(0.7, contentMode: .fit)
+                                        .clipShape(RoundedRectangle(cornerRadius: 2))
+                                        .shadow(color: .black.opacity(0.55), radius: 4, y: 2)
+                                        .overlay(alignment: .bottomTrailing) {
+                                            // 洗印编号（这一卷里的第几张）
+                                            Text(section.indexText(for: item))
+                                                .font(.system(size: 6.5, weight: .bold, design: .monospaced))
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .padding(.horizontal, 4).padding(.vertical, 1)
+                                                .background(Capsule().fill(.black.opacity(0.6)))
+                                                .padding(4)
+                                        }
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("\(item.kind == .video ? "视频" : "照片")，\(AlbumDateFormat.short(item.createdAt))")
                             }
+                        }
+                        .padding(.horizontal, 12)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(item.kind == .video ? "视频" : "照片")，\(AlbumDateFormat.short(item.createdAt))")
                 }
             }
-            .padding(12)
+            .padding(.vertical, 12)
         }
+    }
+
+    private var sections: [AlbumSection] {
+        var groups: [String: [AlbumItem]] = [:]
+        for item in manager.albumItems {
+            let key = item.rollID ?? ""
+            groups[key, default: []].append(item)
+        }
+
+        return groups.map { key, items in
+            let sorted = items.sorted { $0.createdAt > $1.createdAt }
+            if key.isEmpty {
+                return AlbumSection(id: "unsorted", title: "未归档", items: sorted,
+                                    subtitle: nil, capacity: nil)
+            }
+            let roll = RollStore.shared.roll(id: key)
+            return AlbumSection(id: key,
+                                title: roll.map { "\($0.preset.label)" } ?? "未知胶卷",
+                                items: sorted,
+                                subtitle: roll?.numberText,
+                                capacity: roll?.capacity)
+        }
+        .sorted { lhs, rhs in
+            if lhs.id == "unsorted" { return false }
+            if rhs.id == "unsorted" { return true }
+            return (lhs.items.first?.createdAt ?? .distantPast) > (rhs.items.first?.createdAt ?? .distantPast)
+        }
+    }
+}
+
+/// 相册里的一段：一卷胶卷（或未归档）
+private struct AlbumSection: Identifiable {
+    let id: String
+    let title: String
+    let items: [AlbumItem]
+    let subtitle: String?
+    let capacity: Int?
+
+    /// 「第 3 卷 · 12 张」
+    var countText: String {
+        var parts: [String] = []
+        if let subtitle { parts.append(subtitle) }
+        parts.append(capacity.map { "\(items.count)/\($0) 张" } ?? "\(items.count) 张")
+        return parts.joined(separator: " · ")
+    }
+
+    /// 这一卷里从 1 开始的序号（最新一张是最大号）
+    func indexText(for item: AlbumItem) -> String {
+        guard let index = items.firstIndex(of: item) else { return "--" }
+        return String(format: "%02d", items.count - index)
     }
 }
 

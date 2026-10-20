@@ -58,6 +58,11 @@ struct RangefinderCameraView: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
         }
+        .onChange(of: manager.notice) { _, notice in
+            guard let notice else { return }
+            showHUD(notice.title, notice.value, 1, hint: nil)
+            manager.notice = nil
+        }
         .onAppear {
             DetentFeedback.shared.prepare()
             #if DEBUG
@@ -155,6 +160,11 @@ struct RangefinderCameraView: View {
                 Silkscreen(text: manager.selectedPreset.label, color: .white.opacity(0.62),
                            size: 7, tracking: 2)
                 Spacer()
+                // 本卷张数：拍满转红
+                Text(manager.roll.countText)
+                    .font(t.monoFont(7.5, .bold))
+                    .foregroundColor(manager.roll.isFull ? t.accent : .white.opacity(0.5))
+                    .tracking(0.6)
                 LEDDot(color: t.glow, size: 4, dimmed: !manager.hasPreview)
                 Silkscreen(text: manager.hasPreview ? "READY" : "BOOT",
                            color: .white.opacity(0.5), size: 5.5, tracking: 1)
@@ -211,7 +221,7 @@ struct RangefinderCameraView: View {
 
             HStack {
                 Spacer()
-                Silkscreen(text: "SER. \(String(format: "%05d", manager.frameCount))",
+                Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
                            color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
             }
             .padding(.horizontal, 18)

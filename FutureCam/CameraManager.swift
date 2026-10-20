@@ -77,11 +77,19 @@ enum AlbumMediaKind: String, Sendable {
 }
 
 /// 应用内相册里的一条媒体（本地沙盒存储，不依赖系统相册权限）
+/// 一次性相机提示：标题 + 值，视图收到后显示 HUD 并清空
+struct CameraNotice: Equatable, Identifiable {
+    let id = UUID()
+    var title: String
+    var value: String
+}
+
 struct AlbumItem: Identifiable, Hashable {
     let id: String          // 文件名
     let url: URL            // 本地文件路径
     let kind: AlbumMediaKind
     let createdAt: Date
+    var rollID: String? = nil   // 属于哪一卷（旧照片为 nil）
 }
 
 /// 主线程相机视图模型：只持有 UI 状态，把相机硬件操作委托给后台 CaptureSessionController。
@@ -107,7 +115,16 @@ final class CameraManager: NSObject, ObservableObject {
     /// 录制完成后的本地文件（供「分享」用，过期即失效）
     @Published var recordedVideoURL: URL?
 
-    @Published var selectedPreset: FilmPreset = .kodakGold { didSet { controller.preset = selectedPreset } }
+    /// 胶卷仓库：当前装着的这卷 + 已拍完的卷
+    let rolls = RollStore.shared
+    /// 一次性提示（本卷拍完 / 已换卷），视图消费后清空
+    @Published var notice: CameraNotice?
+    @Published var selectedPreset: FilmPreset = .kodakGold {
+        didSet {
+            controller.preset = selectedPreset
+            syncGrain()
+        }
+    }
     @Published var mode: CameraMode = .photo { didSet { modeChanged(mode) } }
     @Published var doubleExposureStep: Int = 0
     @Published var isRecording = false
@@ -132,7 +149,7 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var frameCount: Int = UserDefaults.standard.integer(forKey: "futurecam.frameCount")
 
     // 手动参数（UI 状态，device 内部会 clamp 到支持范围）
-    @Published var iso: Double = 200
+    @Published var iso: Double = 200 { didSet { syncGrain() } }
     @Published var shutterSeconds: Double = 1.0 / 60.0
     @Published var bias: Double = 0
     @Published var temperature: Double = 5500
@@ -169,6 +186,8 @@ final class CameraManager: NSObject, ObservableObject {
 
     override init() {
         super.init()
+        selectedPreset = rolls.current.preset
+        syncGrain()
         refreshStorage()
         loadAlbum()
         controller.onPreview = { [weak self] image in
@@ -176,13 +195,16 @@ final class CameraManager: NSObject, ObservableObject {
         }
         controller.onPhoto = { [weak self] image, jpeg in
             Task { @MainActor in
-                self?.showDoubleExposureFirst = false
-                self?.capturedImage = image
-                self?.bumpFrameCount()
-                if self?.mode == .doubleExposure, self?.doubleExposureStep == 1 {
-                    self?.doubleExposureStep = 2
+                guard let self else { return }
+                self.showDoubleExposureFirst = false
+                self.capturedImage = image
+                self.bumpFrameCount()
+                self.rolls.recordShot()
+                let rollID = self.rolls.current.id
+                if self.mode == .doubleExposure, self.doubleExposureStep == 1 {
+                    self.doubleExposureStep = 2
                 }
-                self?.saveToLibrary(image, jpeg: jpeg)
+                self.saveToLibrary(image, jpeg: jpeg, rollID: rollID)
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -204,7 +226,7 @@ final class CameraManager: NSObject, ObservableObject {
                 self?.recordedVideoURL = url
                 // 本地相册（应用内）立刻可见；同时真写进系统相册，
                 // 成功后才提示「已保存」，失败走拦截引导
-                self?.persistVideoLocally(url)
+                self?.persistVideoLocally(url, rollID: self?.rolls.current.id)
                 self?.saveVideoToLibrary(url)
             }
         }
@@ -324,9 +346,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     /// 把一张成片写入本地沙盒，供应用内相册展示（不依赖系统相册权限）
-    private func persistLocally(_ image: UIImage, jpeg: Data?) {
+    private func persistLocally(_ image: UIImage, jpeg: Data?, rollID: String?) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let item = AlbumStore.savePhoto(image, jpeg: jpeg) else { return }
+            guard let item = AlbumStore.savePhoto(image, jpeg: jpeg, rollID: rollID) else { return }
             DispatchQueue.main.async {
                 if self?.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
                     self?.albumItems.insert(item, at: 0)
@@ -336,9 +358,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     /// 录制完成的视频：复制进相册目录（tmp 会被系统清掉），并让「分享」指向本地副本
-    private func persistVideoLocally(_ tmpURL: URL) {
+    private func persistVideoLocally(_ tmpURL: URL, rollID: String?) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let item = AlbumStore.saveVideo(from: tmpURL)
+            let item = AlbumStore.saveVideo(from: tmpURL, rollID: rollID)
             DispatchQueue.main.async {
                 guard let self, let item else { return }
                 if self.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
@@ -384,7 +406,34 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     // MARK: - 控制
-    func capturePhoto() { controller.capture() }
+    func capturePhoto() {
+        guard !rolls.current.isFull else {
+            notice = CameraNotice(title: "本卷拍完", value: "换一卷")
+            Haptics.impact(.heavy)
+            return
+        }
+        controller.capture()
+    }
+
+    /// 当前这卷
+    var roll: FilmRoll { rolls.current }
+
+    /// 换一卷：把当前这卷收起来，装新的
+    @discardableResult
+    func loadRoll(_ preset: FilmPreset) -> FilmRoll {
+        let fresh = rolls.load(preset)
+        selectedPreset = preset
+        syncGrain()
+        notice = CameraNotice(title: "已装卷", value: "\(preset.label) \(fresh.numberText)")
+        return fresh
+    }
+
+    /// 把当前这卷的性格与颗粒参数推给渲染层
+    private func syncGrain() {
+        let traits = rolls.current.traits
+        controller.rollTraits = traits
+        controller.grain = GrainSettings.make(iso: iso, traits: traits, seed: rolls.current.seed)
+    }
 
     /// 闪光循环：关 → 自动 → 开；视频模式下"开"同时点着手电
     func cycleFlash() {
@@ -483,9 +532,9 @@ final class CameraManager: NSObject, ObservableObject {
     func toggleParam(_ key: ParamKey) { selectParam(key) }
 
     // MARK: - 保存到相册
-    private func saveToLibrary(_ image: UIImage, jpeg: Data?) {
+    private func saveToLibrary(_ image: UIImage, jpeg: Data?, rollID: String?) {
         // 本地相册（应用内）始终保存，不依赖系统相册权限
-        persistLocally(image, jpeg: jpeg)
+        persistLocally(image, jpeg: jpeg, rollID: rollID)
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
@@ -511,6 +560,49 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func dismissPhotoSaveBlocked() { photoSaveBlocked = false }
+
+    #if DEBUG
+    /// 调试：模拟拍摄张数 / 造示范成片（模拟器没有真相机）
+    func applyDebugSeeds() {
+        if let count = DebugHarness.simulateShots {
+            for _ in 0..<count { rolls.recordShot() }
+            if rolls.current.isFull {
+                notice = CameraNotice(title: "本卷拍完", value: "换一卷")
+            }
+        }
+
+        guard DebugHarness.shouldSeedAlbum else { return }
+        // 第一卷拍 3 张，第二卷拍 2 张，成片按卷归档
+        var rollIDs: [String] = []
+        let first = rolls.current
+        for _ in 0..<3 { rolls.recordShot() }
+        rollIDs.append(first.id)
+        let second = loadRoll(.fuji400)
+        for _ in 0..<2 { rolls.recordShot() }
+        rollIDs.append(second.id)
+
+        let counts = [3, 2]
+        for (index, rollID) in rollIDs.enumerated() {
+            for n in 0..<counts[index] {
+                let size = CGSize(width: 900, height: 1200)
+                let renderer = UIGraphicsImageRenderer(size: size)
+                let image = renderer.image { ctx in
+                    let colors = [UIColor(red: 0.72, green: 0.53, blue: 0.29, alpha: 1),
+                                  UIColor(red: 0.29, green: 0.48, blue: 0.44, alpha: 1)][index % 2]
+                    colors.setFill()
+                    ctx.fill(CGRect(origin: .zero, size: size))
+                    let text = "\(index + 1)-\(n + 1)" as NSString
+                    text.draw(at: CGPoint(x: 80, y: 80), withAttributes: [
+                        .font: UIFont.monospacedSystemFont(ofSize: 140, weight: .bold),
+                        .foregroundColor: UIColor.white.withAlphaComponent(0.85)
+                    ])
+                }
+                AlbumStore.savePhoto(image, jpeg: image.jpegData(compressionQuality: 0.85), rollID: rollID)
+            }
+        }
+        loadAlbum()
+    }
+    #endif
 
     /// 计数器进位（拍立得/胶片带主题用）
     private func bumpFrameCount() {

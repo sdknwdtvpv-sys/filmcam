@@ -55,6 +55,11 @@ struct CameraRoot: View {
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
 
+            // 调试：颗粒对照卡
+            if DebugHarness.shouldShowGrainCard {
+                GrainTestCard().zIndex(30)
+            }
+
             // 冷启动的开机页，放完让位给取景器
             if showLaunch {
                 LaunchScreenView(onFinish: {
@@ -88,6 +93,7 @@ struct CameraRoot: View {
         .onAppear {
             #if DEBUG
             DebugHarness.applyLaunchState(manager)
+            manager.applyDebugSeeds()
             if DebugHarness.shouldStubPreview { manager.enableStubPreview() }
             if DebugHarness.shouldTestEXIF { DebugHarness.writeEXIFSample() }
             if DebugHarness.shouldShowDeveloping {

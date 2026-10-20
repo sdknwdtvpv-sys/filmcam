@@ -1,6 +1,7 @@
 #if DEBUG
 import Foundation
 import UIKit
+import SwiftUI
 import CoreImage
 
 /// 仅 Debug 构建的开发自检口子：模拟器没有相机、也没法脚本点击，
@@ -53,6 +54,19 @@ enum DebugHarness {
               let value = Double(arguments[index + 1]) else { return nil }
         return CGFloat(value)
     }
+
+    /// `-fcSimulateShot 5`：直接记 5 张，用来验证张数/满卷，不需要真相机
+    static var simulateShots: Int? {
+        guard let index = arguments.firstIndex(of: "-fcSimulateShot"),
+              index + 1 < arguments.count else { return nil }
+        return Int(arguments[index + 1])
+    }
+
+    /// `-fcGrainCard`：颗粒对照卡（同一张底片在三个 ISO 下过一遍滤镜）
+    static var shouldShowGrainCard: Bool { arguments.contains("-fcGrainCard") }
+
+    /// `-fcSeedAlbum`：造两卷示范成片，验证相册按卷分组
+    static var shouldSeedAlbum: Bool { arguments.contains("-fcSeedAlbum") }
 
     /// `-fcHoldLaunch`：开机页停在最后一帧，方便截图
     static var shouldHoldLaunch: Bool { arguments.contains("-fcHoldLaunch") }
@@ -175,4 +189,102 @@ enum DebugHarness {
         return UIImage(cgImage: cg)
     }
 }
+
+/// 颗粒对照卡：同一张底片在三个 ISO 下过一遍真实滤镜链，1:1 显示以便看清颗粒
+struct GrainTestCard: View {
+    @State private var images: [UIImage] = []
+    @State private var sigmas: [String] = []
+
+    private let isos: [Double] = [100, 800, 3200]
+
+    var body: some View {
+        ZStack {
+            Color(white: 0.12).ignoresSafeArea()
+            VStack(spacing: 8) {
+                ForEach(Array(images.enumerated()), id: \.offset) { index, image in
+                    HStack(spacing: 8) {
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("ISO \(Int(isos[index]))")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.7))
+                            Text(sigmas.count > index ? sigmas[index] : "--")
+                                .font(.system(size: 8, weight: .regular, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.4))
+                        }
+                        .frame(width: 62, alignment: .trailing)
+                        Image(uiImage: image)
+                            .interpolation(.none)
+                    }
+                }
+            }
+            .padding(.vertical, 20)
+        }
+        .task {
+            let rendered = isos.map(render(iso:))
+            images = rendered
+            sigmas = rendered.map(Self.grainSigma)
+        }
+    }
+
+    private func render(iso: Double) -> UIImage {
+        let size = CGSize(width: 300, height: 300)
+        guard let base = Self.scene(size: size) else { return UIImage() }
+        let traits = RollTraits(seed: 42)
+        let grain = GrainSettings.make(iso: iso, traits: traits, seed: 42)
+        let out = FilmFilter.apply(base, preset: .kodakGold, traits: traits, grain: grain)
+        let context = CIContext(options: [.useSoftwareRenderer: false])
+        guard let cg = context.createCGImage(out, from: out.extent) else { return UIImage() }
+        return UIImage(cgImage: cg)
+    }
+
+    /// 局部标准差：颗粒越强，σ 越大。用来在没有肉眼判断的情况下确认颗粒真的存在
+    private static func grainSigma(_ image: UIImage) -> String {
+        guard let cg = image.cgImage else { return "--" }
+        let w = cg.width, h = cg.height
+        var pixels = [UInt8](repeating: 0, count: w * h)
+        guard let ctx = CGContext(data: &pixels, width: w, height: h, bitsPerComponent: 8,
+                                  bytesPerRow: w, space: CGColorSpaceCreateDeviceGray(),
+                                  bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return "--" }
+        ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+
+        // 相邻像素差：渐变本身几乎是常数，只有颗粒才会让差值跳动
+        let x0 = w / 4, x1 = w * 3 / 4, y0 = h / 4, y1 = h * 3 / 4
+        var sum = 0.0, n = 0.0
+        for y in y0..<y1 {
+            for x in x0..<(x1 - 1) {
+                sum += abs(Double(pixels[y * w + x + 1]) - Double(pixels[y * w + x]))
+                n += 1
+            }
+        }
+        guard n > 0 else { return "--" }
+        return String(format: "d%.2f", sum / n)
+    }
+
+    /// 一张有平滑渐变和中间调的底片，颗粒最容易被看出来
+    private static func scene(size: CGSize) -> CIImage? {
+        let extent = CGRect(origin: .zero, size: size)
+        guard let grad = CIFilter(name: "CILinearGradient", parameters: [
+            "inputPoint0": CIVector(x: 0, y: size.height),
+            "inputPoint1": CIVector(x: size.width, y: 0),
+            "inputColor0": CIColor(red: 0.55, green: 0.42, blue: 0.28),
+            "inputColor1": CIColor(red: 0.22, green: 0.32, blue: 0.40)
+        ])?.outputImage else { return nil }
+
+        guard let radial = CIFilter(name: "CIRadialGradient", parameters: [
+            "inputCenter": CIVector(x: size.width * 0.62, y: size.height * 0.58),
+            "inputRadius0": 10,
+            "inputRadius1": size.width * 0.55,
+            "inputColor0": CIColor(red: 0.95, green: 0.86, blue: 0.70, alpha: 0.55),
+            "inputColor1": CIColor(red: 0, green: 0, blue: 0, alpha: 0)
+        ])?.outputImage else { return nil }
+
+        guard let blend = CIFilter(name: "CISoftLightBlendMode", parameters: [
+            kCIInputImageKey: radial,
+            kCIInputBackgroundImageKey: grad
+        ])?.outputImage else { return nil }
+
+        return blend.cropped(to: extent)
+    }
+}
+
 #endif
