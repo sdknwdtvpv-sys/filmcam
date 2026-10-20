@@ -682,6 +682,10 @@ struct LastShotThumbnail: View {
             }
         }
         .opacity(manager.capturedImage == nil ? 0.45 : 1)
+        .contentShape(Rectangle())
+        .onTapGesture { manager.openAlbum() }
+        .accessibilityAddTraits(.isButton)
+        .accessibilityLabel("打开相册")
     }
 }
 
@@ -1100,17 +1104,19 @@ struct DevelopingPhotoView: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.92).ignoresSafeArea().onTapGesture { onDismiss() }
-            VStack {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(Color.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity).padding(24)
-                    Image(uiImage: image).resizable().scaledToFit()
-                        .padding(36)
-                        .opacity(model.done ? 1 : model.progress)
-                        .blur(radius: model.done ? 0 : (1 - model.progress) * 10)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .rotationEffect(.degrees(model.useMotion && !model.done ? (shakePhase ? 4 : -4) : 0))
+            VStack(spacing: 20) {
+                // 成片本身已带白色拍立得边框 + 日期戳，直接按原始比例展示即可。
+                // 旧实现外套一张铺满全屏的白卡：竖版白框里浮着一张横版照片，
+                // 上下大片空白 → 观感"横竖很别扭"。改为相纸贴合照片比例。
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .shadow(color: .black.opacity(0.5), radius: 26, x: 0, y: 14)
+                    .padding(.horizontal, 18)
+                    .opacity(model.done ? 1 : max(0.3, model.progress))
+                    .blur(radius: model.done ? 0 : (1 - model.progress) * 9)
+                    .rotationEffect(.degrees(model.useMotion && !model.done ? (shakePhase ? 3.5 : -3.5) : 0))
                 if !model.done {
                     Text(model.useMotion ? "摇一摇 · 显影 \(Int(model.progress * 100))%" : "显影中…")
                         .foregroundColor(.white).padding(.bottom, 30)

@@ -249,28 +249,29 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         return UIImage(cgImage: cg)
     }
 
-    /// 给成片加白色边框 + 拍摄日期戳（拍立得风）
+    /// 给成片加白色边框 + 拍摄日期戳（拍立得风：上下细边、底部粗边）
     private func stampImage(_ image: UIImage) -> UIImage {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd  HH:mm"
         let dateStr = formatter.string(from: Date())
 
-        let margin = image.size.width * 0.06
-        let totalSize = CGSize(width: image.size.width + margin * 2,
-                               height: image.size.height + margin * 2)
+        let w = image.size.width
+        let h = image.size.height
+        let side = w * 0.06          // 上/左/右细白边
+        let bottom = w * 0.20        // 底部粗白边（拍立得标志）
+        let totalSize = CGSize(width: w + side * 2, height: h + side + bottom)
         let renderer = UIGraphicsImageRenderer(size: totalSize)
         return renderer.image { ctx in
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: totalSize))
-            image.draw(in: CGRect(x: margin, y: margin,
-                                  width: image.size.width, height: image.size.height))
-            let font = UIFont.monospacedDigitSystemFont(ofSize: margin * 0.42, weight: .medium)
+            image.draw(in: CGRect(x: side, y: side, width: w, height: h))
+            let font = UIFont.monospacedDigitSystemFont(ofSize: w * 0.05, weight: .medium)
             let attrs: [NSAttributedString.Key: Any] = [.font: font,
                                                         .foregroundColor: UIColor.black]
             let text = dateStr as NSString
             let textSize = text.size(withAttributes: attrs)
             let point = CGPoint(x: (totalSize.width - textSize.width) / 2,
-                               y: totalSize.height - margin * 0.8 - textSize.height)
+                               y: side + h + (bottom - textSize.height) / 2)
             text.draw(at: point, withAttributes: attrs)
         }
     }
@@ -299,7 +300,10 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         guard let data = photo.fileDataRepresentation(),
               let image = UIImage(data: data),
               let cg = image.cgImage else { return }
-        let ci = CIImage(cgImage: cg)
+        // 关键：JPEG 的像素是传感器原生（横向），方向信息只在 EXIF 里；
+        // CIImage(cgImage:) 会忽略 EXIF，必须像预览那样补一次 .right 旋转，
+        // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
+        let ci = CIImage(cgImage: cg).oriented(.right)
         let filtered = FilmFilter.apply(ci, preset: preset)
         guard let filteredImage = renderToUIImage(filtered) else { return }
 

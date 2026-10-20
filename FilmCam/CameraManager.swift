@@ -194,6 +194,14 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
+    /// 打开系统「照片」App（相册入口）。点缩略图即跳转，方便回看刚拍的成片。
+    func openAlbum() {
+        // photos-redirect:// 是 Apple 公开的跳转照片 App 的 scheme
+        if let url = URL(string: "photos-redirect://") {
+            UIApplication.shared.open(url, options: [:])
+        }
+    }
+
     private func startCameraIfNeeded() {
         guard !didStartCamera else { return }
         didStartCamera = true
