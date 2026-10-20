@@ -1,0 +1,13 @@
+FilmCam 内置 LUT 资源（FilmCam/LUTs/）
+来源：scernst13/HaldCLUT-Cube-Files（GitHub）
+原始为 HaldCLUT 胶片模拟，已转换为 Adobe/IRIDAS .cube 格式。
+许可证：CC0-1.0（公有领域，https://creativecommons.org/publicdomain/zero/1.0/）
+
+文件映射（原文件名 → 本工程描述性文件名，规避商标使用）：
+- Kodak Portra 400.cube            → warm-negative.cube
+- Kodak Ektachrome 100 VS.cube     → vintage-slide.cube
+- Kodak Kodachrome 64 Generic.cube → classic-slide.cube
+- Kodak Elite Chrome 200.cube      → cool-chrome.cube
+
+说明：HaldCLUT 为社区开源胶片模拟数据；胶片名称（Kodak 等）为其各自所有者的商标，
+此处仅用于描述所模拟的对象。本 App 内的 UI 预设名称采用描述性中文，不直接使用商标名。

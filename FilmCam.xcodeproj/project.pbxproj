@@ -1,0 +1,285 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		110EC93211024BC9AF172728 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0092A6C0C53C444BA566BEB7 /* CameraManager.swift */; };
+		65C3DAA474F04F3A9B21589A /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAD9F247B4644DB8C366859 /* CameraView.swift */; };
+		9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */; };
+		B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D2E3F4A50617283940ABC /* FilmPreview.swift */; };
+		7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */; };
+		8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60790E9F2E9D4109A4774314 /* FilmFilter.swift */; };
+		8FDA73025AF74208B94F66BC /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 75E8FE75C5784BFB98C1E319 /* Assets.xcassets */; };
+		AEA22BF6AE594B2A98E62283 /* LUTs in Resources */ = {isa = PBXBuildFile; fileRef = 3CE4775A625D4391902D2990 /* LUTs */; };
+		ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 556B07AF6CF3412D8B342762 /* LUTFilter.swift */; };
+		F1A807516F3D4389960E4F50 /* CaptureSessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0092A6C0C53C444BA566BEB7 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
+		3CAD9F247B4644DB8C366859 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTheme.swift; sourceTree = "<group>"; };
+		C8D2E3F4A50617283940ABC /* FilmPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmPreview.swift; sourceTree = "<group>"; };
+		3CE4775A625D4391902D2990 /* LUTs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = LUTs; sourceTree = "<group>"; };
+		461C07773F4E409BA308DF89 /* FilmCam.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FilmCam.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		556B07AF6CF3412D8B342762 /* LUTFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LUTFilter.swift; sourceTree = "<group>"; };
+		60790E9F2E9D4109A4774314 /* FilmFilter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmFilter.swift; sourceTree = "<group>"; };
+		75E8FE75C5784BFB98C1E319 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureSessionController.swift; sourceTree = "<group>"; };
+		DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmCamApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1550D553CD184A06A28FE63E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		582767F010394CB7B7ABA890 = {
+			isa = PBXGroup;
+			children = (
+				66AA3F5E806F420AB420F82C /* FilmCam */,
+				8ECF8DBDB400413BAA7F2C61 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		66AA3F5E806F420AB420F82C /* FilmCam */ = {
+			isa = PBXGroup;
+			children = (
+				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
+				3CAD9F247B4644DB8C366859 /* CameraView.swift */,
+				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				C8D2E3F4A50617283940ABC /* FilmPreview.swift */,
+				D4700C4C376C47B69B37AD5A /* CaptureSessionController.swift */,
+				DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */,
+				60790E9F2E9D4109A4774314 /* FilmFilter.swift */,
+				556B07AF6CF3412D8B342762 /* LUTFilter.swift */,
+				75E8FE75C5784BFB98C1E319 /* Assets.xcassets */,
+				3CE4775A625D4391902D2990 /* LUTs */,
+			);
+			path = FilmCam;
+			sourceTree = "<group>";
+		};
+		8ECF8DBDB400413BAA7F2C61 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				461C07773F4E409BA308DF89 /* FilmCam.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		84ED732EDE77401099227686 /* FilmCam */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D9180A557C5B420A90046B6D /* Build configuration list for PBXNativeTarget "FilmCam" */;
+			buildPhases = (
+				031BFB04A81B48D7ADED9082 /* Sources */,
+				1550D553CD184A06A28FE63E /* Frameworks */,
+				4D0CB9C3E4914361BD52F54F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FilmCam;
+			productName = FilmCam;
+			productReference = 461C07773F4E409BA308DF89 /* FilmCam.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BA5183900D274471879495F5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					84ED732EDE77401099227686 = {
+						LastSwiftMigration = 2700;
+					};
+				};
+			};
+			buildConfigurationList = C2230D11DFCC43FDA53E704E /* Build configuration list for PBXProject "FilmCam" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 582767F010394CB7B7ABA890;
+			productRefGroup = 8ECF8DBDB400413BAA7F2C61 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				84ED732EDE77401099227686 /* FilmCam */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4D0CB9C3E4914361BD52F54F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8FDA73025AF74208B94F66BC /* Assets.xcassets in Resources */,
+				AEA22BF6AE594B2A98E62283 /* LUTs in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		031BFB04A81B48D7ADED9082 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				110EC93211024BC9AF172728 /* CameraManager.swift in Sources */,
+				65C3DAA474F04F3A9B21589A /* CameraView.swift in Sources */,
+				9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */,
+				B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */,
+				F1A807516F3D4389960E4F50 /* CaptureSessionController.swift in Sources */,
+				7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */,
+				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
+				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		004C949D682149848D0C3547 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		1843D0CBF3EE4EB890511ADB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = LSBQAS2A45;
+				ENABLE_BITCODE = NO;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FilmCam/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				ONLY_ACTIVE_ARCH = YES;
+				OTHER_SWIFT_FLAGS = "-disable-sandbox";
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmcam.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Debug;
+		};
+		57098A3884CD4CC189906FF1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOLS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = LSBQAS2A45;
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FilmCam/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"@executable_path/Frameworks",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				OTHER_SWIFT_FLAGS = "-disable-sandbox";
+				PRODUCT_BUNDLE_IDENTIFIER = com.filmcam.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_STRICT_CONCURRENCY = minimal;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1";
+			};
+			name = Release;
+		};
+		6507490DF8244B03B27054D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C2230D11DFCC43FDA53E704E /* Build configuration list for PBXProject "FilmCam" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				004C949D682149848D0C3547 /* Debug */,
+				6507490DF8244B03B27054D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D9180A557C5B420A90046B6D /* Build configuration list for PBXNativeTarget "FilmCam" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1843D0CBF3EE4EB890511ADB /* Debug */,
+				57098A3884CD4CC189906FF1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BA5183900D274471879495F5 /* Project object */;
+}
