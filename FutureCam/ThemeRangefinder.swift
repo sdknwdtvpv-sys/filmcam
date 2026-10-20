@@ -239,17 +239,20 @@ struct RangefinderCameraView: View {
                     announceArmed()
                     Haptics.impact(.light)
                 } label: {
-                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text(paramTitle(key))
-                            .font(t.monoFont(6.5, .bold))
-                            .tracking(0.8)
+                            .font(t.monoFont(6, .bold))
+                            .tracking(0.6)
                             .foregroundColor(manager.activeParam == key ? t.accent : t.ink.opacity(0.5))
+                            .lineLimit(1)
                         Text(paramValue(key, manager))
-                            .font(t.displayFont(15, .medium))
+                            .font(t.displayFont(13.5, .medium))
                             .foregroundColor(manager.activeParam == key ? t.ink : t.ink.opacity(0.72))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.65)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 8)
+                    .padding(.horizontal, 6)
                     .padding(.vertical, 4)
                     .overlay(alignment: .top) {
                         if manager.activeParam == key {
@@ -262,18 +265,6 @@ struct RangefinderCameraView: View {
                 .accessibilityLabel("\(paramTitle(key)) \(paramValue(key, manager))")
             }
 
-            Button { toggleGroup() } label: {
-                Text(manager.paramMode == .exposure ? "EXP" : "WB")
-                    .font(t.monoFont(6.5, .bold))
-                    .foregroundColor(t.ink.opacity(0.62))
-                    .frame(width: 34, height: 30)
-                    .overlay(alignment: .leading) {
-                        Rectangle().fill(.black.opacity(0.16)).frame(width: 1, height: 22)
-                    }
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("切换参数分组")
         }
         .frame(height: 32)
         // 和按键同一套银色：铝面渐变 + 高光/暗边 + 投影，不再是一块黑色液晶
@@ -435,10 +426,6 @@ struct RangefinderCameraView: View {
         .frame(width: 54)
         .disabled(manager.isRecording)
         .accessibilityLabel(manager.isFrontCamera ? "切换到后置摄像头" : "切换到前置摄像头")
-    }
-
-    private func toggleGroup() {
-        manager.setParamMode(manager.paramMode == .exposure ? .whiteBalance : .exposure)
     }
 
     /// 当前选中的参数 —— 滚花轮盘驱动它

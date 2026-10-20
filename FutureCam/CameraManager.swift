@@ -40,14 +40,6 @@ enum FlashState: String, CaseIterable {
     }
 }
 
-/// 参数分组：曝光（ISO/快门/EV）或 白平衡（色温/色调），决定读数条显示哪一组。
-enum ParamMode: String, CaseIterable, Identifiable {
-    case exposure
-    case whiteBalance
-    var id: String { rawValue }
-    var label: String { self == .exposure ? "曝光" : "白平衡" }
-}
-
 /// 单个可调参数（药丸点选 + 展开对应滑杆）
 enum ParamKey: String, CaseIterable, Identifiable {
     case iso
@@ -150,7 +142,6 @@ final class CameraManager: NSObject, ObservableObject {
 
     // MARK: - 取景辅助与信息架构状态（对标飓风相机）
     /// 当前参数分组（药丸行显示曝光组还是白平衡组）
-    @Published var paramMode: ParamMode = .exposure
     /// 当前展开滑杆的参数；nil = 收起
     @Published var activeParam: ParamKey? = .shutter
     /// 三分构图网格
@@ -490,16 +481,6 @@ final class CameraManager: NSObject, ObservableObject {
 
     /// 兼容旧调用名
     func toggleParam(_ key: ParamKey) { selectParam(key) }
-
-    /// 工具停靠栏切换参数分组；若当前展开的滑杆不属于新组则收起。
-    func setParamMode(_ mode: ParamMode) {
-        paramMode = mode
-        let isExposureParam = (activeParam == .iso || activeParam == .shutter || activeParam == .bias)
-        let needsSwitch = (mode == .exposure) != isExposureParam
-        if needsSwitch {
-            activeParam = (mode == .exposure) ? .iso : .temperature
-        }
-    }
 
     // MARK: - 保存到相册
     private func saveToLibrary(_ image: UIImage, jpeg: Data?) {

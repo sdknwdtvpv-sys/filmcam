@@ -135,8 +135,9 @@ func paramValue(_ key: ParamKey, _ manager: CameraManager) -> String {
 
 /// 当前参数分组下要显示的 2–3 个参数
 @MainActor
+/// 读数条一次显示全部五个参数：曝光三项 + 白平衡两项并排，不再分组切换
 func visibleParams(_ manager: CameraManager) -> [ParamKey] {
-    manager.paramMode == .exposure ? [.iso, .shutter, .bias] : [.temperature, .tint]
+    [.iso, .shutter, .bias, .temperature, .tint]
 }
 
 /// 快门按钮上的动作词
