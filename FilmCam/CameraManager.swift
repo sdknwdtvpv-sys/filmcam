@@ -111,7 +111,7 @@ final class CameraManager: NSObject, ObservableObject {
     /// 当前参数分组（药丸行显示曝光组还是白平衡组）
     @Published var paramMode: ParamMode = .exposure
     /// 当前展开滑杆的参数；nil = 收起
-    @Published var activeParam: ParamKey?
+    @Published var activeParam: ParamKey? = .shutter
     /// 三分构图网格
     @Published var showGrid = false
     /// 水平仪
@@ -421,17 +421,22 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     // MARK: - 药丸 / 参数面板交互
-    /// 药丸点选：同组内切换焦点，再点一次收起滑杆。
-    func toggleParam(_ key: ParamKey) {
-        activeParam = (activeParam == key) ? nil : key
+    /// 选中参数：机身右下那颗滚花轮盘会驱动当前选中的参数
+    func selectParam(_ key: ParamKey) {
+        activeParam = key
     }
+
+    /// 兼容旧调用名
+    func toggleParam(_ key: ParamKey) { selectParam(key) }
 
     /// 工具停靠栏切换参数分组；若当前展开的滑杆不属于新组则收起。
     func setParamMode(_ mode: ParamMode) {
         paramMode = mode
-        guard let active = activeParam else { return }
-        let isExposureParam = (active == .iso || active == .shutter || active == .bias)
-        if (mode == .exposure) != isExposureParam { activeParam = nil }
+        let isExposureParam = (activeParam == .iso || activeParam == .shutter || activeParam == .bias)
+        let needsSwitch = (mode == .exposure) != isExposureParam
+        if needsSwitch {
+            activeParam = (mode == .exposure) ? .iso : .temperature
+        }
     }
 
     // MARK: - 保存到相册

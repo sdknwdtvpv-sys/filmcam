@@ -10,7 +10,7 @@ struct RangefinderCameraView: View {
     /// 拖动快门环时的基准值 / 盘面角度 / 上一次触感所在的档位
     @State private var collarBase: Double?
     @State private var collarAngle: Double = 0
-    @State private var lastStop: Double = 0
+    @State private var lastBucket: Double = .nan
     /// 参数浮层（调参时在取景器里浮出）
     @State private var hud: (title: String, value: String, progress: Double)?
     @State private var hudToken = UUID()
@@ -37,9 +37,7 @@ struct RangefinderCameraView: View {
         }
         .onAppear {
             #if DEBUG
-            if DebugHarness.shouldShowHUD {
-                showHUD("SHUTTER", "1/250", shutterProgress(1.0 / 250))
-            }
+            if DebugHarness.shouldShowHUD { announceArmed() }
             #endif
         }
     }
@@ -205,7 +203,11 @@ struct RangefinderCameraView: View {
                 if index > 0 {
                     Rectangle().fill(.white.opacity(0.14)).frame(width: 1, height: 22)
                 }
-                Button { manager.toggleParam(key) } label: {
+                Button {
+                    manager.selectParam(key)
+                    announceArmed()
+                    Haptics.impact(.light)
+                } label: {
                     HStack(alignment: .firstTextBaseline, spacing: 5) {
                         Text(paramTitle(key))
                             .font(t.monoFont(6.5, .bold))
@@ -218,6 +220,11 @@ struct RangefinderCameraView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
+                    .overlay(alignment: .top) {
+                        if manager.activeParam == key {
+                            Rectangle().fill(t.accent).frame(height: 2)
+                        }
+                    }
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -360,34 +367,100 @@ struct RangefinderCameraView: View {
         manager.setParamMode(manager.paramMode == .exposure ? .whiteBalance : .exposure)
     }
 
-    /// 转环：对数刻度，每跨 1/3 档给一次棘轮触感，并浮出取景器读数
-    private func turnCollar(_ dx: CGFloat) {
-        if collarBase == nil {
-            collarBase = manager.shutterSeconds
-            lastStop = log2(1 / max(manager.shutterSeconds, 0.0001))
-        }
-        let base = collarBase ?? manager.shutterSeconds
-        let value = min(max(base * exp(Double(dx) / 130), 1.0 / 4000), 0.25)
-        manager.shutterSeconds = value
-        manager.applyExposure()
+    /// 当前选中的参数 —— 滚花轮盘驱动它
+    private var armed: ParamKey { manager.activeParam ?? .shutter }
 
-        let stop = log2(1 / value)
-        if abs(stop - lastStop) >= 0.33 {
-            Haptics.impact(.light)
-            lastStop = stop
+    private var armedTitle: String {
+        switch armed {
+        case .iso: return "ISO"
+        case .shutter: return "SHUTTER"
+        case .bias: return "EXPOSURE"
+        case .temperature: return "TEMP"
+        case .tint: return "TINT"
         }
-        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
     }
 
-    /// 无障碍 / 点按微调：按 1/3 档进位
-    private func nudgeShutter(_ direction: Int) {
-        let step = pow(2.0, 1.0 / 3.0)
-        let value = min(max(manager.shutterSeconds * (direction > 0 ? step : 1 / step),
-                            1.0 / 4000), 0.25)
-        manager.shutterSeconds = value
-        manager.applyExposure()
-        Haptics.impact(.light)
-        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
+    private func value(of key: ParamKey) -> Double {
+        switch key {
+        case .iso: return manager.iso
+        case .shutter: return manager.shutterSeconds
+        case .bias: return manager.bias
+        case .temperature: return manager.temperature
+        case .tint: return manager.tint
+        }
+    }
+
+    /// 一盘多用：拖动滚花环，驱动当前选中的那一个参数
+    private func turnCollar(_ dx: CGFloat) {
+        if collarBase == nil {
+            collarBase = value(of: armed)
+            lastBucket = .nan
+        }
+        let base = collarBase ?? value(of: armed)
+
+        switch armed {
+        case .shutter:
+            let v = min(max(base * exp(Double(dx) / 130), 1.0 / 4000), 0.25)
+            manager.shutterSeconds = v
+            manager.applyExposure()
+            tick(at: log2(1 / v), step: 1.0 / 3.0)
+            showHUD("SHUTTER", shutterLabel(v), shutterProgress(v))
+
+        case .iso:
+            let stops: [Double] = [100, 200, 400, 800, 1600]
+            let index0 = stops.firstIndex(of: base) ?? 1
+            let index = min(max(index0 + Int((dx / 26).rounded()), 0), stops.count - 1)
+            let v = stops[index]
+            manager.iso = v
+            manager.applyExposure()
+            tick(at: Double(index), step: 1)
+            showHUD("ISO", "\(Int(v))", Double(index) / Double(stops.count - 1))
+
+        case .bias:
+            let raw = base + Double(dx) / 50 * 0.3
+            let v = min(max((raw / 0.3).rounded() * 0.3, -2), 2)
+            manager.bias = v
+            manager.applyExposure()
+            tick(at: v, step: 0.3)
+            showHUD("EXPOSURE", evLabel(v), (v + 2) / 4)
+
+        case .temperature:
+            let raw = base + Double(dx) / 5 * 100
+            let v = min(max((raw / 100).rounded() * 100, 3000), 8000)
+            manager.temperature = v
+            manager.applyWhiteBalance()
+            tick(at: v, step: 100)
+            showHUD("TEMP", "\(Int(v))K", (v - 3000) / 5000)
+
+        case .tint:
+            let raw = base + Double(dx) / 4 * 10
+            let v = min(max((raw / 10).rounded() * 10, -150), 150)
+            manager.tint = v
+            manager.applyWhiteBalance()
+            tick(at: v, step: 10)
+            showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", (v + 150) / 300)
+        }
+    }
+
+    /// 跨过一个档位就给一次棘轮触感
+    private func tick(at key: Double, step: Double) {
+        let bucket = (key / step).rounded()
+        if bucket != lastBucket {
+            lastBucket = bucket
+            Haptics.impact(.light)
+        }
+    }
+
+    /// 点选参数时先报一次当前值和它在轮盘上的位置
+    private func announceArmed() {
+        let v = value(of: armed)
+        switch armed {
+        case .shutter: showHUD("SHUTTER", shutterLabel(v), shutterProgress(v))
+        case .iso: showHUD("ISO", "\(Int(v))", isoProgress(v))
+        case .bias: showHUD("EXPOSURE", evLabel(v), (v + 2) / 4)
+        case .temperature: showHUD("TEMP", "\(Int(v))K", (v - 3000) / 5000)
+        case .tint: showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", (v + 150) / 300)
+        }
     }
 
     /// 对数位置（1/4000 … 1/4）映射成 0…1
@@ -399,6 +472,17 @@ struct RangefinderCameraView: View {
     private func isoProgress(_ value: Double) -> Double {
         let lo = log2(100.0), hi = log2(1600.0)
         return min(max((log2(value) - lo) / (hi - lo), 0), 1)
+    }
+
+    /// 无障碍微调：按 1/3 档进位
+    private func nudgeShutter(_ direction: Int) {
+        let step = pow(2.0, 1.0 / 3.0)
+        let value = min(max(manager.shutterSeconds * (direction > 0 ? step : 1 / step),
+                            1.0 / 4000), 0.25)
+        manager.shutterSeconds = value
+        manager.applyExposure()
+        Haptics.impact(.light)
+        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
     }
 
     private func showHUD(_ title: String, _ value: String, _ progress: Double) {
