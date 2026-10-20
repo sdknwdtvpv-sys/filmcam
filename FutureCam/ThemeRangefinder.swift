@@ -232,7 +232,7 @@ struct RangefinderCameraView: View {
         return HStack(spacing: 0) {
             ForEach(Array(keys.enumerated()), id: \.element) { index, key in
                 if index > 0 {
-                    Rectangle().fill(.white.opacity(0.14)).frame(width: 1, height: 22)
+                    Rectangle().fill(.black.opacity(0.16)).frame(width: 1, height: 22)
                 }
                 Button {
                     manager.selectParam(key)
@@ -243,10 +243,10 @@ struct RangefinderCameraView: View {
                         Text(paramTitle(key))
                             .font(t.monoFont(6.5, .bold))
                             .tracking(0.8)
-                            .foregroundColor(manager.activeParam == key ? t.accentGlow : .white.opacity(0.45))
+                            .foregroundColor(manager.activeParam == key ? t.accent : t.ink.opacity(0.5))
                         Text(paramValue(key, manager))
                             .font(t.displayFont(15, .medium))
-                            .foregroundColor(manager.activeParam == key ? lcdInk : .white.opacity(0.82))
+                            .foregroundColor(manager.activeParam == key ? t.ink : t.ink.opacity(0.72))
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 8)
@@ -265,10 +265,10 @@ struct RangefinderCameraView: View {
             Button { toggleGroup() } label: {
                 Text(manager.paramMode == .exposure ? "EXP" : "WB")
                     .font(t.monoFont(6.5, .bold))
-                    .foregroundColor(t.accentGlow)
+                    .foregroundColor(t.ink.opacity(0.62))
                     .frame(width: 34, height: 30)
                     .overlay(alignment: .leading) {
-                        Rectangle().fill(.white.opacity(0.14)).frame(width: 1, height: 22)
+                        Rectangle().fill(.black.opacity(0.16)).frame(width: 1, height: 22)
                     }
                     .contentShape(Rectangle())
             }
@@ -276,20 +276,23 @@ struct RangefinderCameraView: View {
             .accessibilityLabel("切换参数分组")
         }
         .frame(height: 32)
+        // 和按键同一套银色：铝面渐变 + 高光/暗边 + 投影，不再是一块黑色液晶
         .background(
-            RoundedRectangle(cornerRadius: 4)
-                .fill(LinearGradient(colors: [t.wellTop, t.wellBottom],
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(LinearGradient(colors: [t.faceTop, t.faceBottom],
                                      startPoint: .top, endPoint: .bottom))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 4)
-                .strokeBorder(LinearGradient(colors: [.black.opacity(0.85), .white.opacity(0.2)],
-                                             startPoint: .top, endPoint: .bottom), lineWidth: 1.2)
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .black.opacity(0.42)],
+                                             startPoint: .top, endPoint: .bottom),
+                              lineWidth: 1)
         )
         .overlay(alignment: .topLeading) {
-            // 玻璃反光
-            Rectangle().fill(.white.opacity(0.05)).frame(height: 1).padding(.top, 1)
+            // 铝面高光
+            Rectangle().fill(.white.opacity(0.18)).frame(height: 1).padding(.top, 1).padding(.horizontal, 3)
         }
+        .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
     }
 
     private func albumWindow(_ t: ThemeTokens) -> some View {
