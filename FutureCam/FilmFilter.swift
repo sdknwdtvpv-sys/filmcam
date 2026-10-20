@@ -69,7 +69,7 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .nightStreet: return "夜街 800"
         case .fresh:       return "晴野 200"
         case .moody:       return "暗涌 400"
-        case .neutral:     return "原生"
+        case .neutral:     return "第一卷"
         case .glowSkin:    return "冷白 200"
         case .cream:       return "奶油 400"
         case .warmSoft:    return "暖柔 200"

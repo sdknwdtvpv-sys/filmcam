@@ -63,6 +63,8 @@ struct AluminumFace: View {
 struct InsetWell<Content: View>: View {
     let tokens: ThemeTokens
     var radius: CGFloat? = nil
+    /// 底色染一层（比如当前胶卷的颜色）
+    var tint: Color? = nil
     @ViewBuilder var content: () -> Content
 
     var body: some View {
@@ -72,6 +74,11 @@ struct InsetWell<Content: View>: View {
                 RoundedRectangle(cornerRadius: r, style: .continuous)
                     .fill(LinearGradient(colors: [tokens.wellTop, tokens.wellBottom],
                                          startPoint: .top, endPoint: .bottom))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: r, style: .continuous)
+                            .fill(tint?.opacity(0.55) ?? .clear)
+                            .blendMode(.plusLighter)
+                    )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: r, style: .continuous)

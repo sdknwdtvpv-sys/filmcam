@@ -114,7 +114,9 @@ struct RangefinderCameraView: View {
                         manager.showFilmSheet = true
                     }) {
                         HStack(spacing: 4) {
-                            InsetWell(tokens: t, radius: 2) {
+                            // 窗底透出这卷的颜色，一眼能认出装的是什么
+                            InsetWell(tokens: t, radius: 2,
+                                      tint: canisterColor(manager.selectedPreset)) {
                                 Text(manager.selectedPreset.label)
                                     .font(t.monoFont(8, .bold))
                                     .foregroundColor(lcdInk)

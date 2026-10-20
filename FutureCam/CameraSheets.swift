@@ -85,33 +85,6 @@ struct FilmSheet: View {
             }
             .background(LeatherPanel())
 
-            // 调色导轨：叠在胶片之上，可关掉
-            Silkscreen(text: "调色 · 叠在胶片之上", color: .white.opacity(0.32),
-                       size: 5.5, tracking: 1.6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 12)
-                .padding(.top, 4)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    LookChip(title: "原色", color: .white.opacity(0.25),
-                             selected: manager.selectedLook == nil, tokens: t) {
-                        manager.selectedLook = nil
-                        Haptics.impact(.light)
-                    }
-                    ForEach(FilmPreset.looks) { preset in
-                        LookChip(title: preset.label, color: canisterColor(preset),
-                                 selected: manager.selectedLook == preset, tokens: t) {
-                            manager.selectedLook = preset
-                            Haptics.impact(.light)
-                        }
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-            }
-            .background(LeatherPanel())
-
             // 当前这卷：型号 · 张数
             HStack(spacing: 6) {
                 Silkscreen(text: manager.roll.numberText, color: .white.opacity(0.38),
