@@ -53,6 +53,9 @@ struct CameraRoot: View {
             #if DEBUG
             DebugHarness.applyLaunchState(manager)
             if DebugHarness.shouldStubPreview { manager.enableStubPreview() }
+            if DebugHarness.shouldShowDeveloping {
+                manager.capturedImage = DebugHarness.stubPreviewFrame()
+            }
             #endif
             manager.requestAccessAndConfigure()
         }
