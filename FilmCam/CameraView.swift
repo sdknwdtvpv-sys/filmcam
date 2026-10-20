@@ -79,6 +79,7 @@ struct CameraView: View {
             // 保存提示
             if manager.showVideoSaved { ToastVideoSaved() }
             if manager.photoSaveBlocked { ToastPhotoBlocked() }
+            if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
             // 弹层
             if manager.showFilmSheet { FilmSheet() }
@@ -1009,6 +1010,34 @@ struct ToastPhotoBlocked: View {
             .padding(.bottom, 40)
         }
         .transition(.move(edge: .bottom))
+    }
+}
+
+struct ToastDoubleExposureFirst: View {
+    @EnvironmentObject var manager: CameraManager
+
+    var body: some View {
+        VStack {
+            Spacer()
+            HStack(spacing: 10) {
+                Image(systemName: "1.circle.fill").foregroundColor(CameraTheme.amber)
+                Text("第一张已曝光 · 请拍第二张").foregroundColor(CameraTheme.ink)
+                    .font(CameraTheme.mono(13, weight: .medium))
+                Button("好") { manager.clearDoubleExposureFirst() }
+                    .foregroundColor(CameraTheme.amber)
+                    .font(CameraTheme.mono(13, weight: .semibold))
+            }
+            .padding(.horizontal, 20).padding(.vertical, 12)
+            .background(CameraTheme.bgDeep.opacity(0.9))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(CameraTheme.hairline, lineWidth: 1))
+            .padding(.bottom, 40)
+        }
+        .transition(.move(edge: .bottom))
+        .task {
+            try? await Task.sleep(nanoseconds: 2_500_000_000)
+            manager.clearDoubleExposureFirst()
+        }
     }
 }
 

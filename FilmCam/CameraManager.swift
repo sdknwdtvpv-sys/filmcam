@@ -66,6 +66,8 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var recordedVideoURL: URL?
     @Published var showVideoSaved = false
+    /// 双曝第一张已曝光提示（短暂出现，不弹显影层）
+    @Published var showDoubleExposureFirst = false
 
     // 手动参数（UI 状态，device 内部会 clamp 到支持范围）
     @Published var iso: Double = 200
@@ -108,6 +110,7 @@ final class CameraManager: NSObject, ObservableObject {
         }
         controller.onPhoto = { [weak self] image in
             Task { @MainActor in
+                self?.showDoubleExposureFirst = false
                 self?.capturedImage = image
                 if self?.mode == .doubleExposure, self?.doubleExposureStep == 1 {
                     self?.doubleExposureStep = 2
@@ -117,8 +120,9 @@ final class CameraManager: NSObject, ObservableObject {
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
             Task { @MainActor in
+                // 第一张只作为合成底图，不进入拍立得显影层
                 self?.doubleExposureStep = 1
-                self?.capturedImage = image
+                self?.showDoubleExposureFirst = true
             }
         }
         controller.onVideoSaved = { [weak self] url in
@@ -243,6 +247,7 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func clearVideoSaved() { showVideoSaved = false; recordedVideoURL = nil }
+    func clearDoubleExposureFirst() { showDoubleExposureFirst = false }
 
     private func modeChanged(_ m: CameraMode) {
         controller.setDoubleExposureEnabled(m == .doubleExposure)
