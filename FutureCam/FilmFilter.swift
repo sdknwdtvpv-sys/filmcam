@@ -16,6 +16,11 @@ enum FilmPreset: String, CaseIterable, Identifiable {
     case frost
     case ochre
     case abyss
+    // 以下 4 个来自公开调色配方，翻译成参数化调色层（不用 LUT）
+    case clear
+    case nightStreet
+    case fresh
+    case moody
 
     var id: String { rawValue }
 
@@ -34,6 +39,41 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .frost:       return "霜白 400"
         case .ochre:       return "赭石 200"
         case .abyss:       return "深潭 1600"
+        case .clear:       return "清透 100"
+        case .nightStreet: return "夜街 800"
+        case .fresh:       return "晴野 200"
+        case .moody:       return "暗涌 400"
+        }
+    }
+
+    /// 参数化调色（来自公开的滑块配方，按各自意图重新标定）。
+    /// 注意：那些数值是相对 iPhone 照片 App 基线做的增量，直接照搬会走样，
+    /// 这里按本 App 的基线重新给了量；名字一律自造，不引用任何厂商或人名。
+    var grade: GradeSettings? {
+        switch self {
+        case .clear:
+            // 清透：压高光、提阴影、略降饱和、偏冷、加清晰度
+            return GradeSettings(exposure: 0.04, highlight: -0.32, shadow: 0.28,
+                                 contrast: 0.96, saturation: 0.91, temperature: -0.09,
+                                 sharpness: 0.22, clarity: 0.12)
+        case .nightStreet:
+            // 夜街：更狠地压高光、抬阴影、降饱和、更冷
+            return GradeSettings(exposure: 0.03, highlight: -0.45, shadow: 0.38,
+                                 contrast: 0.94, blackPoint: 0.08, saturation: 0.86,
+                                 temperature: -0.14, sharpness: 0.20)
+        case .fresh:
+            // 晴野：大幅提亮阴影、提饱和、偏冷偏绿
+            return GradeSettings(exposure: 0.05, highlight: -0.30, shadow: 0.55,
+                                 contrast: 0.88, brightness: 0.04, saturation: 1.12,
+                                 temperature: -0.10, tint: -0.08,
+                                 sharpness: 0.18, clarity: 0.16)
+        case .moody:
+            // 暗涌：压整体亮度、降饱和、偏暖、加对比
+            return GradeSettings(exposure: -0.16, highlight: -0.20, shadow: 0.24,
+                                 contrast: 1.10, brightness: -0.05, saturation: 0.82,
+                                 tint: 0.14, vignette: 0.18, clarity: 0.14)
+        default:
+            return nil
         }
     }
 
@@ -52,6 +92,10 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .frost:       return "400"
         case .ochre:       return "200"
         case .abyss:       return "1600"
+        case .clear:       return "100"
+        case .nightStreet: return "800"
+        case .fresh:       return "200"
+        case .moody:       return "400"
         }
     }
 }
@@ -67,6 +111,24 @@ private struct FilterParams {
     var leakColor: (r: CGFloat, g: CGFloat, b: CGFloat)
     var leakAlpha: CGFloat
     var lutIntensity: CGFloat     // LUT 叠加强度（0 = 不使用 LUT）
+}
+
+/// 参数化调色层：对应照片 App 里那套滑块（曝光/高光/阴影/对比/黑点/饱和/自然饱和/色温/色调/暗角/锐度/清晰度）。
+/// 取值范围统一成 -1…1（除对比、饱和围绕 1.0），方便从配方里换算。
+struct GradeSettings: Equatable {
+    var exposure: Double = 0      // EV，-1…1 表示 -2…+2 档
+    var highlight: Double = 0     // -1…1
+    var shadow: Double = 0        // -1…1
+    var contrast: Double = 1.0    // 0.6…1.6
+    var brightness: Double = 0    // -0.3…0.3
+    var blackPoint: Double = 0    // -1…1
+    var saturation: Double = 1.0  // 0…2
+    var vibrance: Double = 0      // 0…1
+    var temperature: Double = 0   // -1…1，换算成 ±900K
+    var tint: Double = 0          // -1…1
+    var vignette: Double = 0      // 0…1
+    var sharpness: Double = 0     // 0…1
+    var clarity: Double = 0       // 0…1
 }
 
 /// 颗粒参数：强度决定压在画面上的厚度，scale 决定粗细（ISO 越高越粗）
@@ -153,7 +215,12 @@ struct FilmFilter {
             img = LUTFilter.apply(lut, to: img)
         }
 
-        // 5. 这卷的轻微偏色（±160K 以内，只做连续性不做风格）
+        // 5. 参数化调色（照片 App 那套滑块）
+        if let grade = preset.grade {
+            img = applyGrade(img, grade)
+        }
+
+        // 5b. 这卷的轻微偏色（±160K 以内，只做连续性不做风格）
         if let traits, abs(traits.tintShift) > 0.05,
            let f = CIFilter(name: "CITemperatureAndTint") {
             f.setValue(img, forKey: kCIInputImageKey)
@@ -167,6 +234,82 @@ struct FilmFilter {
         // 颗粒按 ∞ 尺寸生成就完全落不到画面上（这个坑让第一版颗粒彻底不可见）。
         if grain.intensity > 0.001 {
             img = applyGrain(img.cropped(to: image.extent), settings: grain)
+        }
+
+        return img.cropped(to: image.extent)
+    }
+
+    /// 参数化调色：按滑块语义依次施加 Core Image 滤镜
+    static func applyGrade(_ image: CIImage, _ g: GradeSettings) -> CIImage {
+        var img = image.cropped(to: image.extent)   // 先裁，避免无穷 extent 里做重活
+
+        if g.exposure != 0, let f = CIFilter(name: "CIExposureAdjust") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.exposure * 2.0, forKey: kCIInputEVKey)
+            img = f.outputImage ?? img
+        }
+
+        if g.highlight != 0 || g.shadow != 0, let f = CIFilter(name: "CIHighlightShadowAdjust") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            // 照片 App 的高光 -100 相当于压低高光，这里正数=压
+            f.setValue(1.0 + g.highlight * 0.9, forKey: "inputHighlightAmount")
+            f.setValue(1.0 + g.shadow * 0.9, forKey: "inputShadowAmount")
+            img = f.outputImage ?? img
+        }
+
+        if g.contrast != 1.0 || g.saturation != 1.0 || g.brightness != 0,
+           let f = CIFilter(name: "CIColorControls") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.contrast, forKey: kCIInputContrastKey)
+            f.setValue(g.saturation, forKey: kCIInputSaturationKey)
+            f.setValue(g.brightness, forKey: kCIInputBrightnessKey)
+            img = f.outputImage ?? img
+        }
+
+        if g.vibrance > 0.001, let f = CIFilter(name: "CIVibrance") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.vibrance, forKey: "inputAmount")
+            img = f.outputImage ?? img
+        }
+
+        if g.temperature != 0 || g.tint != 0, let f = CIFilter(name: "CITemperatureAndTint") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
+            f.setValue(CIVector(x: 6500 + g.temperature * 900, y: g.tint * 60),
+                       forKey: "inputTargetNeutral")
+            img = f.outputImage ?? img
+        }
+
+        // 黑点：用曲线把最暗端抬起来或压下去
+        if abs(g.blackPoint) > 0.01, let f = CIFilter(name: "CIToneCurve") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            let lift = max(0, g.blackPoint) * 0.25
+            let crush = max(0, -g.blackPoint) * 0.10
+            f.setValue(CIVector(x: 0, y: lift), forKey: "inputPoint0")
+            f.setValue(CIVector(x: 0.25, y: 0.25 + lift * 0.4 - crush * 0.4), forKey: "inputPoint1")
+            f.setValue(CIVector(x: 0.5, y: 0.5 + lift * 0.15 - crush * 0.1), forKey: "inputPoint2")
+            f.setValue(CIVector(x: 1.0, y: 1.0), forKey: "inputPoint4")
+            img = f.outputImage ?? img
+        }
+
+        if g.vignette > 0.001, let f = CIFilter(name: "CIVignette") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.vignette * 2.0, forKey: "inputIntensity")
+            f.setValue(1.2, forKey: "inputRadius")
+            img = f.outputImage ?? img
+        }
+
+        if g.clarity > 0.001, let f = CIFilter(name: "CIUnsharpMask") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.clarity * 0.8, forKey: kCIInputIntensityKey)
+            f.setValue(12.0, forKey: kCIInputRadiusKey)
+            img = f.outputImage ?? img
+        }
+
+        if g.sharpness > 0.001, let f = CIFilter(name: "CISharpenLuminance") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(g.sharpness * 0.7, forKey: kCIInputSharpnessKey)
+            img = f.outputImage ?? img
         }
 
         return img.cropped(to: image.extent)
@@ -282,6 +425,11 @@ struct FilmFilter {
             return FilterParams(proceduralColor: false, neutral: 6100, saturation: 1.0, contrast: 1.0,
                                 brightness: 0.0, vignette: 0.68, vignetteRadius: 1.2,
                                 leakColor: (0.75, 0.85, 1.0), leakAlpha: 0.12, lutIntensity: 0.95)
+        // 配方类预设：不用 LUT、不加暗角与漏光，全部交给参数化调色层
+        case .clear, .nightStreet, .fresh, .moody:
+            return FilterParams(proceduralColor: false, neutral: 6500, saturation: 1.0, contrast: 1.0,
+                                brightness: 0.0, vignette: 0.0, vignetteRadius: 1.0,
+                                leakColor: (1, 1, 1), leakAlpha: 0.0, lutIntensity: 0.0)
         }
     }
 }

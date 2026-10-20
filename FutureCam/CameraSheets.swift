@@ -137,6 +137,10 @@ struct FilmCanister: View {
         case .frost:       return Color(hex: 0x7C8790)
         case .ochre:       return Color(hex: 0xA8763C)
         case .abyss:       return Color(hex: 0x35485E)
+        case .clear:       return Color(hex: 0x3E8FA8)
+        case .nightStreet: return Color(hex: 0x2B3A55)
+        case .fresh:       return Color(hex: 0x6FA84E)
+        case .moody:       return Color(hex: 0x6B4A3A)
         }
     }
 
