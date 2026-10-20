@@ -559,6 +559,7 @@ final class CameraManager: NSObject, ObservableObject {
         let fresh = rolls.load(preset)
         selectedPreset = preset
         syncGrain()
+        syncWidget()
         notice = CameraNotice(title: "已装卷", value: "\(preset.label) \(fresh.numberText)")
         return fresh
     }
@@ -798,7 +799,22 @@ final class CameraManager: NSObject, ObservableObject {
     #endif
 
     /// 计数器进位（拍立得/胶片带主题用）
+    /// 把当前卷的进度写给 Widget（App Group 不可用时静默失败）
+    private func syncWidget() {
+        let roll = rolls.current
+        let ui = UIColor(canisterColor(roll.preset))
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        WidgetBridge.publish(film: roll.preset.label,
+                             rollNumber: roll.number,
+                             used: roll.used,
+                             capacity: roll.capacity,
+                             colorHex: String(format: "%02X%02X%02X",
+                                              Int(r * 255), Int(g * 255), Int(b * 255)))
+    }
+
     private func bumpFrameCount() {
+        defer { syncWidget() }
         frameCount += 1
         UserDefaults.standard.set(frameCount, forKey: "futurecam.frameCount")
     }
