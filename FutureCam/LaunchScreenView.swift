@@ -19,6 +19,7 @@ struct LaunchScreenView: View {
 
     @State private var start = Date()
     @State private var leaving = false
+    @State private var markFrame: CGRect = .zero
 
     private let wordmark = "FUTURE CAM"
 
@@ -50,6 +51,11 @@ struct LaunchScreenView: View {
                                startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
 
+                if style == .noise, !WordmarkField.shared.points.isEmpty {
+                    particleCloud(t, converge: converge)
+                        .allowsHitTesting(false)
+                }
+
                 scanBand(t, elapsed: elapsed, reveal: reveal)
 
                 cornerTicks(t, opacity: 0.36 * reveal)
@@ -66,6 +72,7 @@ struct LaunchScreenView: View {
                     .opacity(reveal)
                 }
             }
+            .onPreferenceChange(MarkFrameKey.self) { markFrame = $0 }
             .opacity(leaving ? 0 : 1)
             .scaleEffect(leaving ? 1.04 : 1)
         }
@@ -94,9 +101,67 @@ struct LaunchScreenView: View {
             if WordmarkField.shared.points.isEmpty {
                 engraved(t, sweep: -1).opacity(reveal)
             } else {
-                noiseWordmark(t, reveal: reveal, converge: converge)
+                engraved(t, sweep: -1)
+                    .opacity(max(0, (Double(converge) - 0.62) / 0.38))
+                    .background(
+                        GeometryReader { proxy in
+                            Color.clear.preference(key: MarkFrameKey.self,
+                                                   value: proxy.frame(in: .global))
+                        }
+                    )
             }
         }
+    }
+
+    /// 粒子层：全屏铺开，从屏幕边缘一路收拢到刻字上
+    private func particleCloud(_ t: ThemeTokens, converge: Double) -> some View {
+        let field = WordmarkField.shared
+        let settle = Double(min(max(converge, 0), 1))
+        let sharp = max(0, (settle - 0.62) / 0.38)
+        let dotsFade = 1 - sharp
+        let centre = markFrame == .zero
+            ? CGPoint(x: 0.5, y: 0.5)
+            : CGPoint(x: markFrame.midX, y: markFrame.midY)
+        let targetSize = markFrame == .zero ? field.size : markFrame.size
+
+        return GeometryReader { geo in
+            let radius = max(geo.size.width, geo.size.height) * 0.78
+
+            Canvas { ctx, _ in
+                for (index, point) in field.points.enumerated() {
+                    let r1 = Double(hash(index &* 3 &+ 1) % 10_000) / 10_000
+                    let r2 = Double(hash(index &* 3 &+ 2) % 10_000) / 10_000
+                    let r3 = Double(hash(index &* 3 &+ 3) % 10_000) / 10_000
+
+                    // 起点撒在屏幕外圈，所以是「从四面八方收进来」
+                    let angle = r1 * 2 * .pi
+                    let distance = radius * (0.55 + 0.75 * r2)
+                    let start = CGPoint(x: centre.x + cos(angle) * distance,
+                                        y: centre.y + sin(angle) * distance)
+
+                    let target = CGPoint(x: centre.x + (point.x - 0.5) * targetSize.width,
+                                         y: centre.y + (point.y - 0.5) * targetSize.height)
+
+                    // 每颗粒子错开到达，形成一波一波收拢
+                    let delay = 0.32 * r3
+                    let local = max(0, min(1, (settle - delay) / max(0.0001, 1 - delay)))
+                    let eased = 1 - pow(1 - local, 3)
+
+                    let x = start.x + (target.x - start.x) * eased
+                    let y = start.y + (target.y - start.y) * eased
+                    let dotRadius = 0.9 + 1.7 * (1 - eased)
+                    let alpha = (0.22 + 0.78 * local) * dotsFade
+                    guard alpha > 0.01 else { continue }
+
+                    ctx.fill(
+                        Path(ellipseIn: CGRect(x: x - dotRadius, y: y - dotRadius,
+                                               width: dotRadius * 2, height: dotRadius * 2)),
+                        with: .color(t.ink.opacity(alpha)))
+                }
+            }
+        }
+        .ignoresSafeArea()
+        .opacity(markFrame == .zero ? 0 : 1)
     }
 
     /// 刻进铝里的字：深墨 + 下缘一道白边
@@ -231,6 +296,15 @@ struct LaunchScreenView: View {
 
 /// 从字体轮廓里直接采点，不走位图渲染 —— 冷启动最早期渲染管线还没就绪，
 /// UIGraphicsImageRenderer 有可能返回空图，那样粒子会整个消失。
+/// 刻字在屏幕上的实际位置，粒子层据此瞄准
+struct MarkFrameKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
 @MainActor
 struct WordmarkField {
     static let shared = build()
@@ -278,7 +352,7 @@ struct WordmarkField {
 
         // 网格采样：落在字形内部的点留下。Core Text 的 y 向上，画布 y 向下，这里翻转
         var points: [CGPoint] = []
-        let step: CGFloat = 1.1
+        let step: CGFloat = 0.85
         var y = bounds.minY
         while y < bounds.maxY {
             var x = bounds.minX
@@ -295,6 +369,6 @@ struct WordmarkField {
         #if DEBUG
         NSLog("[Launch] 刻字轮廓采样 %d 点", points.count)
         #endif
-        return WordmarkField(points: points, size: bounds.size)
+        return WordmarkField(points: Array(points.prefix(2600)), size: bounds.size)
     }
 }
