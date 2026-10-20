@@ -1,5 +1,7 @@
 import AVFoundation
 import CoreImage
+import ImageIO
+import UniformTypeIdentifiers
 import UIKit
 import os
 
@@ -43,11 +45,13 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private var audioWriterInput: AVAssetWriterInput?
     nonisolated(unsafe) private var adapter: AVAssetWriterInputPixelBufferAdaptor?
     nonisolated(unsafe) private var recording = false
+    /// 拍照闪光模式（UI 循环 off/auto/on）
+    nonisolated(unsafe) private var flashMode: AVCaptureDevice.FlashMode = .off
     nonisolated(unsafe) private var sessionStarted = false
     nonisolated(unsafe) private var recordedURL: URL?
 
     var onPreview: (@Sendable (UIImage) -> Void)?
-    var onPhoto: (@Sendable (UIImage) -> Void)?
+    var onPhoto: (@Sendable (UIImage, Data?) -> Void)?
     var onDoubleExposureFirstShot: (@Sendable (UIImage) -> Void)?
     var onVideoSaved: (@Sendable (URL) -> Void)?
     /// 切换摄像头成功后回调真实方向（true = 前摄），让 UI 与硬件状态保持一致
@@ -94,10 +98,17 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
                        name: .AVCaptureSessionRuntimeError, object: session)
         nc.addObserver(self, selector: #selector(sessionNeedsRestart),
                        name: .AVCaptureSessionInterruptionEnded, object: session)
+        nc.addObserver(self, selector: #selector(sessionWasInterrupted),
+                       name: .AVCaptureSessionWasInterrupted, object: session)
     }
 
     @objc private func sessionNeedsRestart(_ note: Notification) {
         resume()
+    }
+
+    /// 来电/被打断：先把录制正常收尾，别留一个没封口的 mov
+    @objc private func sessionWasInterrupted(_ note: Notification) {
+        stopRecording()
     }
 
     private func configureSession() {
@@ -130,6 +141,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         videoOutput.setSampleBufferDelegate(self, queue: processingQueue)
 
         if session.canAddOutput(photoOutput) { session.addOutput(photoOutput) }
+        // 默认是 .balanced，白白丢掉一部分计算摄影画质
+        photoOutput.maxPhotoQualityPrioritization = .quality
 
         // 音频（需麦克风授权；未授权则静音录制）
         if AVCaptureDevice.authorizationStatus(for: .audio) == .authorized,
@@ -193,8 +206,24 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     func capture() {
         guard session.isRunning else { return }
         let settings = AVCapturePhotoSettings()
-        settings.flashMode = .auto
+        // 当前镜头不支持该闪光模式时退回关闭，避免 capturePhoto 抛异常
+        let wanted = flashMode
+        settings.flashMode = photoOutput.supportedFlashModes.contains(wanted) ? wanted : .off
+        settings.photoQualityPrioritization = .quality
         photoOutput.capturePhoto(with: settings, delegate: self)
+    }
+
+    /// 拍照闪光模式
+    func setFlashMode(_ mode: AVCaptureDevice.FlashMode) {
+        flashMode = mode
+    }
+
+    /// 视频补光（手电）
+    func setTorch(_ on: Bool) {
+        guard let device = videoDevice, device.hasTorch else { return }
+        guard (try? device.lockForConfiguration()) != nil else { return }
+        defer { device.unlockForConfiguration() }
+        device.torchMode = on ? .on : .off
     }
 
     // MARK: - 手动参数
@@ -472,13 +501,23 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             if let base = doubleExposureBase {
                 let blended = FilmFilter.doubleExposure(base: base, overlay: filteredImage)
                 doubleExposureBase = nil
-                onPhoto?(stampImage(blended))
+                deliver(stampImage(blended), metadata: photo.metadata)
             } else {
                 doubleExposureBase = filteredImage
                 onDoubleExposureFirstShot?(filteredImage)
             }
         } else {
-            onPhoto?(stampImage(filteredImage))
+            deliver(stampImage(filteredImage), metadata: photo.metadata)
         }
+    }
+
+    /// 把成片重新编码成 JPEG，并把原始 EXIF 带回去。
+    /// 旧实现直接传 UIImage 给 Photos，重渲染后元数据全丢（相册里看不到机型/ISO/GPS）。
+    private func deliver(_ image: UIImage, metadata: [String: Any]) {
+        onPhoto?(image, jpegWithMetadata(image, metadata: metadata))
+    }
+
+    private func jpegWithMetadata(_ image: UIImage, metadata: [String: Any]) -> Data? {
+        PhotoEncoding.jpeg(image, metadata: metadata)
     }
 }

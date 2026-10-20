@@ -69,11 +69,11 @@ enum AlbumStore {
     // MARK: - 写入
 
     @discardableResult
-    static func savePhoto(_ image: UIImage) -> AlbumItem? {
+    static func savePhoto(_ image: UIImage, jpeg: Data? = nil) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: photosURL, withIntermediateDirectories: true)
         let name = "futurecam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
         let url = photosURL.appendingPathComponent(name)
-        guard let data = image.jpegData(compressionQuality: 0.9) else { return nil }
+        guard let data = jpeg ?? image.jpegData(compressionQuality: 0.9) else { return nil }
         do {
             try data.write(to: url)
             return AlbumItem(id: name, url: url, kind: .photo, createdAt: Date())

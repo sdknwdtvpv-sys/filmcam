@@ -62,6 +62,22 @@ struct RangefinderCameraView: View {
 
                 Spacer(minLength: 2)
 
+                // 闪光/补光：关 → 自动 → 开，视频模式下"开"同时点着手电
+                VStack(spacing: 2) {
+                    PhysicalButton(tokens: t, radius: 4, action: { manager.cycleFlash() }) {
+                        Image(systemName: manager.flashState.symbol)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(manager.flashState == .off ? t.inkDim : t.accent)
+                            .frame(width: 34, height: 26)
+                            .contentShape(Rectangle())
+                    }
+                    Silkscreen(text: "FLASH \(manager.flashState.label)",
+                               color: t.ink.opacity(0.5), size: 5, tracking: 0.5)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("闪光 \(manager.flashState.label)，点按切换，当前模式 \(manager.mode.label)")
+                .accessibilityAddTraits(.isButton)
+
                 // 胶片型号窗：像机背上的胶片确认窗，点一下开仓换片
                 Button {
                     manager.showFilmSheet = true

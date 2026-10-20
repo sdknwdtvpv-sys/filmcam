@@ -3,6 +3,43 @@ import UIKit
 import Photos
 import Combine
 
+/// 闪光策略：拍照用 off/auto/on 循环，视频里 on 等于常亮补光
+enum FlashState: String, CaseIterable {
+    case off, auto, on
+
+    var label: String {
+        switch self {
+        case .off: return "关"
+        case .auto: return "自动"
+        case .on: return "开"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .off: return "bolt.slash"
+        case .auto: return "bolt.badge.automatic"
+        case .on: return "bolt.fill"
+        }
+    }
+
+    var next: FlashState {
+        switch self {
+        case .off: return .auto
+        case .auto: return .on
+        case .on: return .off
+        }
+    }
+
+    var deviceMode: AVCaptureDevice.FlashMode {
+        switch self {
+        case .off: return .off
+        case .auto: return .auto
+        case .on: return .on
+        }
+    }
+}
+
 /// 拍摄模式
 enum CameraMode: String, CaseIterable, Identifiable {
     case photo
@@ -112,6 +149,10 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var zoomFactor: CGFloat = 1
     /// 是否前摄
     @Published var isFrontCamera = false
+    /// 闪光 / 视频补光
+    @Published var flashState: FlashState = .off
+    /// 保存视频时申请的后台时间，避免切后台被立刻挂起导致写盘中断
+    private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
     /// 胶片计数器（跨启动累计，暗房工单 / 胶片带主题的主视觉）
     @Published var frameCount: Int = UserDefaults.standard.integer(forKey: "futurecam.frameCount")
 
@@ -159,7 +200,7 @@ final class CameraManager: NSObject, ObservableObject {
         controller.onPreview = { [weak self] image in
             Task { @MainActor in self?.handlePreviewFrame(image) }
         }
-        controller.onPhoto = { [weak self] image in
+        controller.onPhoto = { [weak self] image, jpeg in
             Task { @MainActor in
                 self?.showDoubleExposureFirst = false
                 self?.capturedImage = image
@@ -167,7 +208,7 @@ final class CameraManager: NSObject, ObservableObject {
                 if self?.mode == .doubleExposure, self?.doubleExposureStep == 1 {
                     self?.doubleExposureStep = 2
                 }
-                self?.saveToLibrary(image)
+                self?.saveToLibrary(image, jpeg: jpeg)
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -252,9 +293,28 @@ final class CameraManager: NSObject, ObservableObject {
         refreshStorage()
     }
 
-    /// 进入后台：主动停会话（系统也会停，但我们自己要能恢复）
+    /// 进入后台：正在录制就先收尾（否则 mov 永远不封口），再停会话。
+    /// 收尾和写盘期间申请后台时间，避免文件还没写完进程就被挂起。
     func pauseCamera() {
+        if isRecording {
+            isRecording = false
+            beginBackgroundGrace()
+            controller.stopRecording()
+        }
         controller.pause()
+    }
+
+    private func beginBackgroundGrace() {
+        guard backgroundTask == .invalid else { return }
+        backgroundTask = UIApplication.shared.beginBackgroundTask(withName: "FutureCam.finishRecording") { [weak self] in
+            self?.endBackgroundGrace()
+        }
+    }
+
+    private func endBackgroundGrace() {
+        guard backgroundTask != .invalid else { return }
+        UIApplication.shared.endBackgroundTask(backgroundTask)
+        backgroundTask = .invalid
     }
 
     /// 读取可用空间，并按 1080p30（≈12 Mbps）估算剩余可录时长。
@@ -290,9 +350,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     /// 把一张成片写入本地沙盒，供应用内相册展示（不依赖系统相册权限）
-    private func persistLocally(_ image: UIImage) {
+    private func persistLocally(_ image: UIImage, jpeg: Data?) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let item = AlbumStore.savePhoto(image) else { return }
+            guard let item = AlbumStore.savePhoto(image, jpeg: jpeg) else { return }
             DispatchQueue.main.async {
                 if self?.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
                     self?.albumItems.insert(item, at: 0)
@@ -352,6 +412,14 @@ final class CameraManager: NSObject, ObservableObject {
     // MARK: - 控制
     func capturePhoto() { controller.capture() }
 
+    /// 闪光循环：关 → 自动 → 开；视频模式下"开"同时点着手电
+    func cycleFlash() {
+        flashState = flashState.next
+        controller.setFlashMode(flashState.deviceMode)
+        controller.setTorch(mode == .video && flashState == .on)
+        Haptics.impact(.light)
+    }
+
     /// 前后摄切换（录制中不允许，避免把一条视频写成两种镜头）
     func switchCamera() {
         guard !isRecording else { return }
@@ -402,6 +470,7 @@ final class CameraManager: NSObject, ObservableObject {
 
     private func modeChanged(_ m: CameraMode) {
         controller.setDoubleExposureEnabled(m == .doubleExposure)
+        controller.setTorch(m == .video && flashState == .on)
         if m != .doubleExposure { doubleExposureStep = 0 }
         if isRecording { isRecording = false; controller.stopRecording() }
     }
@@ -448,9 +517,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     // MARK: - 保存到相册
-    private func saveToLibrary(_ image: UIImage) {
+    private func saveToLibrary(_ image: UIImage, jpeg: Data?) {
         // 本地相册（应用内）始终保存，不依赖系统相册权限
-        persistLocally(image)
+        persistLocally(image, jpeg: jpeg)
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
@@ -459,7 +528,13 @@ final class CameraManager: NSObject, ObservableObject {
                 return
             }
             PHPhotoLibrary.shared().performChanges({
-                PHAssetChangeRequest.creationRequestForAsset(from: image)
+                if let jpeg {
+                    // 走 data 资源，EXIF 才会跟着进系统相册
+                    let request = PHAssetCreationRequest.forAsset()
+                    request.addResource(with: .photo, data: jpeg, options: nil)
+                } else {
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                }
             }) { success, _ in
                 Task { @MainActor in
                     // 成功不弹窗（应用内相册里已经能看到），失败才引导
@@ -483,7 +558,10 @@ final class CameraManager: NSObject, ObservableObject {
     private func saveVideoToLibrary(_ url: URL) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
-                Task { @MainActor in self?.videoSaveBlocked = true }
+                Task { @MainActor in
+                    self?.videoSaveBlocked = true
+                    self?.endBackgroundGrace()
+                }
                 return
             }
             PHPhotoLibrary.shared().performChanges({
@@ -495,6 +573,7 @@ final class CameraManager: NSObject, ObservableObject {
                     } else {
                         self?.videoSaveBlocked = true
                     }
+                    self?.endBackgroundGrace()
                 }
             }
         }

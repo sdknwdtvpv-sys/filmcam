@@ -28,6 +28,31 @@ enum DebugHarness {
     /// `-fcShowDeveloping`：启动即弹显影层（用合成图），方便截图检查
     static var shouldShowDeveloping: Bool { arguments.contains("-fcShowDeveloping") }
 
+    /// `-fcTestEXIF`：用真实编码器写一张带 EXIF 的样片到 Documents，供外部核对元数据
+    static var shouldTestEXIF: Bool { arguments.contains("-fcTestEXIF") }
+
+    static func writeEXIFSample() {
+        guard let image = stubPreviewFrame() else { return }
+        let metadata: [String: Any] = [
+            kCGImagePropertyTIFFDictionary as String: [
+                kCGImagePropertyTIFFMake as String: "Apple",
+                kCGImagePropertyTIFFModel as String: "iPhone 18 Pro",
+            ],
+            kCGImagePropertyExifDictionary as String: [
+                kCGImagePropertyExifISOSpeedRatings as String: [200],
+                kCGImagePropertyExifExposureTime as String: 1.0 / 60,
+                kCGImagePropertyExifFNumber as String: 1.78,
+                kCGImagePropertyExifLensModel as String: "iPhone 18 Pro back camera 6.86mm f/1.78",
+                kCGImagePropertyExifDateTimeOriginal as String: "2026:10:21 01:20:00",
+            ],
+        ]
+        guard let data = PhotoEncoding.jpeg(image, metadata: metadata) else { return }
+        let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("exif-sample.jpg")
+        try? data.write(to: url)
+        print("[FutureCam] EXIF sample written:", url.path)
+    }
+
     /// 启动时按参数切到指定界面
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {
