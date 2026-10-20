@@ -74,11 +74,26 @@ struct RangefinderCameraView: View {
                 }
                 .padding(.top, 4)
 
-                // ISO 盘：点一下切档（快门速度挪到机身右下的大滚花环）
-                TopDial(tokens: t,
-                        caption: "ISO",
-                        value: "\(Int(manager.iso))",
-                        onTap: cycleISO)
+                // 胶片型号窗：像机背上的胶片确认窗，点一下开仓换片
+                Button {
+                    manager.showFilmSheet = true
+                    Haptics.impact(.light)
+                } label: {
+                    VStack(spacing: 2) {
+                        InsetWell(tokens: t, radius: 3) {
+                            Text(manager.selectedPreset.label)
+                                .font(t.monoFont(8, .bold))
+                                .foregroundColor(lcdInk)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .frame(width: 62, height: 17)
+                        }
+                        Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("当前胶片 \(manager.selectedPreset.label)，点按更换")
 
                 ScrewHead(size: 7)
                     .padding(.top, 6)

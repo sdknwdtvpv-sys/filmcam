@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		110EC93211024BC9AF172728 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0092A6C0C53C444BA566BEB7 /* CameraManager.swift */; };
-		65C3DAA474F04F3A9B21589A /* CameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAD9F247B4644DB8C366859 /* CameraView.swift */; };
+		65C3DAA474F04F3A9B21589A /* SharedOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */; };
 		9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */; };
 		B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D2E3F4A50617283940ABC /* FilmPreview.swift */; };
 		7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */; };
@@ -33,7 +33,7 @@
 
 /* Begin PBXFileReference section */
 		0092A6C0C53C444BA566BEB7 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
-		3CAD9F247B4644DB8C366859 /* CameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraView.swift; sourceTree = "<group>"; };
+		3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedOverlays.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTheme.swift; sourceTree = "<group>"; };
 		C8D2E3F4A50617283940ABC /* FilmPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmPreview.swift; sourceTree = "<group>"; };
 		3CE4775A625D4391902D2990 /* LUTs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = LUTs; sourceTree = "<group>"; };
@@ -80,7 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
-				3CAD9F247B4644DB8C366859 /* CameraView.swift */,
+				3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
 				E7B49A987CFFF2969022A537 /* ThemeRangefinder.swift */,
 				F09846C7236D295667C406E3 /* DeviceUI.swift */,
@@ -185,7 +185,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				110EC93211024BC9AF172728 /* CameraManager.swift in Sources */,
-				65C3DAA474F04F3A9B21589A /* CameraView.swift in Sources */,
+				65C3DAA474F04F3A9B21589A /* SharedOverlays.swift in Sources */,
 				9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */,
 				B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */,
 				F1A807516F3D4389960E4F50 /* CaptureSessionController.swift in Sources */,
