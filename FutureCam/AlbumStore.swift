@@ -113,6 +113,18 @@ enum AlbumStore {
         }
     }
 
+    /// 用新的 JPEG 覆盖同一张（换调色后重写，不产生第二张）
+    @discardableResult
+    static func overwrite(_ item: AlbumItem, jpeg: Data) -> Bool {
+        do {
+            try jpeg.write(to: item.url, options: .atomic)
+            return true
+        } catch {
+            NSLog("[FutureCam] 覆盖成片失败: \(error.localizedDescription)")
+            return false
+        }
+    }
+
     // MARK: - 删除
 
     /// 只删本地沙盒里的文件；系统「照片」App 里的副本不受影响（写入是 addOnly 权限）

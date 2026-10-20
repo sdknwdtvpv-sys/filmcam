@@ -52,7 +52,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     nonisolated(unsafe) private var recordedURL: URL?
 
     var onPreview: (@Sendable (UIImage) -> Void)?
-    var onPhoto: (@Sendable (UIImage, Data?) -> Void)?
+    /// base 是「只过了胶片、没叠调色」的底，用于拍完再换调色
+    var onPhoto: (@Sendable (UIImage, Data?, UIImage) -> Void)?
     var onDoubleExposureFirstShot: (@Sendable (UIImage) -> Void)?
     var onVideoSaved: (@Sendable (URL) -> Void)?
     /// 切换摄像头成功后回调真实方向（true = 前摄），让 UI 与硬件状态保持一致
@@ -520,7 +521,8 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     }
 
     /// 给成片加白色边框 + 拍摄日期戳（拍立得风：上下细边、底部粗边）
-    private func stampImage(_ image: UIImage) -> UIImage {
+    /// 加白色边框 + 日期戳。换调色重渲染后也要走一遍，否则边框会丢
+    static func stampImage(_ image: UIImage) -> UIImage {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy.MM.dd  HH:mm"
         let dateStr = formatter.string(from: Date())
@@ -579,7 +581,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
         // 否则成片是横躺的（显影页/相册里"横竖别扭"的根因）。
         let oriented = CIImage(cgImage: cg).oriented(.right)
         let ci = isFront ? mirroredHorizontally(oriented) : oriented
-        var filtered = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
+        let base = FilmFilter.apply(ci, preset: preset, traits: rollTraits, grain: grain)
+        guard let baseImage = renderToUIImage(base) else { return }
+        var filtered = base
         if let look = lookPreset, let grade = look.grade {
             filtered = FilmFilter.applyGrade(filtered, grade)
         }
@@ -589,20 +593,20 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             if let base = doubleExposureBase {
                 let blended = FilmFilter.doubleExposure(base: base, overlay: filteredImage)
                 doubleExposureBase = nil
-                deliver(stampImage(blended), metadata: photo.metadata)
+                deliver(Self.stampImage(blended), metadata: photo.metadata, base: baseImage)
             } else {
                 doubleExposureBase = filteredImage
                 onDoubleExposureFirstShot?(filteredImage)
             }
         } else {
-            deliver(stampImage(filteredImage), metadata: photo.metadata)
+            deliver(Self.stampImage(filteredImage), metadata: photo.metadata, base: baseImage)
         }
     }
 
     /// 把成片重新编码成 JPEG，并把原始 EXIF 带回去。
     /// 旧实现直接传 UIImage 给 Photos，重渲染后元数据全丢（相册里看不到机型/ISO/GPS）。
-    private func deliver(_ image: UIImage, metadata: [String: Any]) {
-        onPhoto?(image, jpegWithMetadata(image, metadata: metadata))
+    private func deliver(_ image: UIImage, metadata: [String: Any], base: UIImage) {
+        onPhoto?(image, jpegWithMetadata(image, metadata: metadata), base)
     }
 
     private func jpegWithMetadata(_ image: UIImage, metadata: [String: Any]) -> Data? {

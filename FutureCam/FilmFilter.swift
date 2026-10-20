@@ -327,6 +327,18 @@ struct FilmFilter {
         return img.cropped(to: image.extent)
     }
 
+    private static let renderContext = CIContext(options: [.useSoftwareRenderer: false])
+
+    /// 把 CIImage 渲染成 UIImage + JPEG（成片重渲染走这里）
+    static func render(_ image: CIImage, quality: CGFloat = 0.92) -> (UIImage, Data)? {
+        let extent = image.extent
+        guard extent.width > 1, extent.height > 1,
+              let cg = renderContext.createCGImage(image, from: extent) else { return nil }
+        let ui = UIImage(cgImage: cg)
+        guard let data = ui.jpegData(compressionQuality: quality) else { return nil }
+        return (ui, data)
+    }
+
     /// 参数化调色：按滑块语义依次施加 Core Image 滤镜
     static func applyGrade(_ image: CIImage, _ g: GradeSettings) -> CIImage {
         var img = image.cropped(to: image.extent)   // 先裁，避免无穷 extent 里做重活

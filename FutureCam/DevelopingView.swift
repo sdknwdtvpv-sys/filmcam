@@ -4,6 +4,7 @@ import UIKit
 /// 撕拉片：拍完不是「等显影」，而是一张相纸从仓里被拉出来。
 /// 手指往下拉 → 相纸从槽口滑出；拉到底出片完成，轻触关闭。
 struct DevelopingPhotoView: View {
+    @EnvironmentObject var manager: CameraManager
     let image: UIImage
     let onDismiss: () -> Void
     var initialPull: Double = 0
@@ -144,19 +145,45 @@ struct DevelopingPhotoView: View {
     }
 
     private func footer(_ t: ThemeTokens) -> some View {
-        ZStack {
+        VStack(spacing: 8) {
             if done {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.white.opacity(0.8))
-                    .frame(width: 30, height: 30)
-                    .background(Circle().fill(t.accent.opacity(0.85)))
-                    .transition(.scale.combined(with: .opacity))
+                // 出片之后还能换调色：从「只过胶片的底」重渲染
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        LookChip(title: "原色", color: .white.opacity(0.25),
+                                 selected: manager.selectedLook == nil, tokens: t) {
+                            manager.regradeCaptured(to: nil)
+                            Haptics.impact(.light)
+                        }
+                        ForEach(FilmPreset.looks) { preset in
+                            LookChip(title: preset.label, color: canisterColor(preset),
+                                     selected: manager.selectedLook == preset, tokens: t) {
+                                manager.regradeCaptured(to: preset)
+                                Haptics.impact(.light)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 2)
+                    .padding(.vertical, 2)
+                }
+                .transition(.opacity)
             }
+
+            ZStack {
+                if done {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(t.accent.opacity(0.85)))
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            .frame(height: 34)
         }
-        .frame(height: 44)
         .frame(maxWidth: .infinity)
-        .accessibilityLabel(done ? "已出片，轻触关闭" : "下拉相纸取片")
+        .animation(.easeOut(duration: 0.25), value: done)
+        .accessibilityLabel(done ? "已出片，可换调色，轻触关闭" : "下拉相纸取片")
     }
 }
 

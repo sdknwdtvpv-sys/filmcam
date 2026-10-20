@@ -107,6 +107,12 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var previewStalled = false
 
     @Published var capturedImage: UIImage?
+    /// 这一张「只过胶片」的底，换调色时从它重渲染
+    private(set) var capturedBase: UIImage?
+    /// 已经落到应用内相册的那一条（换调色时覆盖它）
+    private var capturedAlbumItem: AlbumItem?
+    /// 关闭显影页时才写进系统相册，此时用用户最后选的调色
+    private var pendingLibrarySave: (UIImage, Data?)?
     @Published var authorizationStatus: AVAuthorizationStatus = .notDetermined
     /// 照片写入相册失败（相册权限被拒 / 写入失败）——用于引导去系统设置。
     @Published var photoSaveBlocked = false
@@ -196,18 +202,21 @@ final class CameraManager: NSObject, ObservableObject {
         controller.onPreview = { [weak self] image in
             Task { @MainActor in self?.handlePreviewFrame(image) }
         }
-        controller.onPhoto = { [weak self] image, jpeg in
+        controller.onPhoto = { [weak self] image, jpeg, base in
             Task { @MainActor in
                 guard let self else { return }
                 self.showDoubleExposureFirst = false
                 self.capturedImage = image
+                self.capturedBase = base
+                self.capturedAlbumItem = nil
+                self.pendingLibrarySave = (image, jpeg)
                 self.bumpFrameCount()
                 self.rolls.recordShot()
                 let rollID = self.rolls.current.id
                 if self.mode == .doubleExposure, self.doubleExposureStep == 1 {
                     self.doubleExposureStep = 2
                 }
-                self.saveToLibrary(image, jpeg: jpeg, rollID: rollID)
+                self.saveToAlbumOnly(image, jpeg: jpeg, rollID: rollID)
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -353,9 +362,12 @@ final class CameraManager: NSObject, ObservableObject {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let item = AlbumStore.savePhoto(image, jpeg: jpeg, rollID: rollID) else { return }
             DispatchQueue.main.async {
-                if self?.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
-                    self?.albumItems.insert(item, at: 0)
+                guard let self else { return }
+                if self.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
+                    self.albumItems.insert(item, at: 0)
                 }
+                // 记下这一条，换调色时覆盖它
+                if self.capturedAlbumItem == nil { self.capturedAlbumItem = item }
             }
         }
     }
@@ -489,8 +501,36 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func clearCaptured() {
+        if let pending = pendingLibrarySave {
+            saveToLibrary(pending.0, jpeg: pending.1, rollID: rolls.current.id)
+        }
+        pendingLibrarySave = nil
+        capturedBase = nil
+        capturedAlbumItem = nil
         capturedImage = nil
         if doubleExposureStep == 2 { doubleExposureStep = 0 }
+    }
+
+    /// 拍完再换调色：从「只过胶片的底」重渲染，覆盖相册里那一张
+    func regradeCaptured(to look: FilmPreset?) {
+        guard let base = capturedBase, let ci = CIImage(image: base) else { return }
+        var out = ci
+        if let grade = look?.grade {
+            out = FilmFilter.applyGrade(out, grade)
+        }
+        guard let rendered = FilmFilter.render(out) else { return }
+        // 重渲染的底没有拍立得边框，这里补回来
+        let stamped = CaptureSessionController.stampImage(rendered.0)
+        let jpeg = stamped.jpegData(compressionQuality: 0.92)
+        capturedImage = stamped
+        selectedLook = look
+        pendingLibrarySave = (stamped, jpeg)
+
+        guard let item = capturedAlbumItem, let jpeg else { return }
+        let albumCopy = jpeg
+        DispatchQueue.global(qos: .userInitiated).async {
+            AlbumStore.overwrite(item, jpeg: albumCopy)
+        }
     }
 
     func clearVideoSaved() { showVideoSaved = false; recordedVideoURL = nil }
@@ -537,9 +577,13 @@ final class CameraManager: NSObject, ObservableObject {
     func toggleParam(_ key: ParamKey) { selectParam(key) }
 
     // MARK: - 保存到相册
-    private func saveToLibrary(_ image: UIImage, jpeg: Data?, rollID: String?) {
-        // 本地相册（应用内）始终保存，不依赖系统相册权限
+    /// 只写应用内相册（立刻，避免丢片）
+    private func saveToAlbumOnly(_ image: UIImage, jpeg: Data?, rollID: String?) {
         persistLocally(image, jpeg: jpeg, rollID: rollID)
+    }
+
+    /// 写系统相册（延后到关闭显影页，用最终选定的调色）
+    private func saveToLibrary(_ image: UIImage, jpeg: Data?, rollID: String?) {
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
