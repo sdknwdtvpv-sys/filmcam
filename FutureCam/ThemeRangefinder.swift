@@ -183,11 +183,6 @@ struct RangefinderCameraView: View {
                                size: 5, dimmed: manager.mode != mode)
                     }
                 }
-                LabeledKey(tokens: t, caption: "胶片", radius: 4, action: { manager.showFilmSheet = true }) {
-                    Image(systemName: "square.stack.3d.up")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(t.ink)
-                }
             }
             .padding(.horizontal, 14)
 
