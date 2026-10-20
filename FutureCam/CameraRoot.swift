@@ -7,7 +7,7 @@ struct CameraRoot: View {
     @Environment(\.scenePhase) private var scenePhase
     /// 关键控件的屏幕位置：胶片仓从这里长出来，首跑引导也指这里
     @State private var anchors: [GuideTarget: CGRect] = [:]
-    @AppStorage("futurecam.seenGuide") private var seenGuide = false
+    @AppStorage("futurecam.seenGuide.v2") private var seenGuide = false
 
     var body: some View {
         ZStack {
@@ -53,7 +53,9 @@ struct CameraRoot: View {
 
             // 一次性的用法引导（拍过一张或点一下就不再出现）
             if shouldShowGuide {
-                FirstRunGuide(anchors: anchors) { seenGuide = true }
+                FirstRunGuide(anchors: anchors,
+                              onFinish: { seenGuide = true },
+                              initialStep: guideInitialStep)
                     .transition(.opacity)
             }
         }
@@ -101,6 +103,14 @@ struct CameraRoot: View {
 
     /// 视频模式下麦克风占着音频会话，会话被锁进 playAndRecord，静音键就管不住了；
     /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
+    private var guideInitialStep: Int {
+        #if DEBUG
+        return DebugHarness.guideStep
+        #else
+        return 0
+        #endif
+    }
+
     private var shouldShowGuide: Bool {
         guard !seenGuide, manager.capturedImage == nil else { return false }
         #if DEBUG

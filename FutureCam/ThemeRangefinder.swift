@@ -98,6 +98,7 @@ struct RangefinderCameraView: View {
                     Silkscreen(text: "FLASH \(manager.flashState.label)",
                                color: t.ink.opacity(0.5), size: 5, tracking: 0.5)
                 }
+                .guideAnchor(.flash)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("闪光 \(manager.flashState.label)，点按切换，当前模式 \(manager.mode.label)")
                 .accessibilityAddTraits(.isButton)
@@ -307,6 +308,7 @@ struct RangefinderCameraView: View {
             .contentShape(Circle())
         }
         .buttonStyle(.plain)
+        .guideAnchor(.album)
         .accessibilityLabel("打开相册")
     }
 
@@ -325,6 +327,7 @@ struct RangefinderCameraView: View {
                         .offset(y: 1)
                         .rotationEffect(.degrees(collarAngle))
                 }
+                .guideAnchor(.collar)
                 .contentShape(Circle())
                 .gesture(
                     DragGesture(minimumDistance: 1)
@@ -424,6 +427,7 @@ struct RangefinderCameraView: View {
         }
         .frame(width: 54)
         .disabled(manager.isRecording)
+        .guideAnchor(.flip)
         .accessibilityLabel(manager.isFrontCamera ? "切换到后置摄像头" : "切换到前置摄像头")
     }
 

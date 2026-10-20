@@ -35,6 +35,14 @@ enum DebugHarness {
     /// `-fcSkipGuide`：把引导标记为已看过，方便截其它界面
     static var shouldSkipGuide: Bool { arguments.contains("-fcSkipGuide") }
 
+    /// `-fcGuideStep 3`：引导直接从第 3 步开始，方便逐步截图
+    static var guideStep: Int {
+        guard let index = arguments.firstIndex(of: "-fcGuideStep"),
+              index + 1 < arguments.count,
+              let value = Int(arguments[index + 1]) else { return 0 }
+        return max(0, value - 1)
+    }
+
     /// `-fcShowHUD`：启动即浮出参数读数，方便截图检查（模拟器没法脚本拖动）
     static var shouldShowHUD: Bool { arguments.contains("-fcShowHUD") }
 
@@ -76,7 +84,10 @@ enum DebugHarness {
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {
         if shouldSkipGuide {
-            UserDefaults.standard.set(true, forKey: "futurecam.seenGuide")
+            UserDefaults.standard.set(true, forKey: "futurecam.seenGuide.v2")
+        }
+        if shouldShowGuide {
+            UserDefaults.standard.set(false, forKey: "futurecam.seenGuide.v2")
         }
 
         switch modeArgument() {
