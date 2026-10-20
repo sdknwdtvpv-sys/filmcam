@@ -361,19 +361,10 @@ final class CameraManager: NSObject, ObservableObject {
     /// 点按对焦 / 长按锁定。point 为取景器内的局部坐标（pt）。
     func focus(at point: CGPoint, in size: CGSize, lock: Bool) {
         guard let aspect = previewAspect, size.width > 0, size.height > 0 else { return }
-        // 预览图以 scaleAspectFill 铺满容器：先还原成图片内归一化坐标
-        let scale = max(size.width / aspect, size.height / 1)
-        let drawnW = aspect * scale
-        let drawnH = scale
-        let originX = (size.width - drawnW) / 2
-        let originY = (size.height - drawnH) / 2
-        let u = min(max((point.x - originX) / drawnW, 0), 1)
-        let v = min(max((point.y - originY) / drawnH, 0), 1)
-        // 竖屏图像坐标 → 传感器原生横图坐标（图像顺时针转了 90°）
-        // 前摄预览是镜像过的，横向要再反一次
-        let devicePoint = isFrontCamera
-            ? CGPoint(x: v, y: u)
-            : CGPoint(x: v, y: 1 - u)
+        let devicePoint = CameraMath.sensorPoint(from: point,
+                                                 container: size,
+                                                 previewAspect: aspect,
+                                                 mirrored: isFrontCamera)
         controller.focus(at: devicePoint, lock: lock, touchExposure: autoExposure)
     }
 

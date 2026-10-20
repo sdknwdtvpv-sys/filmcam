@@ -419,7 +419,7 @@ struct RangefinderCameraView: View {
             manager.shutterSeconds = v
             manager.applyExposure()
             tick(at: log2(1 / v), step: 1.0 / 3.0)
-            showHUD("SHUTTER", shutterLabel(v), shutterProgress(v))
+            showHUD("SHUTTER", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
 
         case .iso:
             let stops: [Double] = [100, 200, 400, 800, 1600]
@@ -433,27 +433,27 @@ struct RangefinderCameraView: View {
 
         case .bias:
             let raw = base + Double(dx) / 50 * 0.3
-            let v = min(max((raw / 0.3).rounded() * 0.3, -2), 2)
+            let v = min(max(CameraMath.quantize(raw, step: 0.3), -2), 2)
             manager.bias = v
             manager.applyExposure()
             tick(at: v, step: 0.3)
-            showHUD("EXPOSURE", evLabel(v), (v + 2) / 4)
+            showHUD("EXPOSURE", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
 
         case .temperature:
             let raw = base + Double(dx) / 5 * 100
-            let v = min(max((raw / 100).rounded() * 100, 3000), 8000)
+            let v = min(max(CameraMath.quantize(raw, step: 100), 3000), 8000)
             manager.temperature = v
             manager.applyWhiteBalance()
             tick(at: v, step: 100)
-            showHUD("TEMP", "\(Int(v))K", (v - 3000) / 5000)
+            showHUD("TEMP", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
 
         case .tint:
             let raw = base + Double(dx) / 4 * 10
-            let v = min(max((raw / 10).rounded() * 10, -150), 150)
+            let v = min(max(CameraMath.quantize(raw, step: 10), -150), 150)
             manager.tint = v
             manager.applyWhiteBalance()
             tick(at: v, step: 10)
-            showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", (v + 150) / 300)
+            showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
     }
 
@@ -470,23 +470,12 @@ struct RangefinderCameraView: View {
     private func announceArmed() {
         let v = value(of: armed)
         switch armed {
-        case .shutter: showHUD("SHUTTER", shutterLabel(v), shutterProgress(v))
-        case .iso: showHUD("ISO", "\(Int(v))", isoProgress(v))
-        case .bias: showHUD("EXPOSURE", evLabel(v), (v + 2) / 4)
-        case .temperature: showHUD("TEMP", "\(Int(v))K", (v - 3000) / 5000)
-        case .tint: showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", (v + 150) / 300)
+        case .shutter: showHUD("SHUTTER", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
+        case .iso: showHUD("ISO", "\(Int(v))", CameraMath.isoProgress(v))
+        case .bias: showHUD("EXPOSURE", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
+        case .temperature: showHUD("TEMP", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
+        case .tint: showHUD("TINT", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
         }
-    }
-
-    /// 对数位置（1/4000 … 1/4）映射成 0…1
-    private func shutterProgress(_ value: Double) -> Double {
-        let lo = log2(4000.0), hi = log2(4.0)
-        return min(max((log2(1 / value) - lo) / (hi - lo), 0), 1)
-    }
-
-    private func isoProgress(_ value: Double) -> Double {
-        let lo = log2(100.0), hi = log2(1600.0)
-        return min(max((log2(value) - lo) / (hi - lo), 0), 1)
     }
 
     /// 无障碍微调：按 1/3 档进位
@@ -497,7 +486,7 @@ struct RangefinderCameraView: View {
         manager.shutterSeconds = value
         manager.applyExposure()
         Haptics.impact(.light)
-        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
+        showHUD("SHUTTER", shutterLabel(value), CameraMath.shutterProgress(value))
     }
 
     private func showHUD(_ title: String, _ value: String, _ progress: Double) {
@@ -512,7 +501,7 @@ struct RangefinderCameraView: View {
         manager.iso = steps[(index + 1) % steps.count]
         manager.applyExposure()
         Haptics.impact(.light)
-        showHUD("ISO", "\(Int(manager.iso))", isoProgress(manager.iso))
+        showHUD("ISO", "\(Int(manager.iso))", CameraMath.isoProgress(manager.iso))
     }
 }
 

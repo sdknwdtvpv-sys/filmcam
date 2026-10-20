@@ -106,14 +106,9 @@ struct PreviewSurface: View {
 
 // MARK: - 三个主题共用的读数格式化
 
-func shutterLabel(_ v: Double) -> String {
-    if v >= 1 { return String(format: "%.1fs", v) }
-    return "1/\(Int(round(1 / v)))"
-}
+func shutterLabel(_ v: Double) -> String { CameraMath.shutterLabel(v) }
 
-func evLabel(_ v: Double) -> String {
-    String(format: "%+.1f", v)
-}
+func evLabel(_ v: Double) -> String { CameraMath.evLabel(v) }
 
 /// 参数短标题（戳记 / 读数字段上用）
 func paramTitle(_ key: ParamKey) -> String {

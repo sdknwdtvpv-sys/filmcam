@@ -87,6 +87,18 @@ xcrun simctl launch booted com.filmcam.app -fcStubPreview       # 垫一帧合�
 
 `-fcStubPreview` 只是布局自检用的假画面，**不能**拿来当商店截图。
 
+## 纯逻辑自检
+
+对焦坐标换算、快门刻度、档位量化这些纯函数放在 `FilmCam/CameraMath.swift`（只依赖 Foundation/CoreGraphics），
+配套检查在 `Tools/main.swift`：
+
+```bash
+xcrun swiftc FilmCam/CameraMath.swift Tools/main.swift -o /tmp/logiccheck && /tmp/logiccheck
+# PASS  21 项检查全部通过
+```
+
+改这些换算后先跑它，再上真机。还没有 XCTest 测试目标，这是下一步。
+
 ## 真机测试清单
 
 改完相机相关代码后至少过一遍：
