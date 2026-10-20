@@ -67,6 +67,7 @@ struct FilmSheet: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
                     ForEach(FilmPreset.films) { preset in
+                        let unlocked = PurchaseStore.shared.isUnlocked(preset)
                         FilmCanister(preset: preset,
                                      loaded: manager.selectedPreset == preset,
                                      tokens: t) {
@@ -190,6 +191,8 @@ struct FilmCanister: View {
     let preset: FilmPreset
     let loaded: Bool
     let tokens: ThemeTokens
+    var locked: Bool = false
+    var priceTag: String? = nil
     let action: () -> Void
 
     private var labelColor: Color { canisterColor(preset) }
@@ -239,6 +242,24 @@ struct FilmCanister: View {
                     .padding(.vertical, 6)
                 }
                 .frame(height: 86)
+                // 未拆封：压一层暗 + 一把小锁 + 价签
+                .overlay {
+                    if locked {
+                        ZStack {
+                            Color.black.opacity(0.45)
+                            VStack(spacing: 3) {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.9))
+                                if let priceTag {
+                                    Text(priceTag)
+                                        .font(.system(size: 7, weight: .bold, design: .monospaced))
+                                        .foregroundColor(.white.opacity(0.85))
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // 底盖
                 LinearGradient(colors: [Color(hex: 0x1B1D1F), Color(hex: 0x36393C)],

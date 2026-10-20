@@ -119,6 +119,7 @@ struct CameraRoot: View {
                 manager.refreshAuthorization()
                 DetentFeedback.shared.prepare()
                 MechanicalSounds.shared.prepare()
+                Task { await PurchaseStore.shared.start() }
                 updateFeedbackSound()
                 replayLaunchIfAwayTooLong()
             case .background:
