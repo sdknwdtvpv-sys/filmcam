@@ -3,7 +3,24 @@ import UIKit
 import Photos
 import Combine
 
-/// 参数分组：曝光（ISO/快门/EV）或 白平衡（色温/色调），决定药丸行显示哪一组。
+/// 拍摄模式
+enum CameraMode: String, CaseIterable, Identifiable {
+    case photo
+    case doubleExposure
+    case video
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .photo: return "照片"
+        case .doubleExposure: return "双曝"
+        case .video: return "视频"
+        }
+    }
+}
+
+/// 参数分组：曝光（ISO/快门/EV）或 白平衡（色温/色调），决定读数条显示哪一组。
 enum ParamMode: String, CaseIterable, Identifiable {
     case exposure
     case whiteBalance

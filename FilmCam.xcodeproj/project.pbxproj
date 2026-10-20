@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		110EC93211024BC9AF172728 /* CameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0092A6C0C53C444BA566BEB7 /* CameraManager.swift */; };
-		65C3DAA474F04F3A9B21589A /* SharedOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */; };
 		9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */; };
 		B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8D2E3F4A50617283940ABC /* FilmPreview.swift */; };
 		7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBB7EA74452D478793AF5DCC /* FilmCamApp.swift */; };
@@ -29,11 +28,17 @@
 		D64A38E1336849E710EB0AF6 /* IndustrialUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97766A2DD3AB57EEA25387EB /* IndustrialUI.swift */; };
 		A115F6B4C6F2750B87A1032C /* DeviceUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F09846C7236D295667C406E3 /* DeviceUI.swift */; };
 		2B5669C628A1B845560326E2 /* ThemeRangefinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7B49A987CFFF2969022A537 /* ThemeRangefinder.swift */; };
+		823EA955C28F7B1FE698AABF /* FilmFrameShapes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82E88E024AB550E7853F8C8F /* FilmFrameShapes.swift */; };
+		09905F541946164FCAB57E52 /* ToastViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03C6132111D1CAB85A024F10 /* ToastViews.swift */; };
+		18FC9F9DA79AF2D56C8E8217 /* DevelopingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26FEA8AB687BCE442692F852 /* DevelopingView.swift */; };
+		B842C9D727A30CFF404580F8 /* CameraSheets.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8883298448DD1F22604D848 /* CameraSheets.swift */; };
+		95C7F24060F60959B70964FB /* PermissionGateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BAF921CCBA8B69EB4862353 /* PermissionGateView.swift */; };
+		6C89D8F6EAF20BC5D119A5DB /* ViewfinderChrome.swift in Sources */ = {isa = PBXBuildFile; fileRef = E144E4111DA82C1C05EA80B7 /* ViewfinderChrome.swift */; };
+		DA50B484E794930347364FD0 /* PreviewRender.swift in Sources */ = {isa = PBXBuildFile; fileRef = D03E9D13769D3DAC6CC0EC1E /* PreviewRender.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0092A6C0C53C444BA566BEB7 /* CameraManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraManager.swift; sourceTree = "<group>"; };
-		3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedOverlays.swift; sourceTree = "<group>"; };
 		A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTheme.swift; sourceTree = "<group>"; };
 		C8D2E3F4A50617283940ABC /* FilmPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmPreview.swift; sourceTree = "<group>"; };
 		3CE4775A625D4391902D2990 /* LUTs */ = {isa = PBXFileReference; lastKnownFileType = folder; path = LUTs; sourceTree = "<group>"; };
@@ -55,6 +60,13 @@
 		97766A2DD3AB57EEA25387EB /* IndustrialUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IndustrialUI.swift; sourceTree = "<group>"; };
 		F09846C7236D295667C406E3 /* DeviceUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceUI.swift; sourceTree = "<group>"; };
 		E7B49A987CFFF2969022A537 /* ThemeRangefinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeRangefinder.swift; sourceTree = "<group>"; };
+		82E88E024AB550E7853F8C8F /* FilmFrameShapes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmFrameShapes.swift; sourceTree = "<group>"; };
+		03C6132111D1CAB85A024F10 /* ToastViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToastViews.swift; sourceTree = "<group>"; };
+		26FEA8AB687BCE442692F852 /* DevelopingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DevelopingView.swift; sourceTree = "<group>"; };
+		E8883298448DD1F22604D848 /* CameraSheets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraSheets.swift; sourceTree = "<group>"; };
+		8BAF921CCBA8B69EB4862353 /* PermissionGateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionGateView.swift; sourceTree = "<group>"; };
+		E144E4111DA82C1C05EA80B7 /* ViewfinderChrome.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewfinderChrome.swift; sourceTree = "<group>"; };
+		D03E9D13769D3DAC6CC0EC1E /* PreviewRender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewRender.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -80,8 +92,14 @@
 			isa = PBXGroup;
 			children = (
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
-				3CAD9F247B4644DB8C366859 /* SharedOverlays.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				D03E9D13769D3DAC6CC0EC1E /* PreviewRender.swift */,
+				E144E4111DA82C1C05EA80B7 /* ViewfinderChrome.swift */,
+				8BAF921CCBA8B69EB4862353 /* PermissionGateView.swift */,
+				E8883298448DD1F22604D848 /* CameraSheets.swift */,
+				26FEA8AB687BCE442692F852 /* DevelopingView.swift */,
+				03C6132111D1CAB85A024F10 /* ToastViews.swift */,
+				82E88E024AB550E7853F8C8F /* FilmFrameShapes.swift */,
 				E7B49A987CFFF2969022A537 /* ThemeRangefinder.swift */,
 				F09846C7236D295667C406E3 /* DeviceUI.swift */,
 				97766A2DD3AB57EEA25387EB /* IndustrialUI.swift */,
@@ -185,13 +203,19 @@
 			buildActionMask = 2147483647;
 			files = (
 				110EC93211024BC9AF172728 /* CameraManager.swift in Sources */,
-				65C3DAA474F04F3A9B21589A /* SharedOverlays.swift in Sources */,
 				9F3A2B1C4D5E6F70819203A4 /* CameraTheme.swift in Sources */,
 				B7C1D2E3F4A50617283940AB /* FilmPreview.swift in Sources */,
 				F1A807516F3D4389960E4F50 /* CaptureSessionController.swift in Sources */,
 				7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */,
 				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
 				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+				DA50B484E794930347364FD0 /* PreviewRender.swift in Sources */,
+				6C89D8F6EAF20BC5D119A5DB /* ViewfinderChrome.swift in Sources */,
+				95C7F24060F60959B70964FB /* PermissionGateView.swift in Sources */,
+				B842C9D727A30CFF404580F8 /* CameraSheets.swift in Sources */,
+				18FC9F9DA79AF2D56C8E8217 /* DevelopingView.swift in Sources */,
+				09905F541946164FCAB57E52 /* ToastViews.swift in Sources */,
+				823EA955C28F7B1FE698AABF /* FilmFrameShapes.swift in Sources */,
 				2B5669C628A1B845560326E2 /* ThemeRangefinder.swift in Sources */,
 				A115F6B4C6F2750B87A1032C /* DeviceUI.swift in Sources */,
 				D64A38E1336849E710EB0AF6 /* IndustrialUI.swift in Sources */,
