@@ -8,6 +8,20 @@ import UniformTypeIdentifiers
 /// 系统相册里看不到机型、镜头、ISO、快门、GPS。
 enum PhotoEncoding {
 
+    /// 从已有文件里取出 EXIF / TIFF / GPS，重新编码时带回去
+    static func metadata(of url: URL) -> [String: Any] {
+        guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [String: Any]
+        else { return [:] }
+        var out: [String: Any] = [:]
+        for key in [kCGImagePropertyExifDictionary as String,
+                    kCGImagePropertyTIFFDictionary as String,
+                    kCGImagePropertyGPSDictionary as String] {
+            if let value = props[key] { out[key] = value }
+        }
+        return out
+    }
+
     static func jpeg(_ image: UIImage, metadata: [String: Any], quality: Double = 0.95) -> Data? {
         guard let cg = image.cgImage else { return nil }
         let out = NSMutableData()

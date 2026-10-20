@@ -223,6 +223,7 @@ struct AlbumDetailView: View {
     @State private var player: AVPlayer?
     @State private var isLoading = true
     @State private var showShare = false
+    @State private var showDevelop = false
     @State private var confirmDelete = false
     @State private var zoom: CGFloat = 1
     @State private var zoomBase: CGFloat = 1
@@ -302,6 +303,14 @@ struct AlbumDetailView: View {
                     }
                     .frame(width: 64)
                     .accessibilityLabel("分享")
+                    LabeledKey(tokens: ThemeStore.current, caption: "冲印", radius: 5,
+                               action: { showDevelop = true }) {
+                        Image(systemName: "crop.rotate")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(ThemeStore.current.ink)
+                    }
+                    .frame(width: 64)
+                    .accessibilityLabel("冲印")
                     LabeledKey(tokens: ThemeStore.current, caption: "删除", radius: 5,
                                action: { confirmDelete = true }) {
                         Image(systemName: "trash")
@@ -324,6 +333,12 @@ struct AlbumDetailView: View {
         .onDisappear { player?.pause() }
         .sheet(isPresented: $showShare) {
             ShareSheet(items: [item.url])
+        }
+        .sheet(isPresented: $showDevelop) {
+            DevelopView(item: item) { updated in
+                image = updated
+                manager.refreshAlbum()
+            }
         }
         .confirmationDialog("删除这条记录？", isPresented: $confirmDelete, titleVisibility: .visible) {
             Button("删除", role: .destructive) { deleteCurrent() }

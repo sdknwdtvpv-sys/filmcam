@@ -524,6 +524,11 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
+    /// 重新读一遍应用内相册（冲印覆盖文件后调用）
+    func refreshAlbum() {
+        albumItems = AlbumStore.loadAll()
+    }
+
     /// 当前这卷
     var roll: FilmRoll { rolls.current }
 
