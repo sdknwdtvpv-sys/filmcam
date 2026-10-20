@@ -296,7 +296,7 @@ struct AlbumDetailView: View {
                         .accessibilityLabel("上一张")
                     Spacer(minLength: 0)
                     LabeledKey(tokens: ThemeStore.current, caption: "分享", radius: 5,
-                               action: { showShare = true }) {
+                               action: { if image != nil { showShare = true } }) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(ThemeStore.current.ink)
@@ -332,7 +332,13 @@ struct AlbumDetailView: View {
         .task(id: item.url) { await load() }
         .onDisappear { player?.pause() }
         .sheet(isPresented: $showShare) {
-            ShareSheet(items: [item.url])
+            if let image {
+                ShareCardSheet(item: item,
+                               image: image,
+                               film: manager.presetLabel(for: item),
+                               rollText: "VOL.\(manager.rollNumberText(for: item))",
+                               frameText: manager.frameText(for: item))
+            }
         }
         .sheet(isPresented: $showDevelop) {
             DevelopView(item: item) { updated in

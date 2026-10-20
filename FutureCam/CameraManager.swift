@@ -524,6 +524,23 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
+    /// 这条记录属于哪一卷胶卷（相册详情里显示用）
+    func presetLabel(for item: AlbumItem) -> String {
+        guard let id = item.rollID, let roll = rolls.roll(id: id) else { return "未归档" }
+        return roll.preset.label
+    }
+
+    func rollNumberText(for item: AlbumItem) -> String {
+        guard let id = item.rollID, let roll = rolls.roll(id: id) else { return "--" }
+        return String(format: "%02d", roll.number)
+    }
+
+    func frameText(for item: AlbumItem) -> String {
+        let siblings = albumItems.filter { $0.rollID == item.rollID && $0.kind != .video }
+        guard let index = siblings.firstIndex(where: { $0.id == item.id }) else { return "--/--" }
+        return String(format: "%02d/%02d", siblings.count - index, siblings.count)
+    }
+
     /// 重新读一遍应用内相册（冲印覆盖文件后调用）
     func refreshAlbum() {
         albumItems = AlbumStore.loadAll()
