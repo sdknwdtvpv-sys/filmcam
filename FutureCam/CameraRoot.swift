@@ -153,11 +153,11 @@ struct CameraRoot: View {
         #endif
     }
 
-    /// 冷启动必放；从后台离开超过 10 分钟再回来也放一次
+    /// 冷启动必放；从后台离开超过 45 秒再回来也放一次
     private func replayLaunchIfAwayTooLong() {
         guard let leftAt = backgroundedAt else { return }
         backgroundedAt = nil
-        guard Date().timeIntervalSince(leftAt) > 600, !showLaunch else { return }
+        guard Date().timeIntervalSince(leftAt) > 45, !showLaunch else { return }
         showLaunch = true
     }
 

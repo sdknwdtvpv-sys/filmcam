@@ -17,80 +17,90 @@ struct LaunchScreenView: View {
     /// 调试用：把进度钉死在这个值上，不播动画（方便截图对比）
     var fixedProgress: CGFloat? = nil
 
-    @State private var p: CGFloat = 0
-    @State private var revealText = false
-    @State private var sweep: CGFloat = -0.25
-    @State private var scan: CGFloat = -0.25
-    @State private var ledOn = false
+    @State private var start = Date()
     @State private var leaving = false
-    /// 刻字采样点与画布尺寸，进程内只算一次
 
     private let wordmark = "FUTURE CAM"
+
+    // 时间轴（秒）
+    private let revealEnd: Double = 0.45
+    private let scanStart: Double = 0.06
+    private let scanDuration: Double = 1.20
+    private let convergeStart: Double = 0.18
+    private let convergeDuration: Double = 1.80
+    private let ledAt: Double = 2.02
+    private let outAt: Double = 2.42
+    private let total: Double = 2.85
 
     var body: some View {
         let t = ThemeStore.current
 
-        ZStack {
-            AluminumFace(tokens: t).ignoresSafeArea()
+        // 用 TimelineView 而不是 withAnimation：进度要逐帧驱动 Canvas，
+        // SwiftUI 的隐式动画不会为它插值，会直接跳到终态。
+        TimelineView(.animation(minimumInterval: 1.0 / 60, paused: fixedProgress != nil)) { context in
+            let elapsed = fixedProgress == nil ? context.date.timeIntervalSince(start) : 0
+            let reveal = fixedProgress == nil ? min(1, elapsed / revealEnd) : 1
+            let converge = fixedProgress ?? min(max((elapsed - convergeStart) / convergeDuration, 0), 1)
+            let led = fixedProgress != nil ? true : elapsed > ledAt
 
-            LinearGradient(colors: [.black.opacity(0.16), .clear, .black.opacity(0.2)],
-                           startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+            ZStack {
+                AluminumFace(tokens: t).ignoresSafeArea()
 
-            // 扫描光带
-            GeometryReader { geo in
-                LinearGradient(colors: [.clear, .white.opacity(0.45), .white.opacity(0.8),
-                                        .white.opacity(0.45), .clear],
+                LinearGradient(colors: [.black.opacity(0.16), .clear, .black.opacity(0.2)],
                                startPoint: .top, endPoint: .bottom)
-                    .frame(height: 190)
-                    .offset(y: scan * (geo.size.height + 380) - 190)
-                    .blendMode(.plusLighter)
-                    .opacity(revealText ? 1 : 0)
-            }
-            .ignoresSafeArea()
-            .allowsHitTesting(false)
+                    .ignoresSafeArea()
 
-            cornerTicks(t)
+                scanBand(t, elapsed: elapsed, reveal: reveal)
 
-            VStack(spacing: 16) {
-                wordmarkView(t)
-                progressLine(t)
-                    .opacity(revealText ? 1 : 0)
-                HStack(spacing: 6) {
-                    LEDDot(color: t.glow, size: 4, dimmed: !ledOn)
-                    Silkscreen(text: "M-01 RANGEFINDER",
-                               color: t.ink.opacity(0.5), size: 6.5, tracking: 2.2)
+                cornerTicks(t, opacity: 0.36 * reveal)
+
+                VStack(spacing: 16) {
+                    wordmarkView(t, reveal: reveal, converge: converge)
+                    progressLine(t, progress: converge)
+                        .opacity(reveal)
+                    HStack(spacing: 6) {
+                        LEDDot(color: t.glow, size: 4, dimmed: !led)
+                        Silkscreen(text: "M-01 RANGEFINDER",
+                                   color: t.ink.opacity(0.5), size: 6.5, tracking: 2.2)
+                    }
+                    .opacity(reveal)
                 }
-                .opacity(revealText ? 1 : 0)
             }
+            .opacity(leaving ? 0 : 1)
+            .scaleEffect(leaving ? 1.04 : 1)
         }
         .ignoresSafeArea()
-        .opacity(leaving ? 0 : 1)
-        .scaleEffect(leaving ? 1.04 : 1)
-        .task { await boot() }
+        .task {
+            guard fixedProgress == nil else { return }
+            try? await Task.sleep(nanoseconds: UInt64((frozen ? total : outAt) * 1_000_000_000))
+            guard !frozen else { return }
+            withAnimation(.easeInOut(duration: 0.42)) { leaving = true }
+            try? await Task.sleep(nanoseconds: 420_000_000)
+            onFinish()
+        }
     }
 
     // MARK: 刻字
 
     @ViewBuilder
-    private func wordmarkView(_ t: ThemeTokens) -> some View {
+    private func wordmarkView(_ t: ThemeTokens, reveal: Double, converge: Double) -> some View {
         switch style {
         case .engraved:
-            engraved(t)
-                .opacity(revealText ? 1 : 0)
-                .blur(radius: revealText ? 0 : 6)
-                .offset(y: revealText ? 0 : 8)
+            engraved(t, sweep: -1)
+                .opacity(reveal)
+                .blur(radius: (1 - reveal) * 6)
+                .offset(y: (1 - reveal) * 8)
         case .noise:
             if WordmarkField.shared.points.isEmpty {
-                engraved(t).opacity(revealText ? 1 : 0)
+                engraved(t, sweep: -1).opacity(reveal)
             } else {
-                noiseWordmark(t)
+                noiseWordmark(t, reveal: reveal, converge: converge)
             }
         }
     }
 
     /// 刻进铝里的字：深墨 + 下缘一道白边
-    private func engraved(_ t: ThemeTokens) -> some View {
+    private func engraved(_ t: ThemeTokens, sweep: CGFloat) -> some View {
         ZStack {
             Text(wordmark)
                 .font(t.labelFont(30, .medium))
@@ -114,30 +124,28 @@ struct LaunchScreenView: View {
         }
     }
 
-    /// 噪点汇聚：一堆点从散开的位置收拢成字形，末段再压上真字
-    private func noiseWordmark(_ t: ThemeTokens) -> some View {
+    /// 噪点汇聚：点从散开位置收拢成字形，末段压上真字并让粒子退场
+    private func noiseWordmark(_ t: ThemeTokens, reveal: Double, converge: Double) -> some View {
         let field = WordmarkField.shared
-        let settle = Double(min(max(p, 0), 1))
+        let settle = Double(min(max(converge, 0), 1))
+        let sharp = max(0, (settle - 0.62) / 0.38)
+        let dotsFade = 1 - sharp * 0.92
         let width = max(field.size.width, 1)
         let height = max(field.size.height, 1)
-        let sharp = max(0, (settle - 0.62) / 0.38)
-        // 字变实的同时粒子退场，免得两套字形叠在一起发糊
-        let dotsFade = 1 - sharp * 0.92
 
         return ZStack {
             Canvas { ctx, size in
-                guard !field.points.isEmpty else { return }
                 for (index, point) in field.points.enumerated() {
                     // 归一化到 0…1，否则 UInt64 直接转 Double 会是个天文数字
                     let r1 = Double(hash(index &* 2 &+ 1) % 10_000) / 10_000
                     let r2 = Double(hash(index &* 2 &+ 7) % 10_000) / 10_000
                     let scatter = 1 - settle
-                    let dx = (r1 - 0.5) * 2 * 150 * scatter
-                    let dy = (r2 - 0.5) * 2 * 90 * scatter
+                    let dx = (r1 - 0.5) * 2 * 205 * scatter
+                    let dy = (r2 - 0.5) * 2 * 125 * scatter
                     let x = point.x * size.width + dx
                     let y = point.y * size.height + dy
-                    let radius = 0.85 + 0.75 * scatter
-                    let alpha = (0.2 + 0.8 * settle) * dotsFade
+                    let radius = 1.0 + 1.1 * scatter
+                    let alpha = (0.45 + 0.55 * settle) * dotsFade
                     ctx.fill(
                         Path(ellipseIn: CGRect(x: x - radius, y: y - radius,
                                                width: radius * 2, height: radius * 2)),
@@ -146,18 +154,33 @@ struct LaunchScreenView: View {
             }
             .frame(width: width, height: height)
 
-            engraved(t)
-                .opacity(sharp)
+            engraved(t, sweep: -1).opacity(sharp)
         }
-        .opacity(revealText ? 1 : 0)
+        .opacity(reveal)
     }
 
-    // MARK: 分段刻度 / 角标
+    // MARK: 扫描光带 / 刻度 / 角标
 
-    private func progressLine(_ t: ThemeTokens) -> some View {
+    private func scanBand(_ t: ThemeTokens, elapsed: Double, reveal: Double) -> some View {
+        let progress = min(max((elapsed - scanStart) / scanDuration, 0), 1.4)
+        return GeometryReader { geo in
+            LinearGradient(colors: [.clear, .white.opacity(0.45), .white.opacity(0.8),
+                                    .white.opacity(0.45), .clear],
+                           startPoint: .top, endPoint: .bottom)
+                .frame(height: 190)
+                .offset(y: progress * (geo.size.height + 380) - 190)
+                .blendMode(.plusLighter)
+                .opacity(reveal)
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
+
+    /// 分段刻度条：一格一格点亮，像仪表盘自检
+    private func progressLine(_ t: ThemeTokens, progress: Double) -> some View {
         HStack(spacing: 3) {
             ForEach(0..<20, id: \.self) { index in
-                let lit = Double(index) / 19.0 <= Double(p)
+                let lit = Double(index) / 19.0 <= progress
                 RoundedRectangle(cornerRadius: 1)
                     .fill(lit ? t.accent : t.ink.opacity(0.14))
                     .frame(width: 6, height: 3)
@@ -166,7 +189,7 @@ struct LaunchScreenView: View {
         }
     }
 
-    private func cornerTicks(_ t: ThemeTokens) -> some View {
+    private func cornerTicks(_ t: ThemeTokens, opacity: Double) -> some View {
         let len: CGFloat = 18
         let inset: CGFloat = 26
         let topInset: CGFloat = 68
@@ -190,11 +213,9 @@ struct LaunchScreenView: View {
                 path.addLine(to: CGPoint(x: w - inset, y: h - bottomInset))
                 path.addLine(to: CGPoint(x: w - inset, y: h - bottomInset - len))
             }
-            .stroke(t.ink.opacity(revealText ? 0.36 : 0), lineWidth: 1)
+            .stroke(t.ink.opacity(opacity), lineWidth: 1)
         }
     }
-
-    // MARK: 字形采样
 
     /// 每个粒子一个稳定的伪随机数
     private func hash(_ value: Int) -> UInt64 {
@@ -204,43 +225,12 @@ struct LaunchScreenView: View {
         h ^= h >> 29
         return h
     }
-
-    // MARK: 时序
-
-    private func boot() async {
-        if let fixedProgress {
-            p = fixedProgress
-            revealText = true
-            ledOn = true
-            return
-        }
-
-        withAnimation(.easeOut(duration: 0.45)) { revealText = true }
-
-        try? await Task.sleep(nanoseconds: 60_000_000)
-        withAnimation(.linear(duration: 1.15)) { scan = 1.25 }
-
-        try? await Task.sleep(nanoseconds: 120_000_000)
-        withAnimation(.easeInOut(duration: 1.05)) { sweep = 1.3 }
-
-        // 刻字出场进度：噪点/色散都靠这个值
-        withAnimation(.easeOut(duration: 0.95)) { p = 1 }
-
-        try? await Task.sleep(nanoseconds: 900_000_000)
-        withAnimation(.easeOut(duration: 0.18)) { ledOn = true }
-
-        try? await Task.sleep(nanoseconds: 520_000_000)
-        guard !frozen else { return }
-
-        withAnimation(.easeInOut(duration: 0.42)) { leaving = true }
-        try? await Task.sleep(nanoseconds: 420_000_000)
-        onFinish()
-    }
 }
 
 // MARK: - 刻字采样
 
-/// 把 FUTURE CAM 渲染成位图、取亮像素当粒子落点。进程内只算一次。
+/// 从字体轮廓里直接采点，不走位图渲染 —— 冷启动最早期渲染管线还没就绪，
+/// UIGraphicsImageRenderer 有可能返回空图，那样粒子会整个消失。
 @MainActor
 struct WordmarkField {
     static let shared = build()
@@ -250,50 +240,61 @@ struct WordmarkField {
 
     private static func build() -> WordmarkField {
         let wordmark = "FUTURE CAM"
-        // 和 engraved 用同一个字号、字距，采样画布就等于真字的实际尺寸
-        let font = UIFont(name: "Futura-Medium", size: 30) ?? .systemFont(ofSize: 30)
-        let text = NSAttributedString(string: wordmark, attributes: [
-            .font: font,
-            .foregroundColor: UIColor.white,
-            .kern: 9
-        ])
-        let textSize = text.size()
-        let w = ceil(textSize.width) + 4
-        let h = ceil(textSize.height) + 4
-        let canvas = CGSize(width: w, height: h)
+        let fontSize: CGFloat = 30
+        let kern: CGFloat = 9
 
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1
-        format.opaque = true
+        let font = CTFontCreateWithName("Futura-Medium" as CFString, fontSize, nil)
+        let attributes: [NSAttributedString.Key: Any] = [
+            NSAttributedString.Key(kCTFontAttributeName as String): font,
+            NSAttributedString.Key(kCTKernAttributeName as String): kern
+        ]
+        let attributed = NSAttributedString(string: wordmark, attributes: attributes)
+        let line = CTLineCreateWithAttributedString(attributed)
 
-        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
-        let image = renderer.image { ctx in
-            UIColor.black.setFill()
-            ctx.fill(CGRect(origin: .zero, size: canvas))
-            text.draw(at: CGPoint(x: 2, y: 2))
-        }
-        guard let cg = image.cgImage else { return WordmarkField(points: [], size: canvas) }
+        let path = CGMutablePath()
+        if let runs = CTLineGetGlyphRuns(line) as? [CTRun] {
+            for run in runs {
+                let count = CTRunGetGlyphCount(run)
+                guard count > 0 else { continue }
+                var glyphs = [CGGlyph](repeating: 0, count: count)
+                var positions = [CGPoint](repeating: .zero, count: count)
+                CTRunGetGlyphs(run, CFRangeMake(0, count), &glyphs)
+                CTRunGetPositions(run, CFRangeMake(0, count), &positions)
 
-        var pixels = [UInt8](repeating: 0, count: Int(w) * Int(h))
-        pixels.withUnsafeMutableBytes { raw in
-            guard let base = raw.baseAddress,
-                  let ctx = CGContext(data: base, width: Int(w), height: Int(h),
-                                      bitsPerComponent: 8, bytesPerRow: Int(w),
-                                      space: CGColorSpaceCreateDeviceGray(),
-                                      bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return }
-            ctx.draw(cg, in: CGRect(origin: .zero, size: canvas))
-        }
-
-        var points: [CGPoint] = []
-        let step = 2
-        for y in Swift.stride(from: 0, to: Int(h), by: step) {
-            for x in Swift.stride(from: 0, to: Int(w), by: step) where pixels[y * Int(w) + x] > 150 {
-                points.append(CGPoint(x: CGFloat(x) / w, y: CGFloat(y) / h))
+                for index in 0..<count {
+                    guard let glyphPath = CTFontCreatePathForGlyph(font, glyphs[index], nil) else { continue }
+                    var transform = CGAffineTransform(translationX: positions[index].x,
+                                                      y: positions[index].y)
+                    path.addPath(glyphPath, transform: transform)
+                    _ = transform
+                }
             }
         }
+
+        let bounds = path.boundingBoxOfPath
+        guard bounds.width > 1, bounds.height > 1, bounds.width.isFinite else {
+            return WordmarkField(points: [], size: CGSize(width: 320, height: 40))
+        }
+
+        // 网格采样：落在字形内部的点留下。Core Text 的 y 向上，画布 y 向下，这里翻转
+        var points: [CGPoint] = []
+        let step: CGFloat = 1.1
+        var y = bounds.minY
+        while y < bounds.maxY {
+            var x = bounds.minX
+            while x < bounds.maxX {
+                if path.contains(CGPoint(x: x, y: y)) {
+                    points.append(CGPoint(x: (x - bounds.minX) / bounds.width,
+                                          y: 1 - (y - bounds.minY) / bounds.height))
+                }
+                x += step
+            }
+            y += step
+        }
+
         #if DEBUG
-        print("[Launch] 刻字采样 \(points.count) 点 / \(Int(w))x\(Int(h))")
+        NSLog("[Launch] 刻字轮廓采样 %d 点", points.count)
         #endif
-        return WordmarkField(points: Array(points.prefix(1500)), size: canvas)
+        return WordmarkField(points: points, size: bounds.size)
     }
 }
