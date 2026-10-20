@@ -153,14 +153,7 @@ struct RangefinderCameraView: View {
                 }
             }
 
-            HStack(spacing: 6) {
-                Silkscreen(text: "35MM · F2.8", color: .white.opacity(0.42), size: 6, tracking: 1.4)
-                Spacer()
-                Silkscreen(text: "SER. \(String(format: "%04d", manager.frameCount))",
-                           color: .white.opacity(0.32), size: 6, tracking: 1.2)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            Color.clear.frame(height: 12)
         }
         .frame(maxHeight: .infinity)
     }
@@ -206,10 +199,9 @@ struct RangefinderCameraView: View {
             .padding(.top, 2)
 
             HStack {
-                Silkscreen(text: "AL-6061 · CNC", color: t.ink.opacity(0.35), size: 5.5, tracking: 1.2)
                 Spacer()
                 Silkscreen(text: "SER. \(String(format: "%05d", manager.frameCount))",
-                           color: t.ink.opacity(0.35), size: 5.5, tracking: 1.2)
+                           color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
             }
             .padding(.horizontal, 18)
             .padding(.bottom, 10)
