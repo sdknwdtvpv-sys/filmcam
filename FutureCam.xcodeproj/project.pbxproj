@@ -43,6 +43,7 @@
 		61EB7699227956491131DDEC /* FirstRunGuide.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE5B0D4B6C177F19FE89A87A /* FirstRunGuide.swift */; };
 		992ABEE886F369349C862702 /* LaunchScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88CE3EC2649FAC9225A247BE /* LaunchScreenView.swift */; };
 		0A26C79B4E76965C1CDEB46D /* FilmRoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 732CB1CBAA47BE75F291894E /* FilmRoll.swift */; };
+		C6C4B11E552ADE2C8FF9478E /* DateBack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8DAB1E771F17D41E311229B /* DateBack.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -83,6 +84,7 @@
 		AE5B0D4B6C177F19FE89A87A /* FirstRunGuide.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunGuide.swift; sourceTree = "<group>"; };
 		88CE3EC2649FAC9225A247BE /* LaunchScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchScreenView.swift; sourceTree = "<group>"; };
 		732CB1CBAA47BE75F291894E /* FilmRoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmRoll.swift; sourceTree = "<group>"; };
+		D8DAB1E771F17D41E311229B /* DateBack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateBack.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +111,7 @@
 			children = (
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				D8DAB1E771F17D41E311229B /* DateBack.swift */,
 				732CB1CBAA47BE75F291894E /* FilmRoll.swift */,
 				88CE3EC2649FAC9225A247BE /* LaunchScreenView.swift */,
 				AE5B0D4B6C177F19FE89A87A /* FirstRunGuide.swift */,
@@ -233,6 +236,7 @@
 				7A27D2BE473F4D84B3B39172 /* FutureCamApp.swift in Sources */,
 				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
 				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+				C6C4B11E552ADE2C8FF9478E /* DateBack.swift in Sources */,
 				0A26C79B4E76965C1CDEB46D /* FilmRoll.swift in Sources */,
 				992ABEE886F369349C862702 /* LaunchScreenView.swift in Sources */,
 				61EB7699227956491131DDEC /* FirstRunGuide.swift in Sources */,

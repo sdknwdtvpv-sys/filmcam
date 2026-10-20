@@ -98,7 +98,9 @@ struct CameraRoot: View {
             if DebugHarness.shouldTestEXIF { DebugHarness.writeEXIFSample() }
             if DebugHarness.shouldShowDeveloping {
                 // 截图检查撕拉片时不要弹相机权限
-                manager.capturedImage = DebugHarness.stubPreviewFrame()
+                if let stub = DebugHarness.stubPreviewFrame() {
+                    manager.previewCapturedForDebug(stub)
+                }
             } else {
                 manager.requestAccessAndConfigure()
             }

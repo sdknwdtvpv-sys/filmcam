@@ -106,6 +106,10 @@ final class CameraManager: NSObject, ObservableObject {
     /// 已授权但迟迟收不到帧（相机被占用 / 初始化失败）
     @Published var previewStalled = false
 
+    /// 日期背印：打开后才把橙色日期烧进成片
+    @Published var dateStampEnabled: Bool = UserDefaults.standard.bool(forKey: "futurecam.dateStamp") {
+        didSet { UserDefaults.standard.set(dateStampEnabled, forKey: "futurecam.dateStamp") }
+    }
     @Published var capturedImage: UIImage?
     /// 这一张「只过胶片」的底，换调色时从它重渲染
     private(set) var capturedBase: UIImage?
@@ -206,17 +210,18 @@ final class CameraManager: NSObject, ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.showDoubleExposureFirst = false
-                self.capturedImage = image
+                let final = self.finalized(image)
+                self.capturedImage = final
                 self.capturedBase = base
                 self.capturedAlbumItem = nil
-                self.pendingLibrarySave = (image, jpeg)
+                self.pendingLibrarySave = (final, jpeg)
                 self.bumpFrameCount()
                 self.rolls.recordShot()
                 let rollID = self.rolls.current.id
                 if self.mode == .doubleExposure, self.doubleExposureStep == 1 {
                     self.doubleExposureStep = 2
                 }
-                self.saveToAlbumOnly(image, jpeg: jpeg, rollID: rollID)
+                self.saveToAlbumOnly(final, jpeg: jpeg, rollID: rollID)
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -511,6 +516,28 @@ final class CameraManager: NSObject, ObservableObject {
         if doubleExposureStep == 2 { doubleExposureStep = 0 }
     }
 
+    #if DEBUG
+    /// 调试：让假成片也走一遍成片出口（日期背印等），用于截图自检
+    func previewCapturedForDebug(_ image: UIImage) {
+        let final = finalized(image)
+        capturedImage = final
+        // 把成片写到沙盒，用来做像素级自检（有没有真的烧上日期、位置对不对）
+        if DebugHarness.shouldProbeDateStamp, let data = final.jpegData(compressionQuality: 0.95) {
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("datestamp-probe.jpg")
+            try? data.write(to: url)
+            NSLog("[DateProbe] 写入 %@ size=%.0fx%.0f", url.lastPathComponent,
+                  final.size.width, final.size.height)
+        }
+    }
+    #endif
+
+    /// 成片统一出口：需要日期背印就烧上去，并把 JPEG 重新编码（保留 EXIF）
+    private func finalized(_ image: UIImage) -> UIImage {
+        guard dateStampEnabled else { return image }
+        return DateBack.apply(to: image)
+    }
+
     /// 拍完再换调色：从「只过胶片的底」重渲染，覆盖相册里那一张
     func regradeCaptured(to look: FilmPreset?) {
         guard let base = capturedBase, let ci = CIImage(image: base) else { return }
@@ -519,12 +546,13 @@ final class CameraManager: NSObject, ObservableObject {
             out = FilmFilter.applyGrade(out, grade)
         }
         guard let rendered = FilmFilter.render(out) else { return }
+        let final = finalized(rendered.0)
         // 用原片的 EXIF 重新编码，换调色不会丢元数据
-        let jpeg = controller.reencodeJPEG(rendered.0)
-            ?? rendered.0.jpegData(compressionQuality: 0.92)
-        capturedImage = rendered.0
+        let jpeg = controller.reencodeJPEG(final)
+            ?? final.jpegData(compressionQuality: 0.92)
+        capturedImage = final
         selectedLook = look
-        pendingLibrarySave = (rendered.0, jpeg)
+        pendingLibrarySave = (final, jpeg)
 
         guard let item = capturedAlbumItem, let jpeg else { return }
         let albumCopy = jpeg

@@ -62,6 +62,9 @@ enum DebugHarness {
         return Int(arguments[index + 1])
     }
 
+    /// `-fcDateStampProbe`：把成片写到沙盒，用于像素级检查日期背印
+    static var shouldProbeDateStamp: Bool { arguments.contains("-fcDateStampProbe") }
+
     /// `-fcGrainCard`：颗粒对照卡（同一张底片在三个 ISO 下过一遍滤镜）
     static var shouldShowGrainCard: Bool { arguments.contains("-fcGrainCard") }
 

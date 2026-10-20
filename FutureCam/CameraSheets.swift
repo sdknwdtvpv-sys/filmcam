@@ -354,6 +354,10 @@ struct SettingsSheet: View {
                 settingsToggle(title: "水平指示", subtitle: "取景器内显示横滚水平仪", isOn: $manager.showLevel)
                 GrooveLine()
                 settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
+                GrooveLine()
+                settingsToggle(title: "日期背印",
+                               subtitle: "把橙色日期烧进成片右下角（老式胶卷机后背）",
+                               isOn: $manager.dateStampEnabled)
 
                 Color.clear.frame(height: 34)
             }
