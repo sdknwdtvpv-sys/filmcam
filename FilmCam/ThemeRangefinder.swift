@@ -7,8 +7,13 @@ import SwiftUI
 struct RangefinderCameraView: View {
     @EnvironmentObject var manager: CameraManager
 
-    /// 拖动快门盘时的基准值
-    @State private var dialBase: Double?
+    /// 拖动快门环时的基准值 / 盘面角度 / 上一次触感所在的档位
+    @State private var collarBase: Double?
+    @State private var collarAngle: Double = 0
+    @State private var lastStop: Double = 0
+    /// 参数浮层（调参时在取景器里浮出）
+    @State private var hud: (title: String, value: String, progress: Double)?
+    @State private var hudToken = UUID()
 
     private var lcdInk: Color { Color(hex: 0xF2F4F6) }
 
@@ -29,6 +34,13 @@ struct RangefinderCameraView: View {
             }
 
             DeviceEdge(radius: 0, intensity: 1)
+        }
+        .onAppear {
+            #if DEBUG
+            if DebugHarness.shouldShowHUD {
+                showHUD("SHUTTER", "1/250", shutterProgress(1.0 / 250))
+            }
+            #endif
         }
     }
 
@@ -64,16 +76,10 @@ struct RangefinderCameraView: View {
                 }
                 .padding(.top, 4)
 
-                // 快门速度盘：拖动改快门，点一下展开滑杆
-                TopDial(tokens: t,
-                        caption: "T",
-                        onTap: { manager.toggleParam(.shutter) },
-                        onRotate: rotateShutter,
-                        onEndRotate: { dialBase = nil })
-
-                // ISO 盘：点一下切档
+                // ISO 盘：点一下切档（快门速度挪到机身右下的大滚花环）
                 TopDial(tokens: t,
                         caption: "ISO",
+                        value: "\(Int(manager.iso))",
                         onTap: cycleISO)
 
                 ScrewHead(size: 7)
@@ -111,6 +117,19 @@ struct RangefinderCameraView: View {
                 PreviewSurface(showsScrim: false)
             }
             .padding(.horizontal, 14)
+            .overlay {
+                if let hud {
+                    ParameterHUD(title: hud.title, value: hud.value,
+                                 progress: hud.progress, tokens: t)
+                        .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                        .task(id: hudToken) {
+                            try? await Task.sleep(nanoseconds: 1_200_000_000)
+                            guard !Task.isCancelled else { return }
+                            withAnimation(.easeOut(duration: 0.25)) { self.hud = nil }
+                        }
+                        .allowsHitTesting(false)
+                }
+            }
 
             HStack(spacing: 6) {
                 Silkscreen(text: "35MM · F2.8", color: .white.opacity(0.42), size: 6, tracking: 1.4)
@@ -262,32 +281,65 @@ struct RangefinderCameraView: View {
     }
 
     private func shutterDial(_ t: ThemeTokens) -> some View {
-        Button {
-            Haptics.impact(.heavy)
-            if manager.mode == .video { manager.toggleRecording() } else { manager.capturePhoto() }
-        } label: {
-            ZStack {
-                KnurledRing(tokens: t, teeth: 90, inner: 0.72)
-                    .frame(width: 92, height: 92)
-                    .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
-                Circle()
-                    .fill(LinearGradient(colors: [t.faceTop, t.faceBottom],
-                                         startPoint: .top, endPoint: .bottom))
-                    .frame(width: 60, height: 60)
-                    .overlay(Circle().strokeBorder(.black.opacity(0.35), lineWidth: 1))
-                if manager.isRecording && manager.mode == .video {
-                    RoundedRectangle(cornerRadius: 3).fill(t.recRed).frame(width: 16, height: 16)
-                } else {
-                    Circle()
+        ZStack {
+            // 外圈：滚花快门速度环（大目标、跟手、有棘轮触感）
+            KnurledRing(tokens: t, teeth: 128, inner: 0.82)
+                .frame(width: 120, height: 120)
+                .rotationEffect(.degrees(collarAngle))
+                .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
+                .overlay(alignment: .top) {
+                    // 红色索引
+                    Rectangle()
                         .fill(t.accent)
-                        .frame(width: 8, height: 8)
-                        .shadow(color: t.accent.opacity(0.7), radius: 4)
+                        .frame(width: 2, height: 8)
+                        .offset(y: 1)
+                        .rotationEffect(.degrees(collarAngle))
                 }
+                .contentShape(Circle())
+                .gesture(
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { value in
+                            turnCollar(value.translation.width)
+                            collarAngle = Double(value.translation.width) * 0.45
+                        }
+                        .onEnded { _ in
+                            collarBase = nil
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                                collarAngle = 0
+                            }
+                        }
+                )
+                .accessibilityLabel("快门速度 \(shutterLabel(manager.shutterSeconds))")
+                .accessibilityAdjustableAction { direction in
+                    nudgeShutter(direction == .increment ? -1 : 1)
+                }
+
+            // 中心：快门
+            Button {
+                Haptics.impact(.heavy)
+                if manager.mode == .video { manager.toggleRecording() } else { manager.capturePhoto() }
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [t.faceTop, t.faceBottom],
+                                             startPoint: .top, endPoint: .bottom))
+                        .frame(width: 82, height: 82)
+                        .overlay(Circle().strokeBorder(.black.opacity(0.35), lineWidth: 1))
+                        .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
+                    if manager.isRecording && manager.mode == .video {
+                        RoundedRectangle(cornerRadius: 3).fill(t.recRed).frame(width: 18, height: 18)
+                    } else {
+                        Circle()
+                            .fill(t.accent)
+                            .frame(width: 9, height: 9)
+                            .shadow(color: t.accent.opacity(0.7), radius: 4)
+                    }
+                }
+                .contentShape(Circle())
             }
-            .contentShape(Circle())
+            .buttonStyle(PressScaleStyle(scale: 0.95))
+            .accessibilityLabel(shutterVerb(manager))
         }
-        .buttonStyle(PressScaleStyle(scale: 0.96))
-        .accessibilityLabel(shutterVerb(manager))
     }
 
     private func flipKey(_ t: ThemeTokens) -> some View {
@@ -308,13 +360,50 @@ struct RangefinderCameraView: View {
         manager.setParamMode(manager.paramMode == .exposure ? .whiteBalance : .exposure)
     }
 
-    /// 转盘横向拖动 = 改快门（对数刻度）
-    private func rotateShutter(_ dx: CGFloat) {
-        if dialBase == nil { dialBase = manager.shutterSeconds }
-        let base = dialBase ?? manager.shutterSeconds
-        let factor = exp(Double(dx) / 150)
-        manager.shutterSeconds = min(max(base * factor, 0.00025), 0.25)
+    /// 转环：对数刻度，每跨 1/3 档给一次棘轮触感，并浮出取景器读数
+    private func turnCollar(_ dx: CGFloat) {
+        if collarBase == nil {
+            collarBase = manager.shutterSeconds
+            lastStop = log2(1 / max(manager.shutterSeconds, 0.0001))
+        }
+        let base = collarBase ?? manager.shutterSeconds
+        let value = min(max(base * exp(Double(dx) / 130), 1.0 / 4000), 0.25)
+        manager.shutterSeconds = value
         manager.applyExposure()
+
+        let stop = log2(1 / value)
+        if abs(stop - lastStop) >= 0.33 {
+            Haptics.impact(.light)
+            lastStop = stop
+        }
+        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
+    }
+
+    /// 无障碍 / 点按微调：按 1/3 档进位
+    private func nudgeShutter(_ direction: Int) {
+        let step = pow(2.0, 1.0 / 3.0)
+        let value = min(max(manager.shutterSeconds * (direction > 0 ? step : 1 / step),
+                            1.0 / 4000), 0.25)
+        manager.shutterSeconds = value
+        manager.applyExposure()
+        Haptics.impact(.light)
+        showHUD("SHUTTER", shutterLabel(value), shutterProgress(value))
+    }
+
+    /// 对数位置（1/4000 … 1/4）映射成 0…1
+    private func shutterProgress(_ value: Double) -> Double {
+        let lo = log2(4000.0), hi = log2(4.0)
+        return min(max((log2(1 / value) - lo) / (hi - lo), 0), 1)
+    }
+
+    private func isoProgress(_ value: Double) -> Double {
+        let lo = log2(100.0), hi = log2(1600.0)
+        return min(max((log2(value) - lo) / (hi - lo), 0), 1)
+    }
+
+    private func showHUD(_ title: String, _ value: String, _ progress: Double) {
+        hud = (title, value, progress)
+        hudToken = UUID()
     }
 
     /// ISO 盘点一下切档
@@ -324,6 +413,7 @@ struct RangefinderCameraView: View {
         manager.iso = steps[(index + 1) % steps.count]
         manager.applyExposure()
         Haptics.impact(.light)
+        showHUD("ISO", "\(Int(manager.iso))", isoProgress(manager.iso))
     }
 }
 
@@ -331,6 +421,7 @@ struct RangefinderCameraView: View {
 struct TopDial: View {
     let tokens: ThemeTokens
     let caption: String
+    var value: String? = nil
     var onTap: () -> Void
     var onRotate: ((CGFloat) -> Void)? = nil
     var onEndRotate: (() -> Void)? = nil
@@ -341,19 +432,28 @@ struct TopDial: View {
     var body: some View {
         VStack(spacing: 2) {
             ZStack {
-                KnurledRing(tokens: tokens, teeth: 54, inner: 0.62)
-                    .frame(width: 40, height: 40)
+                KnurledRing(tokens: tokens, teeth: 64, inner: 0.66)
+                    .frame(width: 54, height: 54)
                     .rotationEffect(.degrees(angle))
                     .shadow(color: .black.opacity(0.4), radius: 2, y: 2)
+                // 盘心数字窗
                 Circle()
                     .fill(LinearGradient(colors: [tokens.faceTop, tokens.faceBottom],
                                          startPoint: .top, endPoint: .bottom))
-                    .frame(width: 25, height: 25)
+                    .frame(width: 34, height: 34)
                     .overlay(Circle().strokeBorder(.black.opacity(0.3), lineWidth: 0.8))
+                    .overlay(
+                        Text(value ?? "")
+                            .font(tokens.monoFont(10, .bold))
+                            .foregroundColor(tokens.ink.opacity(0.85))
+                            .minimumScaleFactor(0.6)
+                            .lineLimit(1)
+                            .padding(.horizontal, 2)
+                    )
                 Rectangle()
                     .fill(tokens.accent)
-                    .frame(width: 1.5, height: 7)
-                    .offset(y: -7)
+                    .frame(width: 1.5, height: 8)
+                    .offset(y: -11)
             }
             .contentShape(Circle())
             .gesture(
@@ -376,7 +476,7 @@ struct TopDial: View {
             Silkscreen(text: caption, color: tokens.ink.opacity(0.55), size: 6, tracking: 1)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(caption)
+        .accessibilityLabel(value.map { "\(caption) \($0)" } ?? caption)
         .accessibilityAddTraits(.isButton)
     }
 }

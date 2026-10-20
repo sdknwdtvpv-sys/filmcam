@@ -22,6 +22,9 @@ enum DebugHarness {
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
 
+    /// `-fcShowHUD`：启动即浮出参数读数，方便截图检查（模拟器没法脚本拖动）
+    static var shouldShowHUD: Bool { arguments.contains("-fcShowHUD") }
+
     /// 启动时按参数切到指定界面
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {

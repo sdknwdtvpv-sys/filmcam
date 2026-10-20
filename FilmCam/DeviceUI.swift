@@ -133,3 +133,39 @@ struct LabeledKey<Content: View>: View {
         }
     }
 }
+
+/// 调参时浮在取景画面上的读数：大字 + 刻度条，1.2 秒后淡出
+struct ParameterHUD: View {
+    let title: String
+    let value: String
+    let progress: Double
+    let tokens: ThemeTokens
+
+    var body: some View {
+        VStack(spacing: 9) {
+            Text(title)
+                .font(tokens.monoFont(9, .bold))
+                .tracking(2.6)
+                .foregroundColor(.white.opacity(0.55))
+            Text(value)
+                .font(tokens.displayFont(42, .medium))
+                .monospacedDigit()
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.55), radius: 6)
+            ZStack(alignment: .leading) {
+                Capsule().fill(.white.opacity(0.16)).frame(width: 150, height: 3)
+                Capsule().fill(tokens.accent)
+                    .frame(width: max(4, 150 * min(max(progress, 0), 1)), height: 3)
+            }
+        }
+        .padding(.horizontal, 26)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 12).fill(Color.black.opacity(0.52))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(.white.opacity(0.16), lineWidth: 1)
+        )
+    }
+}
