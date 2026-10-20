@@ -77,14 +77,16 @@ expect(CameraMath.shutterLabel(2.0) == "2.0s", "快门标签 2.0s", CameraMath.s
 expect(CameraMath.evLabel(0.30000000000000004) == "+0.3", "EV 标签 +0.3", CameraMath.evLabel(0.3))
 expect(CameraMath.evLabel(-1.5) == "-1.5", "EV 标签 -1.5", CameraMath.evLabel(-1.5))
 
-// MARK: 快门键拖拽换模式（往左双曝 / 往右视频）
-expect(CameraMode.photo.shifted(byDragSteps: -1) == .doubleExposure, "照片往左拖一档是双曝")
-expect(CameraMode.photo.shifted(byDragSteps: 1) == .video, "照片往右拖一档是视频")
+// MARK: 快门键拖拽换模式（线性三档：双曝 ← 照片 → 视频）
 expect(CameraMode.photo.shifted(byDragSteps: 0) == .photo, "零位移不改模式")
-expect(CameraMode.doubleExposure.shifted(byDragSteps: 1) == .photo, "双曝往右拖回照片")
-expect(CameraMode.video.shifted(byDragSteps: -1) == .photo, "视频往左拖回照片")
-expect(CameraMode.photo.shifted(byDragSteps: 3) == .photo, "整圈转回来还是照片")
-expect(CameraMode.video.shifted(byDragSteps: -5) == .doubleExposure, "多档回绕仍落在合法模式")
+expect(CameraMode.photo.shifted(byDragSteps: 1) == .video, "照片往右一档是录像")
+expect(CameraMode.photo.shifted(byDragSteps: -1) == .doubleExposure, "照片往左一档是双曝")
+expect(CameraMode.video.shifted(byDragSteps: -1) == .photo, "录像往左一档回照片")
+expect(CameraMode.doubleExposure.shifted(byDragSteps: 1) == .photo, "双曝往右一档回照片")
+expect(CameraMode.video.shifted(byDragSteps: 1) == .video, "录像再往右停住不循环")
+expect(CameraMode.doubleExposure.shifted(byDragSteps: -3) == .doubleExposure, "双曝再往左停住不循环")
+expect(CameraMode.video.shifted(byDragSteps: -2) == .doubleExposure, "录像往左两档直接到双曝")
+expect(CameraMode.photo.stripIndex == 1 && CameraMode.strip.count == 3, "照片在排列中间")
 
 // MARK: 结果
 

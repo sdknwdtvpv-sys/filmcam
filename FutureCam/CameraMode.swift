@@ -16,16 +16,20 @@ enum CameraMode: String, CaseIterable, Identifiable {
         }
     }
 
-    /// 快门键横向拖拽 → 模式：往左拖是双曝，往右拖是视频。
-    /// `dragSteps` 正数向右、负数向左，每 26pt 一档。
-    func shifted(byDragSteps dragSteps: Int) -> CameraMode {
-        cycled(steps: -dragSteps)
+    /// 快门键上的三档线性排列：双曝 ← 照片 → 视频。
+    /// 不循环——拖到头就停在档位尽头，不会绕回另一端。
+    static let strip: [CameraMode] = [.doubleExposure, .photo, .video]
+
+    /// 在这一排里的位置：0 双曝 / 1 照片 / 2 视频
+    var stripIndex: Int {
+        CameraMode.strip.firstIndex(of: self) ?? CameraMode.strip.firstIndex(of: .photo) ?? 1
     }
 
-    /// 从当前模式往前/往后数 steps 档（循环）
-    func cycled(steps: Int) -> CameraMode {
-        let all = CameraMode.allCases
-        guard let index = all.firstIndex(of: self), !all.isEmpty else { return self }
-        return all[((index + steps) % all.count + all.count) % all.count]
+    /// 快门键横向拖拽 → 模式：往右拖是录像，往左拖回照片（再往左才是双曝）。
+    /// `dragSteps` 正数向右、负数向左，每 26pt 一档，到两端夹住。
+    func shifted(byDragSteps dragSteps: Int) -> CameraMode {
+        let order = CameraMode.strip
+        let target = min(max(stripIndex + dragSteps, 0), order.count - 1)
+        return order[target]
     }
 }

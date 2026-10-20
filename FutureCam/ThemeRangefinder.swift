@@ -547,10 +547,9 @@ struct RangefinderCameraView: View {
     }
 
     private func showModeHUD(_ mode: CameraMode) {
-        let all = CameraMode.allCases
-        let index = all.firstIndex(of: mode) ?? 0
+        let strip = CameraMode.strip
         showHUD("MODE", mode.label,
-                Double(index) / Double(max(all.count - 1, 1)))
+                Double(mode.stripIndex) / Double(max(strip.count - 1, 1)))
     }
 
     /// 每帧最多给一次反馈：档位跳了就用「档」的力度，只划过了细牙就用「牙」的力度。
