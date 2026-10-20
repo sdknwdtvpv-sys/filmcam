@@ -89,7 +89,9 @@ struct Silkscreen: View {
     }
 
     var body: some View {
-        Text(text)
+        // 传入的是运行时字符串，必须显式查表；缺失的键原样返回，
+        // 所以 "READY" 这类本来就是英文的丝印不受影响
+        Text(LocalizedStringKey(text))
             .font(font(size, .medium))
             .tracking(tracking)
             .foregroundColor(color.opacity(0.82))

@@ -368,8 +368,8 @@ struct SettingsSheet: View {
     private func settingsToggle(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(CameraTheme.mono(13, weight: .medium)).foregroundColor(CameraTheme.ink)
-                Text(subtitle).font(CameraTheme.mono(11)).foregroundColor(CameraTheme.inkDim)
+                Text(LocalizedStringKey(title)).font(CameraTheme.mono(13, weight: .medium)).foregroundColor(CameraTheme.ink)
+                Text(LocalizedStringKey(subtitle)).font(CameraTheme.mono(11)).foregroundColor(CameraTheme.inkDim)
             }
             Spacer()
             Toggle("", isOn: isOn).labelsHidden().tint(CameraTheme.amber)
