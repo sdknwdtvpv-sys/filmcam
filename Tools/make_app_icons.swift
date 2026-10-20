@@ -30,18 +30,20 @@ func rnd() -> CGFloat {
 /// 拉丝铝：竖向渐变 + 横向细纹
 func brushedAluminum(_ c: CGContext, rect: CGRect) {
     let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
-                       colors: [rgb(0xF2F4F6), rgb(0xD3D8DC), rgb(0xB4BABF)] as CFArray,
-                       locations: [0, 0.55, 1])!
+                       colors: [rgb(0xEDF0F2), rgb(0xD2D7DB), rgb(0xAFB5BA)] as CFArray,
+                       locations: [0, 0.52, 1])!
     c.saveGState(); c.clip(to: rect)
     c.drawLinearGradient(g, start: CGPoint(x: rect.midX, y: rect.maxY),
                          end: CGPoint(x: rect.midX, y: rect.minY), options: [])
     // 横向拉丝
+    // 与 TextureFactory.brushed() 同密度：1px 横线，α 0.035…0.11
     var y = rect.minY
     while y < rect.maxY {
-        let a = 0.012 + rnd() * 0.030
-        c.setFillColor(rnd() > 0.5 ? rgb(0xFFFFFF, a) : rgb(0x5A6068, a * 0.8))
-        c.fill(CGRect(x: rect.minX, y: y, width: rect.width, height: 0.8 + rnd() * 1.6))
-        y += 1.6 + rnd() * 2.2
+        let v = rnd()
+        let alpha = 0.035 + 0.075 * v
+        c.setFillColor(v > 0.52 ? rgb(0xFFFFFF, alpha) : rgb(0x000000, alpha * 0.9))
+        c.fill(CGRect(x: rect.minX, y: y, width: rect.width, height: 1))
+        y += 1
     }
     c.restoreGState()
 }
@@ -49,14 +51,13 @@ func brushedAluminum(_ c: CGContext, rect: CGRect) {
 /// 黑蒙皮：近黑底 + 颗粒 + 暗角
 func leather(_ c: CGContext, rect: CGRect) {
     c.saveGState(); c.clip(to: rect)
-    c.setFillColor(rgb(0x17181A)); c.fill(rect)
-    for _ in 0..<26000 {
-        let x = rect.minX + rnd() * rect.width
-        let y = rect.minY + rnd() * rect.height
-        c.setFillColor(rnd() > 0.5 ? rgb(0xFFFFFF, 0.014 + rnd() * 0.020)
-                                   : rgb(0x000000, 0.05 + rnd() * 0.10))
-        c.fill(CGRect(x: x, y: y, width: 1 + rnd() * 2.4, height: 1 + rnd() * 2.4))
-    }
+    // 平滑暗面：不做颗粒（图标尺寸会糊成噪点），靠暗角出体积
+    c.setFillColor(rgb(0x1A1B1C)); c.fill(rect)
+    let shade = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                           colors: [rgb(0x25272A), rgb(0x1A1B1C), rgb(0x101112)] as CFArray,
+                           locations: [0, 0.45, 1])!
+    c.drawLinearGradient(shade, start: CGPoint(x: rect.midX, y: rect.maxY),
+                         end: CGPoint(x: rect.midX, y: rect.minY), options: [])
     let g = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
                        colors: [rgb(0x000000, 0), rgb(0x000000, 0.55)] as CFArray, locations: [0.45, 1])!
     c.drawRadialGradient(g, startCenter: CGPoint(x: rect.midX, y: rect.midY), startRadius: rect.width * 0.2,
@@ -257,11 +258,22 @@ do {
     let plate = CGRect(x: 0, y: S - plateH, width: S, height: plateH)
     leather(c, rect: CGRect(x: 0, y: 0, width: S, height: S - plateH + 2))
     brushedAluminum(c, rect: plate)
-    // 顶盖与蒙皮之间的凹槽
-    c.setFillColor(rgb(0x000000, 0.85))
-    c.fill(CGRect(x: 0, y: S - plateH - 5, width: S, height: 7))
-    c.setFillColor(rgb(0xFFFFFF, 0.5))
-    c.fill(CGRect(x: 0, y: S - plateH + 2, width: S, height: 2))
+    // 交界：铝盖压在蒙皮上 —— 盖上投影 + 一道极细高光
+    let seamY = S - plateH
+    let shadow = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(),
+                            colors: [rgb(0x000000, 0.75), rgb(0x000000, 0)] as CFArray,
+                            locations: [0, 1])!
+    c.saveGState()
+    c.clip(to: CGRect(x: 0, y: seamY - 46, width: S, height: 46))
+    c.drawLinearGradient(shadow, start: CGPoint(x: 0, y: seamY),
+                         end: CGPoint(x: 0, y: seamY - 46), options: [])
+    c.restoreGState()
+    // 蒙皮自己的一线反光
+    c.setFillColor(rgb(0xFFFFFF, 0.16))
+    c.fill(CGRect(x: 0, y: seamY - 2.5, width: S, height: 1.6))
+    // 铝盖下缘的暗边
+    c.setFillColor(rgb(0x000000, 0.55))
+    c.fill(CGRect(x: 0, y: seamY, width: S, height: 1.6))
     // 左侧丝印：两条粗细不同的横线，像刻在铝上
     c.setFillColor(rgb(0x2A2E33, 0.42))
     c.fill(CGRect(x: S * 0.085, y: S * 0.745, width: S * 0.235, height: 11))
