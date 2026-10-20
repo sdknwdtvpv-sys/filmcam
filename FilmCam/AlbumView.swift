@@ -32,7 +32,9 @@ struct AlbumView: View {
 
     var body: some View {
         ZStack {
-            CameraTheme.bgDeep.ignoresSafeArea()
+            // 洗印台：深色蒙皮底 + 一层压暗，相纸浮在上面
+            LeatherPanel().ignoresSafeArea()
+            Color.black.opacity(0.35).ignoresSafeArea()
 
             VStack(spacing: 0) {
                 header
@@ -70,29 +72,34 @@ struct AlbumView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text("相册")
-                .foregroundColor(CameraTheme.ink)
-                .font(CameraTheme.mono(18, weight: .semibold))
-            if !manager.albumItems.isEmpty {
-                Text("\(manager.albumItems.count)")
-                    .font(CameraTheme.mono(12, weight: .medium))
-                    .foregroundColor(CameraTheme.inkDim)
-            }
+        let t = ThemeStore.current
+        return HStack(spacing: 8) {
+            ScrewHead(size: 7)
+            Silkscreen(text: "CONTACT SHEET", color: .black.opacity(0.55), size: 7, tracking: 2)
+            Text(String(format: "%02d EXP", manager.albumItems.count))
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.black.opacity(0.45))
             Spacer()
+            Text("相册")
+                .font(t.monoFont(11, .bold))
+                .foregroundColor(.black.opacity(0.55))
             Button { manager.closeAlbum() } label: {
                 Image(systemName: "xmark")
-                    .foregroundColor(CameraTheme.ink)
-                    .frame(width: 44, height: 44)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.black.opacity(0.6))
+                    .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("关闭相册")
+            ScrewHead(size: 7)
         }
-        .padding(.leading, 20)
-        .padding(.trailing, 8)
-        .padding(.top, 8)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 12)
+        .frame(height: 44)
+        .background(AluminumFace(tokens: t))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(.black.opacity(0.45)).frame(height: 1)
+        }
     }
 
     private var emptyState: some View {
@@ -111,18 +118,28 @@ struct AlbumView: View {
 
     private var grid: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 4) {
-                ForEach(manager.albumItems) { item in
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(Array(manager.albumItems.enumerated()), id: \.element.id) { index, item in
                     Button { detailItem = item } label: {
                         MediaThumbnail(item: item, maxPixel: 420)
                             .aspectRatio(0.7, contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .clipShape(RoundedRectangle(cornerRadius: 2))
+                            .shadow(color: .black.opacity(0.55), radius: 4, y: 2)
+                            .overlay(alignment: .bottomTrailing) {
+                                // 洗印编号
+                                Text(String(format: "%02d", manager.albumItems.count - index))
+                                    .font(.system(size: 6.5, weight: .bold, design: .monospaced))
+                                    .foregroundColor(.white.opacity(0.8))
+                                    .padding(.horizontal, 4).padding(.vertical, 1)
+                                    .background(Capsule().fill(.black.opacity(0.6)))
+                                    .padding(4)
+                            }
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(item.kind == .video ? "视频" : "照片")，\(AlbumDateFormat.short(item.createdAt))")
                 }
             }
-            .padding(8)
+            .padding(12)
         }
     }
 }
@@ -175,54 +192,64 @@ struct AlbumDetailView: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
 
-            VStack {
-                HStack {
+            VStack(spacing: 0) {
+                // 上夹头：铝条 + 帧号刻字
+                HStack(spacing: 8) {
+                    ScrewHead(size: 7)
+                    Silkscreen(text: "FRAME", color: .black.opacity(0.45), size: 6, tracking: 1.6)
                     Text(AlbumDateFormat.short(item.createdAt))
-                        .font(CameraTheme.mono(11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(.black.opacity(0.7))
                     Spacer()
+                    if item.kind == .video {
+                        Silkscreen(text: "MOV", color: .black.opacity(0.45), size: 6, tracking: 1.2)
+                    }
                     Button { onClose() } label: {
-                        Image(systemName: "xmark").foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Color.white.opacity(0.16)))
+                        Image(systemName: "xmark")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.black.opacity(0.6))
+                            .frame(width: 36, height: 36)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("关闭")
+                    ScrewHead(size: 7)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.horizontal, 12)
+                .frame(height: 44)
+                .background(AluminumFace(tokens: ThemeStore.current))
 
                 Spacer()
 
-                HStack(spacing: 0) {
-                    navButton(system: "chevron.left", enabled: hasPrev) { move(-1) }
+                // 下夹头：机械按键
+                HStack(spacing: 10) {
+                    navKey(system: "chevron.left", enabled: hasPrev) { move(-1) }
                         .accessibilityLabel("上一张")
-                    Spacer()
-                    Button { showShare = true } label: {
+                    Spacer(minLength: 0)
+                    LabeledKey(tokens: ThemeStore.current, caption: "分享", radius: 5,
+                               action: { showShare = true }) {
                         Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 20))
-                            .foregroundColor(.white)
-                            .frame(width: 56, height: 56)
-                            .contentShape(Rectangle())
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(ThemeStore.current.ink)
                     }
-                    .buttonStyle(.plain)
+                    .frame(width: 64)
                     .accessibilityLabel("分享")
-                    Spacer()
-                    Button { confirmDelete = true } label: {
+                    LabeledKey(tokens: ThemeStore.current, caption: "删除", radius: 5,
+                               action: { confirmDelete = true }) {
                         Image(systemName: "trash")
-                            .font(.system(size: 19))
-                            .foregroundColor(CameraTheme.recRed)
-                            .frame(width: 56, height: 56)
-                            .contentShape(Rectangle())
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(ThemeStore.current.recRed)
                     }
-                    .buttonStyle(.plain)
+                    .frame(width: 64)
                     .accessibilityLabel("删除")
-                    Spacer()
-                    navButton(system: "chevron.right", enabled: hasNext) { move(1) }
+                    Spacer(minLength: 0)
+                    navKey(system: "chevron.right", enabled: hasNext) { move(1) }
                         .accessibilityLabel("下一张")
                 }
-                .padding(.horizontal, 8)
-                .padding(.bottom, 24)
+                .padding(.horizontal, 14)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
+                .background(AluminumFace(tokens: ThemeStore.current))
             }
         }
         .task(id: item.url) { await load() }
@@ -279,15 +306,15 @@ struct AlbumDetailView: View {
         }
     }
 
-    private func navButton(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    private func navKey(system: String, enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: system)
-                .font(.system(size: 20))
-                .foregroundColor(enabled ? .white : .white.opacity(0.25))
-                .frame(width: 56, height: 56)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(enabled ? ThemeStore.current.ink : ThemeStore.current.inkDim.opacity(0.5))
+                .frame(width: 54, height: 34)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PhysicalButtonStyle(tokens: ThemeStore.current, radius: 5))
         .disabled(!enabled)
     }
 
