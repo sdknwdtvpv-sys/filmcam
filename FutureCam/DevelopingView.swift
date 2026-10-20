@@ -16,7 +16,7 @@ struct DevelopingPhotoView: View {
         self.image = image
         self.onDismiss = onDismiss
         self.initialPull = initialPull
-        _pull = State(initialValue: initialPull)
+        _pull = State(initialValue: initialPull > 0 ? initialPull : 0.12)
     }
 
     private var done: Bool { pull >= 0.97 }
@@ -29,13 +29,15 @@ struct DevelopingPhotoView: View {
             Color.black.opacity(0.62).ignoresSafeArea()
                 .onTapGesture { if done { onDismiss() } }
 
-            VStack(spacing: 0) {
-                pack
-                slotLip
-                emerging(t)
-                footer(t)
+            GeometryReader { geo in
+                VStack(spacing: 0) {
+                    pack.frame(height: max(88, geo.size.height * 0.22))
+                    slotLip
+                    emerging(t, areaHeight: geo.size.height * 0.66)
+                    footer(t)
+                }
+                .padding(.horizontal, 22)
             }
-            .padding(.horizontal, 22)
         }
     }
 
@@ -45,16 +47,10 @@ struct DevelopingPhotoView: View {
         ZStack {
             LinearGradient(colors: [Color(hex: 0x2B2E31), Color(hex: 0x121416)],
                            startPoint: .top, endPoint: .bottom)
-            VStack(spacing: 3) {
-                Text("PEEL-APART")
-                    .font(.custom("Futura-Medium", size: 11))
-                    .tracking(3.2)
-                    .foregroundColor(.white.opacity(0.4))
-                Text("INSTANT FILM PACK")
-                    .font(.system(size: 6, weight: .bold, design: .monospaced))
-                    .tracking(2)
-                    .foregroundColor(.white.opacity(0.22))
-            }
+            Text("PEEL-APART")
+                .font(.custom("Futura-Medium", size: 11))
+                .tracking(3.2)
+                .foregroundColor(.white.opacity(0.35))
         }
         .frame(height: 92)
         .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
@@ -83,45 +79,43 @@ struct DevelopingPhotoView: View {
 
     // MARK: 出片区
 
-    private func emerging(_ t: ThemeTokens) -> some View {
+    private func emerging(_ t: ThemeTokens, areaHeight: CGFloat) -> some View {
         GeometryReader { geo in
-            let travel = max(geo.size.height - 6, 1)
+            let maxW = geo.size.width - 18
+            let aspect = image.size.height / max(image.size.width, 1)
+            let naturalH = maxW * aspect
+            let printH = min(naturalH, areaHeight - 6)
+            let printW = printH / max(aspect, 0.01)
 
             ZStack(alignment: .top) {
                 LinearGradient(colors: [Color(hex: 0x050607), Color(hex: 0x0B0D0F)],
                                startPoint: .top, endPoint: .bottom)
 
+                // 相纸：顶端贴着槽口，随拉动向下展开
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: geo.size.width - 18)
-                    .offset(y: (1 - pull) * travel)
+                    .frame(width: printW, height: printH)
+                    .offset(y: -(1 - pull) * printH)
                     .shadow(color: .black.opacity(0.7), radius: 10, y: 4)
 
                 // 槽口投影
-                LinearGradient(colors: [.black.opacity(0.6), .clear],
+                LinearGradient(colors: [.black.opacity(0.65), .clear],
                                startPoint: .top, endPoint: .bottom)
-                    .frame(height: 26)
+                    .frame(height: 16)
                     .allowsHitTesting(false)
 
-                if !done {
-                    VStack {
-                        Spacer()
-                        HStack(spacing: 5) {
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 9, weight: .bold))
-                            Text("下拉取片")
-                                .font(t.monoFont(10, .medium))
-                        }
-                        .foregroundColor(.white.opacity(0.65))
-                        .padding(.bottom, 12)
-                        .opacity(max(0, 1 - pull * 1.6))
-                        .onTapGesture {
-                            withAnimation(.easeOut(duration: 0.45)) { pull = 1 }
-                        }
-                    }
+                // 往下流动的箭头：不用文字也能看懂"往下拉"
+                if pull < 0.55 {
+                    PullHint(tokens: t)
+                        // 箭头跟着相纸的可抓边一起走
+                        .padding(.top, pull * printH + 22)
+                        .opacity(max(0, 1 - pull * 2.2))
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .clipShape(RoundedRectangle(cornerRadius: 4))
             .contentShape(Rectangle())
             .gesture(
@@ -129,7 +123,7 @@ struct DevelopingPhotoView: View {
                     .onChanged { value in
                         if dragBase == nil { dragBase = pull }
                         let base = dragBase ?? pull
-                        let next = min(max(base + value.translation.height / travel, 0), 1)
+                        let next = min(max(base + value.translation.height / max(printH, 1), 0), 1)
                         pull = next
                         let bucket = Int(next * 4)
                         if bucket != lastTick {
@@ -139,9 +133,9 @@ struct DevelopingPhotoView: View {
                     }
                     .onEnded { _ in
                         dragBase = nil
-                        // 拉过一半就吸附到底，否则退回仓里
+                        // 拉过三成就吸附到底，否则退回到"露一条边"
                         withAnimation(.spring(response: 0.34, dampingFraction: 0.82)) {
-                            pull = pull > 0.5 ? 1 : 0
+                            pull = pull > 0.3 ? 1 : 0.12
                         }
                         Haptics.impact(.medium)
                     }
@@ -150,20 +144,44 @@ struct DevelopingPhotoView: View {
     }
 
     private func footer(_ t: ThemeTokens) -> some View {
-        HStack(spacing: 6) {
+        ZStack {
             if done {
-                LEDDot(color: t.glow, size: 5)
-                Text("已出片 · 轻触关闭")
-                    .font(t.monoFont(11, .medium))
-                    .foregroundColor(.white.opacity(0.75))
-            } else {
-                Text("按住相纸往下拉")
-                    .font(t.monoFont(10, .regular))
-                    .foregroundColor(.white.opacity(0.45))
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(width: 30, height: 30)
+                    .background(Circle().fill(t.accent.opacity(0.85)))
+                    .transition(.scale.combined(with: .opacity))
             }
         }
         .frame(height: 44)
         .frame(maxWidth: .infinity)
+        .accessibilityLabel(done ? "已出片，轻触关闭" : "下拉相纸取片")
+    }
+}
+
+/// 从槽口往下流动的箭头：只靠动效提示"往下拉"
+struct PullHint: View {
+    let tokens: ThemeTokens
+    @State private var phase = false
+
+    var body: some View {
+        VStack(spacing: -2) {
+            ForEach(0..<3, id: \.self) { i in
+                Image(systemName: "chevron.compact.down")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(tokens.accent)
+                    .opacity(phase ? 0.95 : 0.18)
+                    .animation(
+                        .easeInOut(duration: 0.85)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(i) * 0.13),
+                        value: phase
+                    )
+            }
+        }
+        .shadow(color: tokens.accent.opacity(0.5), radius: 6)
+        .onAppear { phase = true }
     }
 }
 
