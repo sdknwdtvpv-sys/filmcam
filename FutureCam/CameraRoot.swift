@@ -119,9 +119,9 @@ struct CameraRoot: View {
     /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
     private var launchStyle: LaunchIntroStyle {
         #if DEBUG
-        return DebugHarness.launchStyle ?? .engraved
+        return DebugHarness.launchStyle ?? .noise
         #else
-        return .engraved
+        return .noise
         #endif
     }
 

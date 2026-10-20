@@ -2,12 +2,10 @@ import SwiftUI
 
 /// 开机页里刻字的出场方式
 enum LaunchIntroStyle {
-    /// 现在这版：刻字浮起 + 一道高光扫过
+    /// 直接浮起 + 一道高光扫过（采样失败时的兜底）
     case engraved
-    /// 噪点汇聚成型
+    /// 噪点汇聚成型（默认）
     case noise
-    /// 色散边缘收敛（像镜头在合焦）
-    case chromatic
 }
 
 /// 开机页：机器上电。
@@ -15,7 +13,7 @@ enum LaunchIntroStyle {
 struct LaunchScreenView: View {
     var onFinish: () -> Void
     var frozen: Bool = false
-    var style: LaunchIntroStyle = .engraved
+    var style: LaunchIntroStyle = .noise
     /// 调试用：把进度钉死在这个值上，不播动画（方便截图对比）
     var fixedProgress: CGFloat? = nil
 
@@ -25,8 +23,7 @@ struct LaunchScreenView: View {
     @State private var scan: CGFloat = -0.25
     @State private var ledOn = false
     @State private var leaving = false
-    @State private var field: [CGPoint] = []
-    @State private var fieldSize: CGSize = .zero
+    /// 刻字采样点与画布尺寸，进程内只算一次
 
     private let wordmark = "FUTURE CAM"
 
@@ -70,14 +67,7 @@ struct LaunchScreenView: View {
         .ignoresSafeArea()
         .opacity(leaving ? 0 : 1)
         .scaleEffect(leaving ? 1.04 : 1)
-        .task {
-            if style == .noise {
-                let sampled = makeField(t)
-                field = sampled.points
-                fieldSize = sampled.size
-            }
-            await boot()
-        }
+        .task { await boot() }
     }
 
     // MARK: 刻字
@@ -91,13 +81,11 @@ struct LaunchScreenView: View {
                 .blur(radius: revealText ? 0 : 6)
                 .offset(y: revealText ? 0 : 8)
         case .noise:
-            if field.isEmpty {
+            if WordmarkField.shared.points.isEmpty {
                 engraved(t).opacity(revealText ? 1 : 0)
             } else {
                 noiseWordmark(t)
             }
-        case .chromatic:
-            chromaticWordmark(t)
         }
     }
 
@@ -128,17 +116,18 @@ struct LaunchScreenView: View {
 
     /// 噪点汇聚：一堆点从散开的位置收拢成字形，末段再压上真字
     private func noiseWordmark(_ t: ThemeTokens) -> some View {
+        let field = WordmarkField.shared
         let settle = Double(min(max(p, 0), 1))
-        let width = max(fieldSize.width, 1)
-        let height = max(fieldSize.height, 1)
+        let width = max(field.size.width, 1)
+        let height = max(field.size.height, 1)
         let sharp = max(0, (settle - 0.62) / 0.38)
         // 字变实的同时粒子退场，免得两套字形叠在一起发糊
         let dotsFade = 1 - sharp * 0.92
 
         return ZStack {
             Canvas { ctx, size in
-                guard !field.isEmpty else { return }
-                for (index, point) in field.enumerated() {
+                guard !field.points.isEmpty else { return }
+                for (index, point) in field.points.enumerated() {
                     // 归一化到 0…1，否则 UInt64 直接转 Double 会是个天文数字
                     let r1 = Double(hash(index &* 2 &+ 1) % 10_000) / 10_000
                     let r2 = Double(hash(index &* 2 &+ 7) % 10_000) / 10_000
@@ -160,32 +149,6 @@ struct LaunchScreenView: View {
             engraved(t)
                 .opacity(sharp)
         }
-        .opacity(revealText ? 1 : 0)
-    }
-
-    /// 色散收敛：青、洋红两版彩字压在下层，墨色字盖在上层。
-    /// 只有彩版探出笔画的边缘才会露出来 —— 就是镜头没合焦时那道彩边。
-    private func chromaticWordmark(_ t: ThemeTokens) -> some View {
-        let offset = (1 - min(max(p, 0), 1)) * 4
-
-        return ZStack {
-            Text(wordmark)
-                .font(t.labelFont(30, .medium))
-                .tracking(9)
-                .foregroundColor(Color(red: 0, green: 1, blue: 1))
-                .offset(x: -offset)
-                .blendMode(.multiply)
-
-            Text(wordmark)
-                .font(t.labelFont(30, .medium))
-                .tracking(9)
-                .foregroundColor(Color(red: 1, green: 0, blue: 1))
-                .offset(x: offset)
-                .blendMode(.multiply)
-
-            engraved(t)
-        }
-        .compositingGroup()
         .opacity(revealText ? 1 : 0)
     }
 
@@ -233,55 +196,6 @@ struct LaunchScreenView: View {
 
     // MARK: 字形采样
 
-    /// 把刻字渲染成位图、取亮像素当粒子落点
-    @MainActor
-    private func makeField(_ t: ThemeTokens) -> (points: [CGPoint], size: CGSize) {
-        // 用和 engraved 完全相同的字号与字距，采样画布就等于真字的实际尺寸
-        let font = UIFont(name: "Futura-Medium", size: 30) ?? .systemFont(ofSize: 30)
-        let text = NSAttributedString(string: wordmark, attributes: [
-            .font: font,
-            .foregroundColor: UIColor.white,
-            .kern: 9
-        ])
-        let textSize = text.size()
-        let w = ceil(textSize.width) + 4
-        let h = ceil(textSize.height) + 4
-
-        let format = UIGraphicsImageRendererFormat.default()
-        format.scale = 1
-        format.opaque = true
-
-        let renderer = UIGraphicsImageRenderer(size: CGSize(width: w, height: h), format: format)
-        let image = renderer.image { ctx in
-            UIColor.black.setFill()
-            ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
-            text.draw(at: CGPoint(x: 2, y: 2))
-        }
-        guard let cg = image.cgImage else { return ([], CGSize(width: w, height: h)) }
-
-        var pixels = [UInt8](repeating: 0, count: Int(w) * Int(h))
-        pixels.withUnsafeMutableBytes { raw in
-            guard let base = raw.baseAddress,
-                  let ctx = CGContext(data: base, width: Int(w), height: Int(h),
-                                      bitsPerComponent: 8, bytesPerRow: Int(w),
-                                      space: CGColorSpaceCreateDeviceGray(),
-                                      bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return }
-            ctx.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
-        }
-
-        var points: [CGPoint] = []
-        let step = 2
-        for y in Swift.stride(from: 0, to: Int(h), by: step) {
-            for x in Swift.stride(from: 0, to: Int(w), by: step) where pixels[y * Int(w) + x] > 150 {
-                points.append(CGPoint(x: CGFloat(x) / w, y: CGFloat(y) / h))
-            }
-        }
-        #if DEBUG
-        print("[Launch] 刻字采样点 \(points.count) 画布 \(Int(w))x\(Int(h))")
-        #endif
-        return (Array(points.prefix(1500)), CGSize(width: w, height: h))
-    }
-
     /// 每个粒子一个稳定的伪随机数
     private func hash(_ value: Int) -> UInt64 {
         var h = UInt64(bitPattern: Int64(value)) &* 6_364_136_223_846_793_005
@@ -321,5 +235,65 @@ struct LaunchScreenView: View {
         withAnimation(.easeInOut(duration: 0.42)) { leaving = true }
         try? await Task.sleep(nanoseconds: 420_000_000)
         onFinish()
+    }
+}
+
+// MARK: - 刻字采样
+
+/// 把 FUTURE CAM 渲染成位图、取亮像素当粒子落点。进程内只算一次。
+@MainActor
+struct WordmarkField {
+    static let shared = build()
+
+    let points: [CGPoint]
+    let size: CGSize
+
+    private static func build() -> WordmarkField {
+        let wordmark = "FUTURE CAM"
+        // 和 engraved 用同一个字号、字距，采样画布就等于真字的实际尺寸
+        let font = UIFont(name: "Futura-Medium", size: 30) ?? .systemFont(ofSize: 30)
+        let text = NSAttributedString(string: wordmark, attributes: [
+            .font: font,
+            .foregroundColor: UIColor.white,
+            .kern: 9
+        ])
+        let textSize = text.size()
+        let w = ceil(textSize.width) + 4
+        let h = ceil(textSize.height) + 4
+        let canvas = CGSize(width: w, height: h)
+
+        let format = UIGraphicsImageRendererFormat.default()
+        format.scale = 1
+        format.opaque = true
+
+        let renderer = UIGraphicsImageRenderer(size: canvas, format: format)
+        let image = renderer.image { ctx in
+            UIColor.black.setFill()
+            ctx.fill(CGRect(origin: .zero, size: canvas))
+            text.draw(at: CGPoint(x: 2, y: 2))
+        }
+        guard let cg = image.cgImage else { return WordmarkField(points: [], size: canvas) }
+
+        var pixels = [UInt8](repeating: 0, count: Int(w) * Int(h))
+        pixels.withUnsafeMutableBytes { raw in
+            guard let base = raw.baseAddress,
+                  let ctx = CGContext(data: base, width: Int(w), height: Int(h),
+                                      bitsPerComponent: 8, bytesPerRow: Int(w),
+                                      space: CGColorSpaceCreateDeviceGray(),
+                                      bitmapInfo: CGImageAlphaInfo.none.rawValue) else { return }
+            ctx.draw(cg, in: CGRect(origin: .zero, size: canvas))
+        }
+
+        var points: [CGPoint] = []
+        let step = 2
+        for y in Swift.stride(from: 0, to: Int(h), by: step) {
+            for x in Swift.stride(from: 0, to: Int(w), by: step) where pixels[y * Int(w) + x] > 150 {
+                points.append(CGPoint(x: CGFloat(x) / w, y: CGFloat(y) / h))
+            }
+        }
+        #if DEBUG
+        print("[Launch] 刻字采样 \(points.count) 点 / \(Int(w))x\(Int(h))")
+        #endif
+        return WordmarkField(points: Array(points.prefix(1500)), size: canvas)
     }
 }

@@ -35,13 +35,12 @@ enum DebugHarness {
     /// `-fcSkipGuide`：把引导标记为已看过，方便截其它界面
     static var shouldSkipGuide: Bool { arguments.contains("-fcSkipGuide") }
 
-    /// `-fcLaunchStyle noise|chrome|engraved`：切换开机页刻字的出场方式
+    /// `-fcLaunchStyle noise|engraved`：切换开机页刻字的出场方式
     static var launchStyle: LaunchIntroStyle? {
         guard let index = arguments.firstIndex(of: "-fcLaunchStyle"),
               index + 1 < arguments.count else { return nil }
         switch arguments[index + 1] {
         case "noise": return .noise
-        case "chrome": return .chromatic
         case "engraved": return .engraved
         default: return nil
         }
