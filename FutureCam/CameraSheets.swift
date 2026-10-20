@@ -91,7 +91,9 @@ struct FilmSheet: View {
                 Silkscreen(text: manager.roll.numberText, color: .white.opacity(0.38),
                            size: 5.5, tracking: 1.4)
                 Rectangle().fill(.white.opacity(0.16)).frame(width: 1, height: 7)
-                Silkscreen(text: manager.roll.isFull ? "本卷拍完 · 换一卷" : "还剩 \(manager.roll.remaining) 张",
+                Silkscreen(text: manager.roll.isFull ? "本卷拍完 · 换一卷"
+                                      : String(format: NSLocalizedString("还剩 %d 张", comment: ""),
+                                               manager.roll.remaining),
                            color: .white.opacity(0.38), size: 5.5, tracking: 1.4)
                 Spacer(minLength: 0)
                 Text(manager.roll.countText)
@@ -221,7 +223,7 @@ struct FilmCanister: View {
                     VStack(spacing: 3) {
                         Rectangle().fill(labelColor).frame(height: 30)
                             .overlay(
-                                Text(preset.label)
+                                Text(LocalizedStringKey(preset.label))
                                     .font(.custom("Futura-Medium", size: 9))
                                     .foregroundColor(.white.opacity(0.95))
                                     .lineLimit(1)

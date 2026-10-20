@@ -117,7 +117,7 @@ struct RangefinderCameraView: View {
                             // 窗底透出这卷的颜色，一眼能认出装的是什么
                             InsetWell(tokens: t, radius: 2,
                                       tint: canisterColor(manager.selectedPreset)) {
-                                Text(manager.selectedPreset.label)
+                                Text(LocalizedStringKey(manager.selectedPreset.label))
                                     .font(t.monoFont(8, .bold))
                                     .foregroundColor(lcdInk)
                                     .lineLimit(1)

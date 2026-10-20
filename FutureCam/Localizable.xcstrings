@@ -1,6 +1,16 @@
 {
   "sourceLanguage": "zh-Hans",
   "strings": {
+    "AE/AF 锁定": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AE/AF Lock"
+          }
+        }
+      }
+    },
     "CONTACT SHEET": {
       "localizations": {
         "en": {
@@ -11,12 +21,82 @@
         }
       }
     },
+    "FutureCam 需要相机权限才能拍摄。点下方按钮前往系统设置开启相机权限，然后返回本页即可。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FutureCam needs camera access to shoot. Tap below to open Settings, then come back to this page."
+          }
+        }
+      }
+    },
+    "FutureCam 需要访问相机来拍摄复古胶片照片。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FutureCam needs the camera to take film-style photos."
+          }
+        }
+      }
+    },
+    "LUT 把太阳变蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The LUT turns the sun blue"
+          }
+        }
+      }
+    },
     "三分构图辅助线": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Thirds guide"
+          }
+        }
+      }
+    },
+    "上一张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous"
+          }
+        }
+      }
+    },
+    "下一张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        }
+      }
+    },
+    "下一条": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        }
+      }
+    },
+    "下一步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
           }
         }
       }
@@ -41,6 +121,66 @@
         }
       }
     },
+    "偏冷·发蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cool · blue"
+          }
+        }
+      }
+    },
+    "偏暖·发黄": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm · amber"
+          }
+        }
+      }
+    },
+    "偏洋红": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Magenta"
+          }
+        }
+      }
+    },
+    "偏绿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        }
+      }
+    },
+    "停止录制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
     "关闭": {
       "localizations": {
         "en": {
@@ -51,12 +191,42 @@
         }
       }
     },
+    "关闭相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close album"
+          }
+        }
+      }
+    },
     "冲印": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Print"
+          }
+        }
+      }
+    },
+    "冲印中…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Printing…"
+          }
+        }
+      }
+    },
+    "冷白 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cool White 200"
           }
         }
       }
@@ -91,12 +261,32 @@
         }
       }
     },
+    "切换前置 / 后置镜头": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch camera"
+          }
+        }
+      }
+    },
     "删除": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        }
+      }
+    },
+    "删除这卷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete this film"
           }
         }
       }
@@ -111,12 +301,32 @@
         }
       }
     },
+    "前后摄": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera"
+          }
+        }
+      }
+    },
     "前置": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Front"
+          }
+        }
+      }
+    },
+    "动得凶不凶": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Motion level"
           }
         }
       }
@@ -141,12 +351,52 @@
         }
       }
     },
+    "原生": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neutral"
+          }
+        }
+      }
+    },
     "原色": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Original"
+          }
+        }
+      }
+    },
+    "去系统设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "去系统设置开启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Settings"
+          }
+        }
+      }
+    },
+    "去设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
           }
         }
       }
@@ -201,6 +451,16 @@
         }
       }
     },
+    "只过胶片的底": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film-only base"
+          }
+        }
+      }
+    },
     "可拍": {
       "localizations": {
         "en": {
@@ -227,6 +487,96 @@
           "stringUnit": {
             "state": "translated",
             "value": "BOOT"
+          }
+        }
+      }
+    },
+    "四卷偏日间与风光": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four rolls for daylight and landscape"
+          }
+        }
+      }
+    },
+    "四卷偏暗光与夜色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Four rolls for low light and night"
+          }
+        }
+      }
+    },
+    "场景": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scene"
+          }
+        }
+      }
+    },
+    "复古 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retro 200"
+          }
+        }
+      }
+    },
+    "夏日 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Summer 400"
+          }
+        }
+      }
+    },
+    "夜行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nocturne"
+          }
+        }
+      }
+    },
+    "夜街 800": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night St. 800"
+          }
+        }
+      }
+    },
+    "奶油 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cream 400"
+          }
+        }
+      }
+    },
+    "好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
           }
         }
       }
@@ -321,6 +671,46 @@
         }
       }
     },
+    "底部卡片轮播": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Carousel of cards below"
+          }
+        }
+      }
+    },
+    "开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
+    "开始使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get started"
+          }
+        }
+      }
+    },
+    "开始录制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Record"
+          }
+        }
+      }
+    },
     "张": {
       "localizations": {
         "en": {
@@ -391,6 +781,16 @@
         }
       }
     },
+    "成功": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
     "我的": {
       "localizations": {
         "en": {
@@ -417,6 +817,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slow, handheld"
+          }
+        }
+      }
+    },
+    "打开相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open album"
           }
         }
       }
@@ -451,6 +861,36 @@
         }
       }
     },
+    "拍照": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photos"
+          }
+        }
+      }
+    },
+    "拍过的照片和视频都在这里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your photos and videos live here"
+          }
+        }
+      }
+    },
+    "按下快门": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press the shutter"
+          }
+        }
+      }
+    },
     "换一卷": {
       "localizations": {
         "en": {
@@ -467,6 +907,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Change film"
+          }
+        }
+      }
+    },
+    "授权并开启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow and open"
+          }
+        }
+      }
+    },
+    "接近日光": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Near daylight"
           }
         }
       }
@@ -521,12 +981,52 @@
         }
       }
     },
+    "晴野 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Field 200"
+          }
+        }
+      }
+    },
+    "暖柔 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm Soft 200"
+          }
+        }
+      }
+    },
+    "暗涌 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undertow 400"
+          }
+        }
+      }
+    },
     "暗角": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Vignette"
+          }
+        }
+      }
+    },
+    "暮金 100": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dusk 100"
           }
         }
       }
@@ -581,6 +1081,16 @@
         }
       }
     },
+    "更长": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Longer"
+          }
+        }
+      }
+    },
     "服务面板": {
       "localizations": {
         "en": {
@@ -601,12 +1111,42 @@
         }
       }
     },
+    "未知胶卷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown film"
+          }
+        }
+      }
+    },
     "本卷拍完": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Roll finished"
+          }
+        }
+      }
+    },
+    "本卷拍完 · 换一卷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll finished · load a new one"
+          }
+        }
+      }
+    },
+    "松石 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turquoise 400"
           }
         }
       }
@@ -621,12 +1161,32 @@
         }
       }
     },
+    "标准": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
+          }
+        }
+      }
+    },
     "标准曝光": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Standard"
+          }
+        }
+      }
+    },
+    "森野 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Forest 400"
           }
         }
       }
@@ -641,12 +1201,102 @@
         }
       }
     },
+    "横竖别扭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "sideways"
+          }
+        }
+      }
+    },
+    "正在启动相机…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starting camera…"
+          }
+        }
+      }
+    },
     "水平指示": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Level"
+          }
+        }
+      }
+    },
+    "永久黑屏无提示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stays black with no hint"
+          }
+        }
+      }
+    },
+    "深潭 1600": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abyss 1600"
+          }
+        }
+      }
+    },
+    "清透 100": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear 100"
+          }
+        }
+      }
+    },
+    "滤色 + 半透明": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen + translucent"
+          }
+        }
+      }
+    },
+    "点一个格子选中它，下面的大轮盘就调它": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap a cell to select it; the big dial adjusts it"
+          }
+        }
+      }
+    },
+    "点了没反应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Taps do nothing"
+          }
+        }
+      }
+    },
+    "点这个窗开仓，换一筒胶片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap this window to change film"
           }
         }
       }
@@ -671,6 +1321,36 @@
         }
       }
     },
+    "照片未保存：请在设置中允许访问照片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Photo not saved — allow Photos access in Settings"
+          }
+        }
+      }
+    },
+    "照镜子": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mirrored"
+          }
+        }
+      }
+    },
+    "琥珀 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amber 200"
+          }
+        }
+      }
+    },
     "画面在动": {
       "localizations": {
         "en": {
@@ -681,12 +1361,122 @@
         }
       }
     },
+    "略冷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slightly cool"
+          }
+        }
+      }
+    },
+    "略暖": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slightly warm"
+          }
+        }
+      }
+    },
     "相册": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Album"
+          }
+        }
+      }
+    },
+    "相机权限已关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera access is off"
+          }
+        }
+      }
+    },
+    "相机预览不可用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera preview unavailable"
+          }
+        }
+      }
+    },
+    "石板 800": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slate 800"
+          }
+        }
+      }
+    },
+    "第 %d 卷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll %d"
+          }
+        }
+      }
+    },
+    "第 %d 卷  |  还剩 %d 张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll %d  |  %d left"
+          }
+        }
+      }
+    },
+    "第一张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First"
+          }
+        }
+      }
+    },
+    "第一张已曝光 · 请拍第二张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First exposure done — take the second"
+          }
+        }
+      }
+    },
+    "第二张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Second"
+          }
+        }
+      }
+    },
+    "胶卷": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Film"
           }
         }
       }
@@ -731,12 +1521,32 @@
         }
       }
     },
+    "自动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto"
+          }
+        }
+      }
+    },
     "自动曝光与白平衡": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Auto exposure & white balance"
+          }
+        }
+      }
+    },
+    "色彩 + 颗粒 + 暗角": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color, grain, vignette"
           }
         }
       }
@@ -761,6 +1571,46 @@
         }
       }
     },
+    "落日 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunset 200"
+          }
+        }
+      }
+    },
+    "薄荷 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mint 400"
+          }
+        }
+      }
+    },
+    "褪色电影": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faded Cinema"
+          }
+        }
+      }
+    },
+    "要不要叠调色、要不要叠颗粒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Whether to add a grade or grain"
+          }
+        }
+      }
+    },
     "要架稳": {
       "localizations": {
         "en": {
@@ -781,6 +1631,36 @@
         }
       }
     },
+    "视频已保存到相册": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video saved to Photos"
+          }
+        }
+      }
+    },
+    "视频未保存：请在设置中允许访问照片": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Video not saved — allow Photos access in Settings"
+          }
+        }
+      }
+    },
+    "订阅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subscription"
+          }
+        }
+      }
+    },
     "设置": {
       "localizations": {
         "en": {
@@ -791,12 +1671,52 @@
         }
       }
     },
+    "调数值": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adjust the value"
+          }
+        }
+      }
+    },
     "调色 · 叠在胶片之上": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "COLOR · on top of the film"
+          }
+        }
+      }
+    },
+    "赭石 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ochre 200"
+          }
+        }
+      }
+    },
+    "转这圈滚花，每过一颗齿咔哒一下": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn this knurled ring — each tooth clicks"
+          }
+        }
+      }
+    },
+    "轻点松手就是拍；按住左右拖换模式，左双曝右录像": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap to shoot. Press and drag to switch: left for double exposure, right for video"
           }
         }
       }
@@ -821,12 +1741,32 @@
         }
       }
     },
+    "还剩 %d 张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d left"
+          }
+        }
+      }
+    },
     "还原": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Reset"
+          }
+        }
+      }
+    },
+    "还没有照片，先拍一张吧": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No photos yet — take one"
           }
         }
       }
@@ -851,6 +1791,16 @@
         }
       }
     },
+    "这卷还剩几张": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frames left"
+          }
+        }
+      }
+    },
     "这卷还没拆封": {
       "localizations": {
         "en": {
@@ -861,12 +1811,62 @@
         }
       }
     },
+    "这张图打不开了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Can't open this image"
+          }
+        }
+      }
+    },
+    "远行": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wander"
+          }
+        }
+      }
+    },
     "重置": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Reset"
+          }
+        }
+      }
+    },
+    "钴蓝 200": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cobalt 200"
+          }
+        }
+      }
+    },
+    "铁锈 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rust 400"
+          }
+        }
+      }
+    },
+    "银盐 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silver 400"
           }
         }
       }
@@ -897,6 +1897,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Flash"
+          }
+        }
+      }
+    },
+    "随机器附赠": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Included"
+          }
+        }
+      }
+    },
+    "雪原 100": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snow 100"
+          }
+        }
+      }
+    },
+    "需要相机权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera access required"
+          }
+        }
+      }
+    },
+    "霜白 400": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frost 400"
           }
         }
       }
@@ -977,6 +2017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Saturation"
+          }
+        }
+      }
+    },
+    "，已装载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\", loaded"
           }
         }
       }

@@ -19,7 +19,7 @@ struct FilmRoll: Codable, Identifiable, Equatable {
     /// 如 "12/36"
     var countText: String { "\(used)/\(capacity)" }
     /// 如 "第 3 卷"
-    var numberText: String { "第 \(number) 卷" }
+    var numberText: String { String(format: NSLocalizedString("第 %d 卷", comment: ""), number) }
 
     var traits: RollTraits { RollTraits(seed: seed) }
 }
