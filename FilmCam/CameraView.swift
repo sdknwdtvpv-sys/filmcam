@@ -1142,7 +1142,8 @@ struct DevelopingPhotoView: View {
 
 struct AlbumView: View {
     @EnvironmentObject var manager: CameraManager
-    @State private var selected: AlbumItem?
+    @State private var selectedIndex: Int = 0
+    @State private var showDetail = false
     private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
 
     var body: some View {
@@ -1168,8 +1169,8 @@ struct AlbumView: View {
                 } else {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 10) {
-                            ForEach(manager.albumItems) { item in
-                                Button { selected = item } label: {
+                            ForEach(Array(manager.albumItems.enumerated()), id: \.element.id) { idx, item in
+                                Button { selectedIndex = idx; showDetail = true } label: {
                                     AlbumThumb(url: item.url)
                                         .frame(height: 116)
                                         .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -1181,8 +1182,10 @@ struct AlbumView: View {
                 }
             }
 
-            if let item = selected {
-                AlbumDetail(url: item.url) { selected = nil }
+            if showDetail, selectedIndex < manager.albumItems.count {
+                AlbumDetail(items: manager.albumItems,
+                           index: $selectedIndex,
+                           onClose: { showDetail = false })
             }
         }
         .onAppear { manager.loadAlbum() }
@@ -1205,11 +1208,17 @@ struct AlbumThumb: View {
     }
 }
 
-/// 全屏看大图（应用内，不跳出 App）
+/// 全屏看大图（应用内，不跳出 App）：左右滑动/箭头切换、可分享
 struct AlbumDetail: View {
-    let url: URL
+    let items: [AlbumItem]
+    @Binding var index: Int
     let onClose: () -> Void
     @State private var image: UIImage?
+    @State private var showShare = false
+
+    private var current: AlbumItem { items[index] }
+    private var hasPrev: Bool { index > 0 }
+    private var hasNext: Bool { index < items.count - 1 }
 
     var body: some View {
         ZStack {
@@ -1232,10 +1241,54 @@ struct AlbumDetail: View {
                     .padding(16)
                 }
                 Spacer()
+                HStack(spacing: 44) {
+                    Button { move(-1) } label: {
+                        Image(systemName: "chevron.left").font(.title2).foregroundColor(.white)
+                    }
+                    .opacity(hasPrev ? 1 : 0.3)
+                    .disabled(!hasPrev)
+                    Button { showShare = true } label: {
+                        Image(systemName: "square.and.arrow.up").font(.title2).foregroundColor(.white)
+                    }
+                    Button { move(1) } label: {
+                        Image(systemName: "chevron.right").font(.title2).foregroundColor(.white)
+                    }
+                    .opacity(hasNext ? 1 : 0.3)
+                    .disabled(!hasNext)
+                }
+                .padding(.bottom, 42)
             }
         }
-        .onAppear { image = UIImage(contentsOfFile: url.path) }
+        .gesture(DragGesture().onEnded { value in
+            if value.translation.width < -40 { move(1) }
+            else if value.translation.width > 40 { move(-1) }
+        })
+        .onAppear { loadCurrent() }
+        .sheet(isPresented: $showShare) {
+            if let image { ShareSheet(items: [image]) }
+        }
     }
+
+    private func move(_ delta: Int) {
+        let next = index + delta
+        guard next >= 0, next < items.count else { return }
+        index = next
+        image = nil
+        loadCurrent()
+    }
+
+    private func loadCurrent() {
+        image = UIImage(contentsOfFile: current.url.path)
+    }
+}
+
+/// 系统分享面板（保存/分享当前成片）
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+    func updateUIViewController(_ vc: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - 预览渲染
