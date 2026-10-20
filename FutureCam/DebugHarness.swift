@@ -62,6 +62,9 @@ enum DebugHarness {
         return Int(arguments[index + 1])
     }
 
+    /// `-fcResetRollNumber`：把当前这卷的卷号复位成 1
+    static var shouldResetRollNumber: Bool { arguments.contains("-fcResetRollNumber") }
+
     /// `-fcDateStampProbe`：把成片写到沙盒，用于像素级检查日期背印
     static var shouldProbeDateStamp: Bool { arguments.contains("-fcDateStampProbe") }
 

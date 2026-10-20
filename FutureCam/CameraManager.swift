@@ -643,6 +643,10 @@ final class CameraManager: NSObject, ObservableObject {
     #if DEBUG
     /// 调试：模拟拍摄张数 / 造示范成片（模拟器没有真相机）
     func applyDebugSeeds() {
+        if DebugHarness.shouldResetRollNumber {
+            rolls.resetNumbering(to: 1)
+        }
+
         if let count = DebugHarness.simulateShots {
             for _ in 0..<count { rolls.recordShot() }
             if rolls.current.isFull {

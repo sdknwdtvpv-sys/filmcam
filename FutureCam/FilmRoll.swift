@@ -92,9 +92,18 @@ final class RollStore: ObservableObject {
         }
     }
 
-    /// 装一卷新的：当前这卷如果拍过，就归档收起来
+    /// 装一卷新的。
+    /// 当前这卷一张都没拍就换型号 = 同一卷换了胶卷，卷号不进位、也不归档。
     @discardableResult
     func load(_ preset: FilmPreset) -> FilmRoll {
+        if current.used == 0 {
+            current.presetRaw = preset.rawValue
+            current.seed = Self.makeSeed()   // 换了型号就换一套性格
+            current.startedAt = Date()
+            persist()
+            return current
+        }
+
         if current.used > 0 {
             var finished = current
             finished.finishedAt = Date()
@@ -119,6 +128,17 @@ final class RollStore: ObservableObject {
         persist()
         return true
     }
+
+    #if DEBUG
+    /// 调试：把当前这卷的卷号复位成 1（归档保留）
+    func resetNumbering(to number: Int = 1) {
+        current.number = number
+        current.used = 0
+        current.finishedAt = nil
+        nextNumber = number + 1
+        persist()
+    }
+    #endif
 
     func roll(id: String) -> FilmRoll? {
         if current.id == id { return current }
