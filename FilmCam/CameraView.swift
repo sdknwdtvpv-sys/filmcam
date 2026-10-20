@@ -84,6 +84,7 @@ struct CameraView: View {
             // 弹层
             if manager.showFilmSheet { FilmSheet() }
             if manager.showSettingsSheet { SettingsSheet() }
+            if manager.showAlbum { AlbumView() }
         }
         .animation(.easeInOut(duration: 0.22), value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
@@ -1134,6 +1135,106 @@ struct DevelopingPhotoView: View {
             model.start()
             withAnimation(.easeInOut(duration: 0.18).repeatForever(autoreverses: true)) { shakePhase = true }
         }
+    }
+}
+
+// MARK: - 应用内相册
+
+struct AlbumView: View {
+    @EnvironmentObject var manager: CameraManager
+    @State private var selected: AlbumItem?
+    private let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+
+    var body: some View {
+        ZStack {
+            CameraTheme.bgDeep.ignoresSafeArea()
+            VStack(spacing: 0) {
+                HStack {
+                    Text("相册").foregroundColor(CameraTheme.ink)
+                        .font(CameraTheme.mono(18, weight: .semibold))
+                    Spacer()
+                    Button(action: { manager.closeAlbum() }) {
+                        Image(systemName: "xmark").foregroundColor(CameraTheme.ink)
+                            .frame(width: 32, height: 32)
+                    }
+                }
+                .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 12)
+
+                if manager.albumItems.isEmpty {
+                    Spacer()
+                    Text("还没有照片，先拍一张吧").foregroundColor(CameraTheme.ink.opacity(0.6))
+                        .font(CameraTheme.mono(14))
+                    Spacer()
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 10) {
+                            ForEach(manager.albumItems) { item in
+                                Button { selected = item } label: {
+                                    AlbumThumb(url: item.url)
+                                        .frame(height: 116)
+                                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                            }
+                        }
+                        .padding(16)
+                    }
+                }
+            }
+
+            if let item = selected {
+                AlbumDetail(url: item.url) { selected = nil }
+            }
+        }
+        .onAppear { manager.loadAlbum() }
+    }
+}
+
+/// 相册网格缩略图：从本地文件按需加载
+struct AlbumThumb: View {
+    let url: URL
+    @State private var image: UIImage?
+
+    var body: some View {
+        ZStack {
+            Color.white.opacity(0.06)
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+            }
+        }
+        .onAppear { image = UIImage(contentsOfFile: url.path) }
+    }
+}
+
+/// 全屏看大图（应用内，不跳出 App）
+struct AlbumDetail: View {
+    let url: URL
+    let onClose: () -> Void
+    @State private var image: UIImage?
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
+                    .padding(24)
+                    .shadow(color: .black.opacity(0.5), radius: 24, x: 0, y: 12)
+            } else {
+                ProgressView().tint(.white)
+            }
+            VStack {
+                HStack {
+                    Spacer()
+                    Button { onClose() } label: {
+                        Image(systemName: "xmark").foregroundColor(.white)
+                            .frame(width: 38, height: 38)
+                            .background(Circle().fill(Color.white.opacity(0.16)))
+                    }
+                    .padding(16)
+                }
+                Spacer()
+            }
+        }
+        .onAppear { image = UIImage(contentsOfFile: url.path) }
     }
 }
 

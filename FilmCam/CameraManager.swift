@@ -41,6 +41,12 @@ enum ParamKey: String, CaseIterable, Identifiable {
     }
 }
 
+/// 应用内相册里的一张照片（本地沙盒存储，不依赖系统相册权限）
+struct AlbumItem: Identifiable {
+    let id: String        // 文件名
+    let url: URL          // 本地文件路径
+}
+
 /// 主线程相机视图模型：只持有 UI 状态，把相机硬件操作委托给后台 CaptureSessionController。
 @MainActor
 final class CameraManager: NSObject, ObservableObject {
@@ -93,6 +99,10 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var showFilmSheet = false
     /// 设置弹层
     @Published var showSettingsSheet = false
+    /// 应用内相册弹层
+    @Published var showAlbum = false
+    /// 应用内相册里的照片（本地沙盒，最新在前）
+    @Published var albumItems: [AlbumItem] = []
     /// 可用空间文本（如 "52 GB"）
     @Published var freeStorageText = "--"
     /// 按 1080p30 估算的剩余可录时长（如 "298 min"）
@@ -105,6 +115,7 @@ final class CameraManager: NSObject, ObservableObject {
     override init() {
         super.init()
         refreshStorage()
+        loadAlbum()
         controller.onPreview = { [weak self] image in
             Task { @MainActor in self?.handlePreviewFrame(image) }
         }
@@ -194,11 +205,41 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
-    /// 打开系统「照片」App（相册入口）。点缩略图即跳转，方便回看刚拍的成片。
-    func openAlbum() {
-        // photos-redirect:// 是 Apple 公开的跳转照片 App 的 scheme
-        if let url = URL(string: "photos-redirect://") {
-            UIApplication.shared.open(url, options: [:])
+    /// 打开应用内相册（不再跳出 App 跳系统「照片」）
+    func openAlbum() { showAlbum = true }
+    func closeAlbum() { showAlbum = false }
+
+    /// 启动时从本地沙盒读取已拍照片，填充相册
+    func loadAlbum() {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let fm = FileManager.default
+            guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first?
+                    .appendingPathComponent("filmcam_photos", isDirectory: true),
+                  let files = try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else { return }
+            let items = files.filter { $0.pathExtension.lowercased() == "jpg" }
+                .map { AlbumItem(id: $0.lastPathComponent, url: $0) }
+                .sorted { $0.id > $1.id }
+            DispatchQueue.main.async { self?.albumItems = items }
+        }
+    }
+
+    /// 把一张成片写入本地沙盒，供应用内相册展示（不依赖系统相册权限）
+    private func persistLocally(_ image: UIImage) {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let fm = FileManager.default
+            guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first?
+                    .appendingPathComponent("filmcam_photos", isDirectory: true) else { return }
+            try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+            let name = "filmcam_\(Int(Date().timeIntervalSince1970 * 1000)).jpg"
+            let url = dir.appendingPathComponent(name)
+            guard let data = image.jpegData(compressionQuality: 0.9) else { return }
+            try? data.write(to: url)
+            let item = AlbumItem(id: name, url: url)
+            DispatchQueue.main.async {
+                if self?.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
+                    self?.albumItems.insert(item, at: 0)
+                }
+            }
         }
     }
 
@@ -298,6 +339,8 @@ final class CameraManager: NSObject, ObservableObject {
 
     // MARK: - 保存到相册
     private func saveToLibrary(_ image: UIImage) {
+        // 本地相册（应用内）始终保存，不依赖系统相册权限
+        persistLocally(image)
         PHPhotoLibrary.requestAuthorization(for: .addOnly) { [weak self] status in
             guard status == .authorized || status == .limited else {
                 Task { @MainActor in
