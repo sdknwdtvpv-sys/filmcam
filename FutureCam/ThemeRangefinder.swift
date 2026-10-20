@@ -35,20 +35,28 @@ struct RangefinderCameraView: View {
     var body: some View {
         let t = ThemeStore.current
 
-        ZStack {
-            // 机身：黑蒙皮
-            LeatherPanel().ignoresSafeArea()
-            LinearGradient(colors: [.white.opacity(0.05), .clear, .black.opacity(0.25)],
-                           startPoint: .top, endPoint: .bottom)
+        GeometryReader { geo in
+            let insets = geo.safeAreaInsets
+
+            ZStack {
+                // 机身：黑蒙皮
+                LeatherPanel().ignoresSafeArea()
+                LinearGradient(colors: [.white.opacity(0.05), .clear, .black.opacity(0.25)],
+                               startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+
+                // 整台机器铺满屏幕，内容再按安全区让开灵动岛和 home indicator
+                VStack(spacing: 0) {
+                    topPlate(t, topInset: insets.top)
+                    waist(t)
+                    bottomPlate(t, bottomInset: insets.bottom)
+                }
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                topPlate(t)
-                waist(t)
-                bottomPlate(t)
+                DeviceEdge(radius: 0, intensity: 1)
+                    .ignoresSafeArea()
             }
-
-            DeviceEdge(radius: 0, intensity: 1)
+            .frame(width: geo.size.width, height: geo.size.height)
         }
         .onAppear {
             DetentFeedback.shared.prepare()
@@ -60,7 +68,7 @@ struct RangefinderCameraView: View {
 
     // MARK: 铝制顶盖
 
-    private func topPlate(_ t: ThemeTokens) -> some View {
+    private func topPlate(_ t: ThemeTokens, topInset: CGFloat) -> some View {
         VStack(spacing: 0) {
             HStack(alignment: .top, spacing: 8) {
                 ScrewHead(size: 7)
@@ -132,7 +140,7 @@ struct RangefinderCameraView: View {
                     .padding(.top, 6)
             }
             .padding(.horizontal, 14)
-            .padding(.top, 8)
+            .padding(.top, topInset + 8)
             .padding(.bottom, 10)
 
             GrooveLine()
@@ -184,7 +192,7 @@ struct RangefinderCameraView: View {
 
     // MARK: 铝制底盖
 
-    private func bottomPlate(_ t: ThemeTokens) -> some View {
+    private func bottomPlate(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
         VStack(spacing: 8) {
             GrooveLine()
 
@@ -211,7 +219,7 @@ struct RangefinderCameraView: View {
                            color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
             }
             .padding(.horizontal, 18)
-            .padding(.bottom, 10)
+            .padding(.bottom, 10 + bottomInset)
         }
         .background(AluminumFace(tokens: t))
         .overlay(alignment: .top) {
