@@ -471,9 +471,11 @@ final class CameraManager: NSObject, ObservableObject {
 
         // 快门超过 1 秒：走多帧堆栈（设备单帧上限约 1 秒）
         if shutterSeconds >= CameraMath.longExposureThreshold {
+            MechanicalSounds.shared.shutter()
             startLongExposure()
             return
         }
+        MechanicalSounds.shared.shutterThenAdvance()
         controller.capture()
     }
 

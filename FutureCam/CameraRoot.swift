@@ -118,6 +118,7 @@ struct CameraRoot: View {
             case .active:
                 manager.refreshAuthorization()
                 DetentFeedback.shared.prepare()
+                MechanicalSounds.shared.prepare()
                 updateFeedbackSound()
                 replayLaunchIfAwayTooLong()
             case .background:
@@ -184,5 +185,6 @@ struct CameraRoot: View {
 
     private func updateFeedbackSound() {
         DetentFeedback.shared.soundEnabled = manager.mode != .video && !manager.isRecording
+        MechanicalSounds.shared.soundEnabled = manager.mode != .video && !manager.isRecording
     }
 }
