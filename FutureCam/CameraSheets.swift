@@ -3,15 +3,6 @@ import UIKit
 import CoreMotion
 import AVKit
 
-/// 胶片窗在顶盖上的位置：胶片仓从这里长出来，不从屏幕底下往上顶。
-struct FilmAnchorKey: PreferenceKey {
-    nonisolated(unsafe) static var defaultValue: CGRect = .zero
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
-        let next = nextValue()
-        if next != .zero { value = next }
-    }
-}
-
 struct FilmSheet: View {
     @EnvironmentObject var manager: CameraManager
 

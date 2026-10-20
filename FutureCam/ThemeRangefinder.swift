@@ -27,7 +27,7 @@ struct RangefinderCameraView: View {
     /// 滚花盘画了 96 颗齿，拖动 0.45°/pt，所以一颗齿 = 8.333pt 位移
     private let toothPitch: Double = 360.0 / 96.0 / 0.45
     /// 参数浮层（调参时在取景器里浮出）
-    @State private var hud: (title: String, value: String, progress: Double)?
+    @State private var hud: (title: String, value: String, progress: Double, hint: String?)?
     @State private var hudToken = UUID()
 
     private var lcdInk: Color { Color(hex: 0xF2F4F6) }
@@ -126,12 +126,7 @@ struct RangefinderCameraView: View {
                     }
                     Silkscreen(text: "FILM", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
                 }
-                .background(
-                    GeometryReader { proxy in
-                        Color.clear.preference(key: FilmAnchorKey.self,
-                                               value: proxy.frame(in: .global))
-                    }
-                )
+                .guideAnchor(.film)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("当前胶片 \(manager.selectedPreset.label)，点按更换")
                 .accessibilityAddTraits(.isButton)
@@ -174,7 +169,7 @@ struct RangefinderCameraView: View {
             .overlay {
                 if let hud {
                     ParameterHUD(title: hud.title, value: hud.value,
-                                 progress: hud.progress, tokens: t)
+                                 progress: hud.progress, tokens: t, hint: hud.hint)
                         .transition(.opacity.combined(with: .scale(scale: 0.96)))
                         .task(id: hudToken) {
                             try? await Task.sleep(nanoseconds: 1_200_000_000)
@@ -286,6 +281,7 @@ struct RangefinderCameraView: View {
             Rectangle().fill(.white.opacity(0.18)).frame(height: 1).padding(.top, 1).padding(.horizontal, 3)
         }
         .shadow(color: .black.opacity(0.3), radius: 2, y: 1)
+        .guideAnchor(.strip)
     }
 
     private func albumWindow(_ t: ThemeTokens) -> some View {
@@ -350,6 +346,7 @@ struct RangefinderCameraView: View {
 
             // 中心：快门 —— 原地松开是拍，按住左右拖是换模式
             shutterButton(t)
+                .guideAnchor(.shutter)
         }
     }
 
@@ -468,7 +465,8 @@ struct RangefinderCameraView: View {
             manager.shutterSeconds = v
             manager.applyExposure()
             feedback(dx: dx, key: log2(1 / v), step: 1.0 / 3.0)
-            showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
+            showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v),
+                    hint: CameraMath.shutterHint(v))
 
         case .iso:
             let stops: [Double] = [100, 200, 400, 800, 1600]
@@ -478,7 +476,8 @@ struct RangefinderCameraView: View {
             manager.iso = v
             manager.applyExposure()
             feedback(dx: dx, key: Double(index), step: 1)
-            showHUD("感光度", "\(Int(v))", Double(index) / Double(stops.count - 1))
+            showHUD("感光度", "\(Int(v))", Double(index) / Double(stops.count - 1),
+                    hint: CameraMath.isoHint(v))
 
         case .bias:
             let raw = base + Double(dx) / 50 * 0.3
@@ -486,7 +485,8 @@ struct RangefinderCameraView: View {
             manager.bias = v
             manager.applyExposure()
             feedback(dx: dx, key: v, step: 0.3)
-            showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
+            showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2),
+                    hint: CameraMath.evHint(v))
 
         case .temperature:
             let raw = base + Double(dx) / 5 * 100
@@ -494,7 +494,8 @@ struct RangefinderCameraView: View {
             manager.temperature = v
             manager.applyWhiteBalance()
             feedback(dx: dx, key: v, step: 100)
-            showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
+            showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000),
+                    hint: CameraMath.temperatureHint(v))
 
         case .tint:
             let raw = base + Double(dx) / 4 * 10
@@ -502,7 +503,8 @@ struct RangefinderCameraView: View {
             manager.tint = v
             manager.applyWhiteBalance()
             feedback(dx: dx, key: v, step: 10)
-            showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
+            showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150),
+                    hint: CameraMath.tintHint(v))
         }
     }
 
@@ -612,11 +614,15 @@ struct RangefinderCameraView: View {
     private func announceArmed() {
         let v = value(of: armed)
         switch armed {
-        case .shutter: showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v))
+        case .shutter: showHUD("快门", CameraMath.shutterLabel(v), CameraMath.shutterProgress(v),
+                    hint: CameraMath.shutterHint(v))
         case .iso: showHUD("感光度", "\(Int(v))", CameraMath.isoProgress(v))
-        case .bias: showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2))
-        case .temperature: showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000))
-        case .tint: showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150))
+        case .bias: showHUD("曝光", CameraMath.evLabel(v), CameraMath.progress(v, in: -2...2),
+                    hint: CameraMath.evHint(v))
+        case .temperature: showHUD("色温", "\(Int(v))K", CameraMath.progress(v, in: 3000...8000),
+                    hint: CameraMath.temperatureHint(v))
+        case .tint: showHUD("色调", "\(v >= 0 ? "+" : "")\(Int(v))", CameraMath.progress(v, in: -150...150),
+                    hint: CameraMath.tintHint(v))
         }
     }
 
@@ -631,8 +637,9 @@ struct RangefinderCameraView: View {
         showHUD("快门", shutterLabel(value), CameraMath.shutterProgress(value))
     }
 
-    private func showHUD(_ title: String, _ value: String, _ progress: Double) {
-        hud = (title, value, progress)
+    private func showHUD(_ title: String, _ value: String, _ progress: Double,
+                         hint: String? = nil) {
+        hud = (title, value, progress, hint)
         hudToken = UUID()
     }
 

@@ -83,3 +83,61 @@ enum CameraMath {
         String(format: "%+.1f", value)
     }
 }
+
+// MARK: - 读数的大白话解释（给不懂相机参数的人）
+
+extension CameraMath {
+    /// 感光度：数字越大越能在暗处拍，但颗粒越粗
+    static func isoHint(_ iso: Double) -> String {
+        switch iso {
+        case ..<150: return "颗粒最细"
+        case ..<300: return "颗粒细"
+        case ..<600: return "颗粒中等"
+        case ..<1200: return "颗粒明显"
+        default: return "颗粒很粗"
+        }
+    }
+
+    /// 快门：开得越久越亮，也越容易糊
+    static func shutterHint(_ seconds: Double) -> String {
+        let inverse = 1 / max(seconds, 0.0001)
+        switch inverse {
+        case 250...: return "能定格动作"
+        case 100..<250: return "手持不易糊"
+        case 50..<100: return "手持慢速"
+        case 15..<50: return "容易手抖"
+        default: return "要架稳"
+        }
+    }
+
+    /// 曝光补偿：整体加亮还是压暗
+    static func evHint(_ bias: Double) -> String {
+        switch bias {
+        case 1.05...: return "明显更亮"
+        case 0.35..<1.05: return "更亮"
+        case -0.35..<0.35: return "标准曝光"
+        case -1.05..<(-0.35): return "更暗"
+        default: return "明显更暗"
+        }
+    }
+
+    /// 色温：K 数越大越偏蓝，越小越偏黄
+    static func temperatureHint(_ kelvin: Double) -> String {
+        switch kelvin {
+        case ..<3600: return "偏暖·发黄"
+        case 3600..<4800: return "略暖"
+        case 4800..<6000: return "接近日光"
+        case 6000..<7000: return "略冷"
+        default: return "偏冷·发蓝"
+        }
+    }
+
+    /// 色调：绿 ↔ 洋红
+    static func tintHint(_ tint: Double) -> String {
+        switch tint {
+        case 25...: return "偏洋红"
+        case -25..<25: return "标准"
+        default: return "偏绿"
+        }
+    }
+}

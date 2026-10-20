@@ -5,8 +5,9 @@ import SwiftUI
 struct CameraRoot: View {
     @EnvironmentObject var manager: CameraManager
     @Environment(\.scenePhase) private var scenePhase
-    /// 顶盖胶片键的位置，胶片仓从那里长出来
-    @State private var filmAnchor: CGRect = .zero
+    /// 关键控件的屏幕位置：胶片仓从这里长出来，首跑引导也指这里
+    @State private var anchors: [GuideTarget: CGRect] = [:]
+    @AppStorage("futurecam.seenGuide") private var seenGuide = false
 
     var body: some View {
         ZStack {
@@ -46,11 +47,17 @@ struct CameraRoot: View {
             if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
             // 弹层
-            if manager.showFilmSheet { FilmSheet(anchor: filmAnchor) }
+            if manager.showFilmSheet { FilmSheet(anchor: anchors[.film] ?? .zero) }
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showAlbum { AlbumView() }
+
+            // 一次性的用法引导（拍过一张或点一下就不再出现）
+            if shouldShowGuide {
+                FirstRunGuide(anchors: anchors) { seenGuide = true }
+                    .transition(.opacity)
+            }
         }
-        .onPreferenceChange(FilmAnchorKey.self) { filmAnchor = $0 }
+        .onPreferenceChange(GuideAnchorKey.self) { anchors = $0 }
         .animation(.spring(response: 0.32, dampingFraction: 0.82),
                    value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
@@ -94,6 +101,14 @@ struct CameraRoot: View {
 
     /// 视频模式下麦克风占着音频会话，会话被锁进 playAndRecord，静音键就管不住了；
     /// 干脆视频模式只留触感。拍照模式走 .ambient，静音键自动生效。
+    private var shouldShowGuide: Bool {
+        guard !seenGuide, manager.capturedImage == nil else { return false }
+        #if DEBUG
+        if DebugHarness.shouldShowGuide { return true }
+        #endif
+        return manager.hasPreview && manager.authorizationStatus == .authorized
+    }
+
     private func updateFeedbackSound() {
         DetentFeedback.shared.soundEnabled = manager.mode != .video && !manager.isRecording
     }

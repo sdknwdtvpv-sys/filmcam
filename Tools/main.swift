@@ -88,6 +88,19 @@ expect(CameraMode.doubleExposure.shifted(byDragSteps: -3) == .doubleExposure, "�
 expect(CameraMode.video.shifted(byDragSteps: -2) == .doubleExposure, "录像往左两档直接到双曝")
 expect(CameraMode.photo.stripIndex == 1 && CameraMode.strip.count == 3, "照片在排列中间")
 
+// MARK: 参数解释（小白也能读懂的那行字）
+expect(CameraMath.shutterHint(1.0 / 500) == "能定格动作", "1/500 能定格")
+expect(CameraMath.shutterHint(1.0 / 60) == "手持慢速", "1/60 手持慢速")
+expect(CameraMath.shutterHint(0.25) == "要架稳", "1/4 要架稳")
+expect(CameraMath.isoHint(100) == "颗粒最细", "ISO100 颗粒最细")
+expect(CameraMath.isoHint(1600) == "颗粒很粗", "ISO1600 颗粒很粗")
+expect(CameraMath.evHint(0) == "标准曝光", "EV0 标准曝光")
+expect(CameraMath.evHint(-1.5) == "明显更暗", "EV-1.5 明显更暗")
+expect(CameraMath.temperatureHint(5500) == "接近日光", "5500K 接近日光")
+expect(CameraMath.temperatureHint(3000) == "偏暖·发黄", "3000K 偏暖")
+expect(CameraMath.tintHint(0) == "标准", "TINT0 标准")
+expect(CameraMath.tintHint(-40) == "偏绿", "TINT-40 偏绿")
+
 // MARK: 结果
 
 if failures == 0 {

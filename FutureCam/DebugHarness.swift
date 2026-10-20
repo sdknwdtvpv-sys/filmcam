@@ -29,6 +29,12 @@ enum DebugHarness {
         return arguments[index + 1]
     }
 
+    /// `-fcShowGuide`：强制显示首跑引导，方便截图（模拟器里没有相机授权）
+    static var shouldShowGuide: Bool { arguments.contains("-fcShowGuide") }
+
+    /// `-fcSkipGuide`：把引导标记为已看过，方便截其它界面
+    static var shouldSkipGuide: Bool { arguments.contains("-fcSkipGuide") }
+
     /// `-fcShowHUD`：启动即浮出参数读数，方便截图检查（模拟器没法脚本拖动）
     static var shouldShowHUD: Bool { arguments.contains("-fcShowHUD") }
 
@@ -69,6 +75,10 @@ enum DebugHarness {
     /// 启动时按参数切到指定界面
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {
+        if shouldSkipGuide {
+            UserDefaults.standard.set(true, forKey: "futurecam.seenGuide")
+        }
+
         switch modeArgument() {
         case "photo": manager.mode = .photo
         case "double": manager.mode = .doubleExposure

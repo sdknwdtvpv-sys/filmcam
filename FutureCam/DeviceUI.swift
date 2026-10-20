@@ -140,6 +140,8 @@ struct ParameterHUD: View {
     let value: String
     let progress: Double
     let tokens: ThemeTokens
+    /// 大白话解释，只在对小白有用的参数上出现
+    var hint: String? = nil
 
     var body: some View {
         VStack(spacing: 9) {
@@ -152,6 +154,12 @@ struct ParameterHUD: View {
                 .monospacedDigit()
                 .foregroundColor(.white)
                 .shadow(color: .black.opacity(0.55), radius: 6)
+            if let hint {
+                Text(hint)
+                    .font(tokens.labelFont(11, .medium))
+                    .foregroundColor(.white.opacity(0.72))
+                    .padding(.top, -4)
+            }
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.16)).frame(width: 150, height: 3)
                 Capsule().fill(tokens.accent)
