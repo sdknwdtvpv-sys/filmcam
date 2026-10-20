@@ -23,6 +23,12 @@
 		731FEF07560AD75327ABE924 /* AlbumView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD406509C48E705FA108DECF /* AlbumView.swift */; };
 		2940E748D12770955A1351A7 /* DebugHarness.swift in Sources */ = {isa = PBXBuildFile; fileRef = F32BA7486E881596CC07CE47 /* DebugHarness.swift */; };
 		0B986C876E3EC44800452396 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */; };
+		ABDD8369FF6B79B1F25ECBEF /* Themes.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB740E478FFECF731B842ABA /* Themes.swift */; };
+		3F3DE0F722731553E7A83AF8 /* SharedCameraParts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5014A54F9AFB86A7A04B7D00 /* SharedCameraParts.swift */; };
+		F655A4F3ACFC75039824D8D8 /* CameraRoot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7564D9C59398E81AFC785912 /* CameraRoot.swift */; };
+		89582381F0E5E47386F30CFB /* ThemeDarkroom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B4FCB6DC315300E842D321 /* ThemeDarkroom.swift */; };
+		173210787B380460BC56CD0B /* ThemeMeter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8D419F76F36BF88C17D9494 /* ThemeMeter.swift */; };
+		3F5405F76E8828B5E935D1D2 /* ThemeFilmStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8B3F0D255D30E6803E08B30 /* ThemeFilmStrip.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +49,12 @@
 		BD406509C48E705FA108DECF /* AlbumView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumView.swift; sourceTree = "<group>"; };
 		F32BA7486E881596CC07CE47 /* DebugHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHarness.swift; sourceTree = "<group>"; };
 		C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		DB740E478FFECF731B842ABA /* Themes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Themes.swift; sourceTree = "<group>"; };
+		5014A54F9AFB86A7A04B7D00 /* SharedCameraParts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedCameraParts.swift; sourceTree = "<group>"; };
+		7564D9C59398E81AFC785912 /* CameraRoot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraRoot.swift; sourceTree = "<group>"; };
+		58B4FCB6DC315300E842D321 /* ThemeDarkroom.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeDarkroom.swift; sourceTree = "<group>"; };
+		B8D419F76F36BF88C17D9494 /* ThemeMeter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeMeter.swift; sourceTree = "<group>"; };
+		B8B3F0D255D30E6803E08B30 /* ThemeFilmStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeFilmStrip.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +82,12 @@
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
 				3CAD9F247B4644DB8C366859 /* CameraView.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				B8B3F0D255D30E6803E08B30 /* ThemeFilmStrip.swift */,
+				B8D419F76F36BF88C17D9494 /* ThemeMeter.swift */,
+				58B4FCB6DC315300E842D321 /* ThemeDarkroom.swift */,
+				7564D9C59398E81AFC785912 /* CameraRoot.swift */,
+				5014A54F9AFB86A7A04B7D00 /* SharedCameraParts.swift */,
+				DB740E478FFECF731B842ABA /* Themes.swift */,
 				C45E8EE69BEC76964CA40C2E /* PrivacyInfo.xcprivacy */,
 				F32BA7486E881596CC07CE47 /* DebugHarness.swift */,
 				BD406509C48E705FA108DECF /* AlbumView.swift */,
@@ -174,6 +192,12 @@
 				7A27D2BE473F4D84B3B39172 /* FilmCamApp.swift in Sources */,
 				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
 				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+				3F5405F76E8828B5E935D1D2 /* ThemeFilmStrip.swift in Sources */,
+				173210787B380460BC56CD0B /* ThemeMeter.swift in Sources */,
+				89582381F0E5E47386F30CFB /* ThemeDarkroom.swift in Sources */,
+				F655A4F3ACFC75039824D8D8 /* CameraRoot.swift in Sources */,
+				3F3DE0F722731553E7A83AF8 /* SharedCameraParts.swift in Sources */,
+				ABDD8369FF6B79B1F25ECBEF /* Themes.swift in Sources */,
 				2940E748D12770955A1351A7 /* DebugHarness.swift in Sources */,
 				731FEF07560AD75327ABE924 /* AlbumView.swift in Sources */,
 				0F8B4543E58B56F8F025A864 /* AlbumStore.swift in Sources */,

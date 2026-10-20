@@ -22,6 +22,12 @@ enum DebugHarness {
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
 
+    /// `-fcTheme darkroom|meter|filmstrip`：启动时强制切到某个界面主题
+    static func themeArgument() -> String? {
+        guard let index = arguments.firstIndex(of: "-fcTheme"), index + 1 < arguments.count else { return nil }
+        return arguments[index + 1]
+    }
+
     /// 启动时按参数切到指定界面
     @MainActor
     static func applyLaunchState(_ manager: CameraManager) {

@@ -6,7 +6,7 @@ struct FilmCamApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CameraView()
+            CameraRoot()
                 .environmentObject(manager)
                 .statusBarHidden()
         }

@@ -64,6 +64,8 @@ final class CameraManager: NSObject, ObservableObject {
     let previewFrames = PassthroughSubject<UIImage, Never>()
     /// 是否已收到首帧（低频状态，用 @Published 安全）
     @Published var hasPreview = false
+    /// 最近一帧预览图：PreviewView 重建（如切换主题）时先垫上，避免黑一下
+    private(set) var lastPreviewFrame: UIImage?
     /// 已授权但迟迟收不到帧（相机被占用 / 初始化失败）
     @Published var previewStalled = false
 
@@ -93,6 +95,8 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var zoomFactor: CGFloat = 1
     /// 是否前摄
     @Published var isFrontCamera = false
+    /// 胶片计数器（跨启动累计，暗房工单 / 胶片带主题的主视觉）
+    @Published var frameCount: Int = UserDefaults.standard.integer(forKey: "filmcam.frameCount")
 
     // 手动参数（UI 状态，device 内部会 clamp 到支持范围）
     @Published var iso: Double = 200
@@ -142,6 +146,7 @@ final class CameraManager: NSObject, ObservableObject {
             Task { @MainActor in
                 self?.showDoubleExposureFirst = false
                 self?.capturedImage = image
+                self?.bumpFrameCount()
                 if self?.mode == .doubleExposure, self?.doubleExposureStep == 1 {
                     self?.doubleExposureStep = 2
                 }
@@ -183,6 +188,7 @@ final class CameraManager: NSObject, ObservableObject {
                 previewAspect = image.size.width / image.size.height
             }
         }
+        lastPreviewFrame = image
         previewFrames.send(image)
     }
 
@@ -451,6 +457,12 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     func dismissPhotoSaveBlocked() { photoSaveBlocked = false }
+
+    /// 计数器进位（拍立得/胶片带主题用）
+    private func bumpFrameCount() {
+        frameCount += 1
+        UserDefaults.standard.set(frameCount, forKey: "filmcam.frameCount")
+    }
 
     // MARK: - 视频保存
     /// 把录制完的视频写进系统相册。

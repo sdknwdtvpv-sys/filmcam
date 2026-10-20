@@ -99,17 +99,23 @@ struct MediaThumbnail: View {
     @State private var image: UIImage?
 
     var body: some View {
+        // 用 Color 当尺寸载体、图片放进 overlay，再在 Color 边界裁剪。
+        // 直接给 scaledToFill 的图片加 .clipped() 不可靠：
+        // 竖版视频按宽铺满后会撑出容器，父级没有 clipShape 的地方就会溢出。
         ZStack {
-            if image == nil {
-                Color.white.opacity(0.06)
-            }
             if let image {
                 if fill {
-                    Image(uiImage: image).resizable().scaledToFill()
+                    Color.clear
+                        .overlay { Image(uiImage: image).resizable().scaledToFill() }
+                        .clipped()
                 } else {
-                    Image(uiImage: image).resizable().scaledToFit()
+                    Color.clear
+                        .overlay { Image(uiImage: image).resizable().scaledToFit() }
                 }
+            } else {
+                Color.white.opacity(0.06)
             }
+
             if item.kind == .video {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 20, weight: .semibold))
@@ -117,7 +123,6 @@ struct MediaThumbnail: View {
                     .shadow(color: .black.opacity(0.5), radius: 3)
             }
         }
-        .clipped()
         .task(id: item.url) {
             image = nil
             image = await MediaThumbnailLoader.thumbnail(for: item, maxPixel: maxPixel)

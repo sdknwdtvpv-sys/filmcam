@@ -1,44 +1,62 @@
 import SwiftUI
 
-/// 设计系统：复古机顶 · 琥珀（Retro camera-top · Amber）
+/// 设计令牌的读取入口。
 ///
-/// 统一承载 FilmCam 的视觉令牌（配色 / 字体 / 仪表质感），
-/// 让所有界面元素从「占位橙黑」升级为一致的机顶仪表风格。
+/// 三套主题（暗房工单 / 测光台 / 胶片带）共用同一批语义名，
+/// 具体取值由 `ThemeStore.current` 决定 —— 相册、弹层、提示条这些
+/// 共享界面不需要知道当前是哪套主题。
+///
+/// 新代码请直接用 `ThemeStore.current` 里更完整的令牌（字体族、圆角、密度）；
+/// 这里保留旧名字是为了让已有页面继续工作。
 enum CameraTheme {
+
+    // MARK: - 当前主题
+
+    static var tokens: ThemeTokens { ThemeStore.current }
 
     // MARK: - 配色
 
-    /// 取景器后方最深的底（暖调近黑）
-    static let bgDeep     = Color(hex: 0x0E0E0C)
-    /// 暖炭灰面板（机顶铭牌 / 控件底）
-    static let bgPanel    = Color(hex: 0x1A1815)
-    /// 控件 / 胶片标签的抬升面
-    static let bgElevated = Color(hex: 0x23201B)
+    /// 页面底色
+    static var bgDeep: Color { tokens.background }
+    /// 面板 / 弹层
+    static var bgPanel: Color { tokens.panel }
+    /// 抬升面（卡片、输入框）
+    static var bgElevated: Color { tokens.elevated }
     /// 按压态
-    static let bgPressed  = Color(hex: 0x2E2A23)
+    static var bgPressed: Color { tokens.elevated }
 
-    /// 主琥珀色（读数 / 描边 / 选中态）
-    static let amber      = Color(hex: 0xE8A030)
-    /// 琥珀辉光（用于铭牌 / REC 的发光感）
-    static let amberGlow  = Color(hex: 0xF6C067)
-    /// 琥珀暗部（径向渐变用）
-    static let amberDeep  = Color(hex: 0xC77F1E)
+    /// 主强调色（选中 / 读数 / 描边）
+    static var amber: Color { tokens.accent }
+    /// 强调高光
+    static var amberGlow: Color { tokens.accentGlow }
+    /// 强调暗部
+    static var amberDeep: Color { tokens.accentDeep }
 
-    /// 暖白正文
-    static let ink        = Color(hex: 0xF3ECE0)
+    /// 正文
+    static var ink: Color { tokens.ink }
     /// 次级文字
-    static let inkDim     = Color(hex: 0xF3ECE0).opacity(0.55)
-    /// 琥珀细发丝线（机顶接缝 / 描边）
-    static let hairline   = Color(hex: 0xE8A030).opacity(0.22)
+    static var inkDim: Color { tokens.inkDim }
+    /// 发丝线
+    static var hairline: Color { tokens.hairline }
 
-    /// 通用危险/录制红（REC、录制态快门）
-    static let recRed     = Color(hex: 0xE5484D)
+    /// 录制红
+    static var recRed: Color { tokens.recRed }
 
     // MARK: - 字体
 
-    /// 等宽字体（仪表读数的灵魂）
+    /// 微标签 / 读数：等宽
     static func mono(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
-        .system(size: size, weight: weight, design: .monospaced)
+        tokens.monoFont(size, weight)
+    }
+
+    /// 展示字体（各主题的字族不同）
+    static func display(_ size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        tokens.displayFont(size, weight)
+    }
+
+    /// 标签字体（字距、大小写各不相同）
+    static func label(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+        tokens.labelFont(size, weight)
     }
 }
 
