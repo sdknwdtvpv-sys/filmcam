@@ -28,7 +28,7 @@ struct LaunchScreenView: View {
     private let scanStart: Double = 0.06
     private let scanDuration: Double = 1.20
     private let convergeStart: Double = 0.18
-    private let convergeDuration: Double = 1.80
+    private let convergeDuration: Double = 2.05
     private let ledAt: Double = 2.02
     private let outAt: Double = 2.42
     private let total: Double = 2.85
@@ -117,7 +117,7 @@ struct LaunchScreenView: View {
     private func particleCloud(_ t: ThemeTokens, converge: Double) -> some View {
         let field = WordmarkField.shared
         let settle = Double(min(max(converge, 0), 1))
-        let sharp = max(0, (settle - 0.62) / 0.38)
+        let sharp = max(0, (settle - 0.70) / 0.30)
         let dotsFade = 1 - sharp
         let centre = markFrame == .zero
             ? CGPoint(x: 0.5, y: 0.5)
@@ -129,9 +129,12 @@ struct LaunchScreenView: View {
 
             Canvas { ctx, _ in
                 for (index, point) in field.points.enumerated() {
-                    let r1 = Double(hash(index &* 3 &+ 1) % 10_000) / 10_000
-                    let r2 = Double(hash(index &* 3 &+ 2) % 10_000) / 10_000
-                    let r3 = Double(hash(index &* 3 &+ 3) % 10_000) / 10_000
+                    let r1 = Double(hash(index &* 7 &+ 1) % 10_000) / 10_000
+                    let r2 = Double(hash(index &* 7 &+ 2) % 10_000) / 10_000
+                    let r3 = Double(hash(index &* 7 &+ 3) % 10_000) / 10_000
+                    let r4 = Double(hash(index &* 7 &+ 4) % 10_000) / 10_000
+                    let r5 = Double(hash(index &* 7 &+ 5) % 10_000) / 10_000
+                    let r6 = Double(hash(index &* 7 &+ 6) % 10_000) / 10_000
 
                     // 起点撒在屏幕外圈，所以是「从四面八方收进来」
                     let angle = r1 * 2 * .pi
@@ -142,15 +145,28 @@ struct LaunchScreenView: View {
                     let target = CGPoint(x: centre.x + (point.x - 0.5) * targetSize.width,
                                          y: centre.y + (point.y - 0.5) * targetSize.height)
 
-                    // 每颗粒子错开到达，形成一波一波收拢
-                    let delay = 0.32 * r3
-                    let local = max(0, min(1, (settle - delay) / max(0.0001, 1 - delay)))
-                    let eased = 1 - pow(1 - local, 3)
+                    // 每颗粒子在自己的时间点落地（0.55…0.97），所以是一波一波到位
+                    let landing = 0.55 + 0.42 * r3
+                    let local = min(1, settle / max(0.05, landing))
+                    let eased = 1 - pow(1 - local, 2.4)
 
-                    let x = start.x + (target.x - start.x) * eased
-                    let y = start.y + (target.y - start.y) * eased
+                    var x = start.x + (target.x - start.x) * eased
+                    var y = start.y + (target.y - start.y) * eased
+
+                    // 落地之后还有一小段衰减抖动，像磁铁吸住之前先弹几下
+                    if r4 < 0.45, settle > landing {
+                        let since = settle - landing
+                        // 衰减控制「抖几下」：半衰期约 0.13 秒，频率 4.5–8 Hz
+                        let decay = exp(-since * 11)
+                        let amplitude = 3.0 * decay
+                        let frequency = 9 + 7 * r5
+                        let phase = r6 * 2 * .pi
+                        x += cos(since * frequency * 2 * .pi + phase) * amplitude
+                        y += sin(since * frequency * 2 * .pi + phase * 1.6) * amplitude
+                    }
+
                     let dotRadius = 0.9 + 1.7 * (1 - eased)
-                    let alpha = (0.22 + 0.78 * local) * dotsFade
+                    let alpha = (0.22 + 0.78 * min(1, eased * 1.4)) * dotsFade
                     guard alpha > 0.01 else { continue }
 
                     ctx.fill(
