@@ -27,6 +27,8 @@ struct AlbumView: View {
     @EnvironmentObject var manager: CameraManager
 
     @State private var detailItem: AlbumItem?
+    /// 接触印相模式：一冲出来就是一整张，和胶片真正拿到手的样子一样
+    @State private var contactSheetMode = false
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
 
@@ -40,6 +42,8 @@ struct AlbumView: View {
                 header
                 if manager.albumItems.isEmpty {
                     emptyState
+                } else if contactSheetMode {
+                    contactSheet
                 } else {
                     grid
                 }
@@ -80,7 +84,18 @@ struct AlbumView: View {
                 .font(.system(size: 9, weight: .bold, design: .monospaced))
                 .foregroundColor(.black.opacity(0.45))
             Spacer()
-            Text("相册")
+            Button {
+                withAnimation(.easeOut(duration: 0.18)) { contactSheetMode.toggle() }
+            } label: {
+                Image(systemName: contactSheetMode ? "square.grid.2x2" : "film")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.black.opacity(0.55))
+                    .frame(width: 30, height: 30)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(contactSheetMode ? "切回网格" : "切成接触印相")
+
+            Text(contactSheetMode ? "印相" : "相册")
                 .font(t.monoFont(11, .bold))
                 .foregroundColor(.black.opacity(0.55))
             Button { manager.closeAlbum() } label: {
@@ -117,6 +132,56 @@ struct AlbumView: View {
     }
 
     /// 按卷分组的相册：一卷一段，像翻底片袋
+    /// 接触印相：按卷分块，每卷一张黑纸，6 列密排，带齿孔
+    private var contactSheet: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 20) {
+                ForEach(sections) { section in
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack(spacing: 6) {
+                            Silkscreen(text: section.title, color: .white.opacity(0.7),
+                                       size: 6.5, tracking: 1.8)
+                            Rectangle().fill(.white.opacity(0.14)).frame(height: 1)
+                            Text(section.countText)
+                                .font(.system(size: 8, weight: .bold, design: .monospaced))
+                                .foregroundColor(.white.opacity(0.45))
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 6),
+                                  spacing: 2) {
+                            ForEach(section.items) { item in
+                                Button { detailItem = item } label: {
+                                    MediaThumbnail(item: item, maxPixel: 200)
+                                        .aspectRatio(1.5, contentMode: .fill)
+                                        .clipped()
+                                        .overlay(Rectangle().strokeBorder(.white.opacity(0.10), lineWidth: 0.5))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.bottom, 8)
+
+                        // 底边齿孔，和机身胶片仓同一套语言
+                        HStack(spacing: 3) {
+                            ForEach(0..<24, id: \.self) { _ in
+                                RoundedRectangle(cornerRadius: 1)
+                                    .fill(.white.opacity(0.07))
+                                    .frame(height: 4)
+                            }
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.bottom, 6)
+                    }
+                    .background(Color(hex: 0x121314))
+                }
+            }
+            .padding(.horizontal, 10)
+        }
+    }
+
     private var grid: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
