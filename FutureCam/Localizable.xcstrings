@@ -8,12 +8,24 @@
             "state": "translated",
             "value": "AE/AF Lock"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AE/AF 锁定"
+          }
         }
       }
     },
     "CONTACT SHEET": {
       "localizations": {
         "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "CONTACT SHEET"
+          }
+        },
+        "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "CONTACT SHEET"
@@ -28,6 +40,12 @@
             "state": "translated",
             "value": "FutureCam needs camera access to shoot. Tap below to open Settings, then come back to this page."
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FutureCam 需要相机权限才能拍摄。点下方按钮前往系统设置开启相机权限，然后返回本页即可。"
+          }
         }
       }
     },
@@ -37,6 +55,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "FutureCam needs the camera to take film-style photos."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "FutureCam 需要访问相机来拍摄复古胶片照片。"
           }
         }
       }
@@ -48,6 +72,12 @@
             "state": "translated",
             "value": "The LUT turns the sun blue"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "LUT 把太阳变蓝"
+          }
         }
       }
     },
@@ -57,6 +87,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Thirds guide"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三分构图辅助线"
           }
         }
       }
@@ -68,6 +104,12 @@
             "state": "translated",
             "value": "Previous"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一张"
+          }
         }
       }
     },
@@ -77,6 +119,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一张"
           }
         }
       }
@@ -88,6 +136,12 @@
             "state": "translated",
             "value": "Next"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一条"
+          }
         }
       }
     },
@@ -97,6 +151,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Next"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一步"
           }
         }
       }
@@ -108,6 +168,12 @@
             "state": "translated",
             "value": "Save"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存"
+          }
         }
       }
     },
@@ -117,6 +183,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Save film"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "保存这卷"
           }
         }
       }
@@ -128,6 +200,12 @@
             "state": "translated",
             "value": "Cool · blue"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偏冷·发蓝"
+          }
         }
       }
     },
@@ -137,6 +215,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Warm · amber"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偏暖·发黄"
           }
         }
       }
@@ -148,6 +232,12 @@
             "state": "translated",
             "value": "Magenta"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偏洋红"
+          }
         }
       }
     },
@@ -157,6 +247,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Green"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "偏绿"
           }
         }
       }
@@ -168,6 +264,12 @@
             "state": "translated",
             "value": "Stop"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止录制"
+          }
         }
       }
     },
@@ -177,6 +279,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Off"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关"
           }
         }
       }
@@ -188,6 +296,12 @@
             "state": "translated",
             "value": "Close"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
         }
       }
     },
@@ -197,6 +311,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Close album"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭相册"
           }
         }
       }
@@ -208,6 +328,12 @@
             "state": "translated",
             "value": "Print"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冲印"
+          }
         }
       }
     },
@@ -217,6 +343,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Printing…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冲印中…"
           }
         }
       }
@@ -228,6 +360,12 @@
             "state": "translated",
             "value": "Cool White 200"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "冷白 200"
+          }
         }
       }
     },
@@ -237,6 +375,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Share"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分享"
           }
         }
       }
@@ -248,6 +392,12 @@
             "state": "translated",
             "value": "Switch to front camera"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换到前置摄像头"
+          }
         }
       }
     },
@@ -257,6 +407,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Switch to rear camera"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换到后置摄像头"
           }
         }
       }
@@ -268,6 +424,12 @@
             "state": "translated",
             "value": "Switch camera"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换前置 / 后置镜头"
+          }
         }
       }
     },
@@ -277,6 +439,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除"
           }
         }
       }
@@ -288,6 +456,12 @@
             "state": "translated",
             "value": "Delete this film"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除这卷"
+          }
         }
       }
     },
@@ -297,6 +471,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Delete this item?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删除这条记录？"
           }
         }
       }
@@ -308,6 +488,12 @@
             "state": "translated",
             "value": "Camera"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前后摄"
+          }
         }
       }
     },
@@ -317,6 +503,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Front"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "前置"
           }
         }
       }
@@ -328,6 +520,12 @@
             "state": "translated",
             "value": "Motion level"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "动得凶不凶"
+          }
         }
       }
     },
@@ -337,6 +535,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Card"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡片"
           }
         }
       }
@@ -348,6 +552,12 @@
             "state": "translated",
             "value": "Original"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原图"
+          }
         }
       }
     },
@@ -357,6 +567,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Neutral"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原生"
           }
         }
       }
@@ -368,6 +584,12 @@
             "state": "translated",
             "value": "Original"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "原色"
+          }
         }
       }
     },
@@ -377,6 +599,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去系统设置"
           }
         }
       }
@@ -388,6 +616,12 @@
             "state": "translated",
             "value": "Open Settings"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去系统设置开启"
+          }
         }
       }
     },
@@ -397,6 +631,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "去设置"
           }
         }
       }
@@ -408,6 +648,12 @@
             "state": "translated",
             "value": "Readout strip"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "参数条"
+          }
         }
       }
     },
@@ -417,6 +663,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Double"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双曝"
           }
         }
       }
@@ -428,6 +680,12 @@
             "state": "translated",
             "value": "Roll indicator in the viewfinder"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取景器内显示横滚水平仪"
+          }
         }
       }
     },
@@ -437,6 +695,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Free space in the viewfinder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取景器右上角显示可用空间"
           }
         }
       }
@@ -448,6 +712,12 @@
             "state": "translated",
             "value": "Cancel"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
+          }
         }
       }
     },
@@ -457,6 +727,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Film-only base"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只过胶片的底"
           }
         }
       }
@@ -468,6 +744,12 @@
             "state": "translated",
             "value": "Available"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可拍"
+          }
         }
       }
     },
@@ -477,6 +759,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rear"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "后置"
           }
         }
       }
@@ -488,6 +776,12 @@
             "state": "translated",
             "value": "BOOT"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动中"
+          }
         }
       }
     },
@@ -497,6 +791,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Four rolls for daylight and landscape"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四卷偏日间与风光"
           }
         }
       }
@@ -508,6 +808,12 @@
             "state": "translated",
             "value": "Four rolls for low light and night"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "四卷偏暗光与夜色"
+          }
         }
       }
     },
@@ -517,6 +823,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Scene"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "场景"
           }
         }
       }
@@ -528,6 +840,12 @@
             "state": "translated",
             "value": "Retro 200"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "复古 200"
+          }
         }
       }
     },
@@ -537,6 +855,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Summer 400"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夏日 400"
           }
         }
       }
@@ -548,6 +872,12 @@
             "state": "translated",
             "value": "Nocturne"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜行"
+          }
         }
       }
     },
@@ -557,6 +887,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Night St. 800"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜街 800"
           }
         }
       }
@@ -568,6 +904,12 @@
             "state": "translated",
             "value": "Cream 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "奶油 400"
+          }
         }
       }
     },
@@ -577,6 +919,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "OK"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "好"
           }
         }
       }
@@ -588,6 +936,12 @@
             "state": "translated",
             "value": "Storage"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存储提示"
+          }
         }
       }
     },
@@ -597,6 +951,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Done"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
           }
         }
       }
@@ -608,6 +968,12 @@
             "state": "translated",
             "value": "Easy to shake"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "容易手抖"
+          }
         }
       }
     },
@@ -617,6 +983,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Contrast"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "对比"
           }
         }
       }
@@ -628,6 +1000,12 @@
             "state": "translated",
             "value": "READY"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "就绪"
+          }
         }
       }
     },
@@ -637,6 +1015,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tap to close"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已出片，可换调色，轻触关闭"
           }
         }
       }
@@ -648,6 +1032,12 @@
             "state": "translated",
             "value": "On"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已开启"
+          }
         }
       }
     },
@@ -657,6 +1047,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "FIXED"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已显影"
           }
         }
       }
@@ -668,6 +1064,12 @@
             "state": "translated",
             "value": "Film loaded"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已装卷"
+          }
         }
       }
     },
@@ -677,6 +1079,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Carousel of cards below"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "底部卡片轮播"
           }
         }
       }
@@ -688,6 +1096,12 @@
             "state": "translated",
             "value": "On"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开"
+          }
         }
       }
     },
@@ -697,6 +1111,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Get started"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始使用"
           }
         }
       }
@@ -708,6 +1128,12 @@
             "state": "translated",
             "value": "Record"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始录制"
+          }
         }
       }
     },
@@ -717,6 +1143,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "frames"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "张"
           }
         }
       }
@@ -728,6 +1160,12 @@
             "state": "translated",
             "value": "REC"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录制中"
+          }
         }
       }
     },
@@ -737,6 +1175,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tripod required"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必须架稳，长时间积分"
           }
         }
       }
@@ -748,6 +1192,12 @@
             "state": "translated",
             "value": "Shutter"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快门"
+          }
         }
       }
     },
@@ -757,6 +1207,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset to auto"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复自动"
           }
         }
       }
@@ -768,6 +1224,12 @@
             "state": "translated",
             "value": "Resume continuous AF / AE / AWB"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复连续自动对焦 / 曝光 / 白平衡"
+          }
         }
       }
     },
@@ -777,6 +1239,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "ISO"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "感光度"
           }
         }
       }
@@ -788,6 +1256,12 @@
             "state": "translated",
             "value": "Done"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "成功"
+          }
         }
       }
     },
@@ -797,6 +1271,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "My films"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "我的"
           }
         }
       }
@@ -808,6 +1288,12 @@
             "state": "translated",
             "value": "Hand-holdable"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手持不易糊"
+          }
         }
       }
     },
@@ -817,6 +1303,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slow, handheld"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "手持慢速"
           }
         }
       }
@@ -828,6 +1320,12 @@
             "state": "translated",
             "value": "Open album"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开相册"
+          }
         }
       }
     },
@@ -837,6 +1335,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Burn an amber date into the lower right corner"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把橙色日期烧进成片右下角（老式胶卷机后背）"
           }
         }
       }
@@ -848,6 +1352,12 @@
             "state": "translated",
             "value": "Straighten"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拉直"
+          }
         }
       }
     },
@@ -857,6 +1367,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Take a shot to preview"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍一张再看效果"
           }
         }
       }
@@ -868,6 +1384,12 @@
             "state": "translated",
             "value": "Photos"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍照"
+          }
         }
       }
     },
@@ -877,6 +1399,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your photos and videos live here"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拍过的照片和视频都在这里"
           }
         }
       }
@@ -888,6 +1416,12 @@
             "state": "translated",
             "value": "Press the shutter"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按下快门"
+          }
         }
       }
     },
@@ -897,6 +1431,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Load a new roll"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "换一卷"
           }
         }
       }
@@ -908,6 +1448,12 @@
             "state": "translated",
             "value": "Change film"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "换胶片"
+          }
         }
       }
     },
@@ -917,6 +1463,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Allow and open"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授权并开启"
           }
         }
       }
@@ -928,6 +1480,12 @@
             "state": "translated",
             "value": "Near daylight"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接近日光"
+          }
         }
       }
     },
@@ -937,6 +1495,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rotate 90°"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "旋转 90 度"
           }
         }
       }
@@ -948,6 +1512,12 @@
             "state": "translated",
             "value": "Date imprint"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日期背印"
+          }
         }
       }
     },
@@ -957,6 +1527,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Much brighter"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明显更亮"
           }
         }
       }
@@ -968,6 +1544,12 @@
             "state": "translated",
             "value": "Much darker"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "明显更暗"
+          }
         }
       }
     },
@@ -977,6 +1559,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Developing…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显影中…"
           }
         }
       }
@@ -988,6 +1576,12 @@
             "state": "translated",
             "value": "Field 200"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "晴野 200"
+          }
         }
       }
     },
@@ -997,6 +1591,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Warm Soft 200"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暖柔 200"
           }
         }
       }
@@ -1008,6 +1608,12 @@
             "state": "translated",
             "value": "Undertow 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗涌 400"
+          }
         }
       }
     },
@@ -1017,6 +1623,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Vignette"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暗角"
           }
         }
       }
@@ -1028,6 +1640,12 @@
             "state": "translated",
             "value": "Dusk 100"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暮金 100"
+          }
         }
       }
     },
@@ -1037,6 +1655,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exposure"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曝光"
           }
         }
       }
@@ -1048,6 +1672,12 @@
             "state": "translated",
             "value": "Exposure value"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曝光值"
+          }
         }
       }
     },
@@ -1057,6 +1687,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Exposure bias"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "曝光补偿"
           }
         }
       }
@@ -1068,6 +1704,12 @@
             "state": "translated",
             "value": "Brighter"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更亮"
+          }
         }
       }
     },
@@ -1077,6 +1719,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Darker"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更暗"
           }
         }
       }
@@ -1088,6 +1736,12 @@
             "state": "translated",
             "value": "Longer"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更长"
+          }
         }
       }
     },
@@ -1097,6 +1751,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "SERVICE PANEL"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "服务面板"
           }
         }
       }
@@ -1108,6 +1768,12 @@
             "state": "translated",
             "value": "Unfiled"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未归档"
+          }
         }
       }
     },
@@ -1117,6 +1783,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Unknown film"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知胶卷"
           }
         }
       }
@@ -1128,6 +1800,12 @@
             "state": "translated",
             "value": "Roll finished"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本卷拍完"
+          }
         }
       }
     },
@@ -1137,6 +1815,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Roll finished · load a new one"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本卷拍完 · 换一卷"
           }
         }
       }
@@ -1148,6 +1832,12 @@
             "state": "translated",
             "value": "Turquoise 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "松石 400"
+          }
         }
       }
     },
@@ -1157,6 +1847,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hold steady"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "架稳再拍"
           }
         }
       }
@@ -1168,6 +1864,12 @@
             "state": "translated",
             "value": "Standard"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准"
+          }
         }
       }
     },
@@ -1177,6 +1879,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Standard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标准曝光"
           }
         }
       }
@@ -1188,6 +1896,12 @@
             "state": "translated",
             "value": "Forest 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "森野 400"
+          }
         }
       }
     },
@@ -1197,6 +1911,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "模式"
           }
         }
       }
@@ -1208,6 +1928,12 @@
             "state": "translated",
             "value": "sideways"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "横竖别扭"
+          }
         }
       }
     },
@@ -1217,6 +1943,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Starting camera…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在启动相机…"
           }
         }
       }
@@ -1228,6 +1960,12 @@
             "state": "translated",
             "value": "Level"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "水平指示"
+          }
         }
       }
     },
@@ -1237,6 +1975,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Stays black with no hint"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "永久黑屏无提示"
           }
         }
       }
@@ -1248,6 +1992,12 @@
             "state": "translated",
             "value": "Abyss 1600"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "深潭 1600"
+          }
         }
       }
     },
@@ -1257,6 +2007,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Clear 100"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清透 100"
           }
         }
       }
@@ -1268,6 +2024,12 @@
             "state": "translated",
             "value": "Screen + translucent"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "滤色 + 半透明"
+          }
         }
       }
     },
@@ -1277,6 +2039,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tap a cell to select it; the big dial adjusts it"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一个格子选中它，下面的大轮盘就调它"
           }
         }
       }
@@ -1288,6 +2056,12 @@
             "state": "translated",
             "value": "Taps do nothing"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点了没反应"
+          }
         }
       }
     },
@@ -1297,6 +2071,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tap this window to change film"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点这个窗开仓，换一筒胶片"
           }
         }
       }
@@ -1308,6 +2088,12 @@
             "state": "translated",
             "value": "Focal length"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "焦段"
+          }
         }
       }
     },
@@ -1317,6 +2103,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Photo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片"
           }
         }
       }
@@ -1328,6 +2120,12 @@
             "state": "translated",
             "value": "Photo not saved — allow Photos access in Settings"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照片未保存：请在设置中允许访问照片"
+          }
         }
       }
     },
@@ -1337,6 +2135,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Mirrored"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "照镜子"
           }
         }
       }
@@ -1348,6 +2152,12 @@
             "state": "translated",
             "value": "Amber 200"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "琥珀 200"
+          }
         }
       }
     },
@@ -1357,6 +2167,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Camera is moving"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面在动"
           }
         }
       }
@@ -1368,6 +2184,12 @@
             "state": "translated",
             "value": "Slightly cool"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "略冷"
+          }
         }
       }
     },
@@ -1377,6 +2199,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slightly warm"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "略暖"
           }
         }
       }
@@ -1388,6 +2216,12 @@
             "state": "translated",
             "value": "Album"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相册"
+          }
         }
       }
     },
@@ -1397,6 +2231,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Camera access is off"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相机权限已关闭"
           }
         }
       }
@@ -1408,6 +2248,12 @@
             "state": "translated",
             "value": "Camera preview unavailable"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相机预览不可用"
+          }
         }
       }
     },
@@ -1417,6 +2263,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Slate 800"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "石板 800"
           }
         }
       }
@@ -1428,6 +2280,12 @@
             "state": "translated",
             "value": "Roll %d"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %d 卷"
+          }
         }
       }
     },
@@ -1437,6 +2295,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Roll %d  |  %d left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第 %d 卷  |  还剩 %d 张"
           }
         }
       }
@@ -1448,6 +2312,12 @@
             "state": "translated",
             "value": "First"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一张"
+          }
         }
       }
     },
@@ -1457,6 +2327,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "First exposure done — take the second"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第一张已曝光 · 请拍第二张"
           }
         }
       }
@@ -1468,6 +2344,12 @@
             "state": "translated",
             "value": "Second"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "第二张"
+          }
         }
       }
     },
@@ -1477,6 +2359,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Film"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "胶卷"
           }
         }
       }
@@ -1488,6 +2376,12 @@
             "state": "translated",
             "value": "FILM · medium and frame count"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "胶卷 · 决定介质与张数"
+          }
         }
       }
     },
@@ -1497,6 +2391,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Freezes motion"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "能定格动作"
           }
         }
       }
@@ -1508,6 +2408,12 @@
             "state": "translated",
             "value": "Custom"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自制"
+          }
         }
       }
     },
@@ -1517,6 +2423,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Custom film"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自制胶卷"
           }
         }
       }
@@ -1528,6 +2440,12 @@
             "state": "translated",
             "value": "Auto"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动"
+          }
         }
       }
     },
@@ -1537,6 +2455,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Auto exposure & white balance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自动曝光与白平衡"
           }
         }
       }
@@ -1548,6 +2472,12 @@
             "state": "translated",
             "value": "Color, grain, vignette"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "色彩 + 颗粒 + 暗角"
+          }
         }
       }
     },
@@ -1557,6 +2487,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Temp"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "色温"
           }
         }
       }
@@ -1568,6 +2504,12 @@
             "state": "translated",
             "value": "Tint"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "色调"
+          }
         }
       }
     },
@@ -1577,6 +2519,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sunset 200"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "落日 200"
           }
         }
       }
@@ -1588,6 +2536,12 @@
             "state": "translated",
             "value": "Mint 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "薄荷 400"
+          }
         }
       }
     },
@@ -1597,6 +2551,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Faded Cinema"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "褪色电影"
           }
         }
       }
@@ -1608,6 +2568,12 @@
             "state": "translated",
             "value": "Whether to add a grade or grain"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要不要叠调色、要不要叠颗粒"
+          }
         }
       }
     },
@@ -1617,6 +2583,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Needs a tripod"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要架稳"
           }
         }
       }
@@ -1628,6 +2600,12 @@
             "state": "translated",
             "value": "Video"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视频"
+          }
         }
       }
     },
@@ -1637,6 +2615,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Video saved to Photos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视频已保存到相册"
           }
         }
       }
@@ -1648,6 +2632,12 @@
             "state": "translated",
             "value": "Video not saved — allow Photos access in Settings"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "视频未保存：请在设置中允许访问照片"
+          }
         }
       }
     },
@@ -1657,6 +2647,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Subscription"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "订阅"
           }
         }
       }
@@ -1668,6 +2664,12 @@
             "state": "translated",
             "value": "Settings"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
+          }
         }
       }
     },
@@ -1677,6 +2679,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Adjust the value"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调数值"
           }
         }
       }
@@ -1688,6 +2696,12 @@
             "state": "translated",
             "value": "COLOR · on top of the film"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调色 · 叠在胶片之上"
+          }
         }
       }
     },
@@ -1697,6 +2711,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ochre 200"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "赭石 200"
           }
         }
       }
@@ -1708,6 +2728,12 @@
             "state": "translated",
             "value": "Turn this knurled ring — each tooth clicks"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转这圈滚花，每过一颗齿咔哒一下"
+          }
         }
       }
     },
@@ -1717,6 +2743,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tap to shoot. Press and drag to switch: left for double exposure, right for video"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻点松手就是拍；按住左右拖换模式，左双曝右录像"
           }
         }
       }
@@ -1728,6 +2760,12 @@
             "state": "translated",
             "value": "Tap to close"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻触关闭"
+          }
         }
       }
     },
@@ -1737,6 +2775,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还剩"
           }
         }
       }
@@ -1748,6 +2792,12 @@
             "state": "translated",
             "value": "%d left"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还剩 %d 张"
+          }
         }
       }
     },
@@ -1757,6 +2807,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还原"
           }
         }
       }
@@ -1768,6 +2824,12 @@
             "state": "translated",
             "value": "No photos yet — take one"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还没有照片，先拍一张吧"
+          }
         }
       }
     },
@@ -1777,6 +2839,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "This roll is full. Load a new one."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这卷拍完了，换一卷再拍"
           }
         }
       }
@@ -1788,6 +2856,12 @@
             "state": "translated",
             "value": "Buy this film"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这卷要买"
+          }
         }
       }
     },
@@ -1797,6 +2871,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Frames left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这卷还剩几张"
           }
         }
       }
@@ -1808,6 +2888,12 @@
             "state": "translated",
             "value": "This film is still sealed"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这卷还没拆封"
+          }
         }
       }
     },
@@ -1817,6 +2903,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Can't open this image"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这张图打不开了"
           }
         }
       }
@@ -1828,6 +2920,12 @@
             "state": "translated",
             "value": "Wander"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "远行"
+          }
         }
       }
     },
@@ -1837,6 +2935,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重置"
           }
         }
       }
@@ -1848,6 +2952,12 @@
             "state": "translated",
             "value": "Cobalt 200"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "钴蓝 200"
+          }
         }
       }
     },
@@ -1857,6 +2967,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rust 400"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "铁锈 400"
           }
         }
       }
@@ -1868,6 +2984,12 @@
             "state": "translated",
             "value": "Silver 400"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "银盐 400"
+          }
         }
       }
     },
@@ -1877,6 +2999,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Long-press to delete"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长按删除"
           }
         }
       }
@@ -1888,6 +3016,12 @@
             "state": "translated",
             "value": "Long exposure, use a tripod"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长曝光，最好架稳"
+          }
         }
       }
     },
@@ -1897,6 +3031,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Flash"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "闪光"
           }
         }
       }
@@ -1908,6 +3048,12 @@
             "state": "translated",
             "value": "Included"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "随机器附赠"
+          }
         }
       }
     },
@@ -1917,6 +3063,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Snow 100"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "雪原 100"
           }
         }
       }
@@ -1928,6 +3080,12 @@
             "state": "translated",
             "value": "Camera access required"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要相机权限"
+          }
         }
       }
     },
@@ -1937,6 +3095,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Frost 400"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "霜白 400"
           }
         }
       }
@@ -1948,6 +3112,12 @@
             "state": "translated",
             "value": "Grid"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "预览网格"
+          }
         }
       }
     },
@@ -1957,6 +3127,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Grain"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒"
           }
         }
       }
@@ -1968,6 +3144,12 @@
             "state": "translated",
             "value": "Medium grain"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒中等"
+          }
         }
       }
     },
@@ -1977,6 +3159,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Coarse grain"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒很粗"
           }
         }
       }
@@ -1988,6 +3176,12 @@
             "state": "translated",
             "value": "Visible grain"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒明显"
+          }
         }
       }
     },
@@ -1997,6 +3191,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "Finest grain"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒最细"
           }
         }
       }
@@ -2008,6 +3208,12 @@
             "state": "translated",
             "value": "Fine grain"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "颗粒细"
+          }
         }
       }
     },
@@ -2018,6 +3224,12 @@
             "state": "translated",
             "value": "Saturation"
           }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "饱和"
+          }
         }
       }
     },
@@ -2027,6 +3239,12 @@
           "stringUnit": {
             "state": "translated",
             "value": "\", loaded"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "，已装载"
           }
         }
       }
