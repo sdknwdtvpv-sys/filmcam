@@ -46,13 +46,21 @@ struct RangefinderCameraView: View {
                     .ignoresSafeArea()
 
                 // 整台机器铺满屏幕，内容再按安全区让开灵动岛和 home indicator
-                // 竖过来 = 整台机器跟手一起转，不做第二套布局。
-                // 物理相机横过来时，机身、按键、丝印都是一起转的。
+                // 横屏：顶盖横着不动，取景窗占左，三个控件在右侧竖排
                 if geo.size.width > geo.size.height {
-                    machine(t, topInset: 0, bottomInset: 0)
-                        .frame(width: geo.size.height, height: geo.size.width)
-                        .rotationEffect(.degrees(90))
-                        .frame(width: geo.size.width, height: geo.size.height)
+                    VStack(spacing: 0) {
+                        topPlate(t, topInset: insets.top)
+                        HStack(spacing: 0) {
+                            VStack(spacing: 0) {
+                                waist(t)
+                                readoutStrip(t)
+                                    .padding(.horizontal, 12)
+                                    .padding(.bottom, 6)
+                            }
+                            landscapeGripVertical(t, bottomInset: insets.bottom)
+                        }
+                    }
+                    .ignoresSafeArea()
                 } else {
                     machine(t, topInset: insets.top, bottomInset: insets.bottom)
                         .ignoresSafeArea()
@@ -78,7 +86,42 @@ struct RangefinderCameraView: View {
 
     // MARK: 铝制顶盖
 
-    /// 竖版机身：顶盖 + 取景 + 操控区。横屏时整体旋转，不另做布局
+    /// 横屏右侧握把：三个控件竖排（相册 / 快门 / 翻转），和竖屏的左右顺序一一对应
+    private func landscapeGripVertical(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 8)
+
+            VStack(spacing: 6) {
+                albumWindow(t)
+                Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
+            }
+
+            Spacer(minLength: 10)
+
+            shutterDial(t)
+
+            Spacer(minLength: 10)
+
+            VStack(spacing: 6) {
+                flipKey(t)
+                Silkscreen(text: "后置", color: t.inkDim, size: 6, tracking: 0.8)
+            }
+
+            Spacer(minLength: 8)
+
+            Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
+                       color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
+                .padding(.bottom, 4 + bottomInset)
+        }
+        .frame(width: 128)
+        .padding(.horizontal, 8)
+        .background(AluminumFace(tokens: t))
+        .overlay(alignment: .leading) {
+            Rectangle().fill(.black.opacity(0.35)).frame(width: 1)
+        }
+    }
+
+    /// 竖版机身：顶盖 + 取景 + 操控区
     private func machine(_ t: ThemeTokens, topInset: CGFloat, bottomInset: CGFloat) -> some View {
         VStack(spacing: 0) {
             topPlate(t, topInset: topInset)
