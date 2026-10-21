@@ -166,8 +166,8 @@ struct AlbumView: View {
     private func rollCard(_ section: AlbumSection) -> some View {
         let preset = RollStore.shared.roll(id: section.id).map { FilmPreset(rawValue: $0.presetRaw) ?? .neutral }
         let band = preset.map { canisterColor($0) } ?? CameraTheme.amber
-        return HStack(spacing: 0) {
-            Rectangle().fill(band).frame(width: 10)
+        return HStack(spacing: 12) {
+            MiniCanister(color: band, iso: preset.map { "\($0.nominalISO)" } ?? "")
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -204,9 +204,10 @@ struct AlbumView: View {
                         .foregroundColor(CameraTheme.ink.opacity(0.3))
                 }
             }
-            .padding(.horizontal, 12)
+            .padding(.trailing, 12)
             .padding(.vertical, 10)
         }
+        .padding(.leading, 8)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(CameraTheme.ink.opacity(0.05))
@@ -652,5 +653,72 @@ struct AlbumDetailView: View {
         } else {
             onClose()
         }
+    }
+}
+
+
+/// 迷你胶卷罐：上下金属盖 + 中间彩色标签 + 顶部卷轴凸起。
+/// 135 胶卷罐横放不下，这里竖着放在卡片左侧，一眼看出是「一筒胶片」。
+struct MiniCanister: View {
+    let color: Color
+    /// ISO 数字，印在白色标签条上
+    var iso: String = ""
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // 卷轴凸起
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(metalGradient)
+                .frame(width: 12, height: 5)
+
+            // 上盖
+            RoundedRectangle(cornerRadius: 1)
+                .fill(metalGradient)
+                .frame(height: 9)
+
+            // 罐身：彩色标签 + 圆柱高光
+            ZStack {
+                color
+                LinearGradient(colors: [.white.opacity(0.35), .clear, .black.opacity(0.22)],
+                               startPoint: .leading, endPoint: .trailing)
+                // 白色标签条 + ISO 数字：真实胶卷罐的辨识特征
+                VStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    ZStack {
+                        Rectangle().fill(.white.opacity(0.92))
+                        Text(iso)
+                            .font(.system(size: 8, weight: .heavy, design: .monospaced))
+                            .foregroundColor(color.opacity(0.9))
+                    }
+                    .frame(height: 13)
+                    Spacer(minLength: 0)
+                }
+                VStack(spacing: 2) {
+                    Rectangle().fill(.white.opacity(0.30)).frame(height: 0.5)
+                    Spacer(minLength: 0)
+                    Rectangle().fill(.black.opacity(0.18)).frame(height: 0.5)
+                }
+                .padding(.vertical, 4)
+            }
+            .frame(width: 34, height: 40)
+            .clipped()
+
+            // 下盖
+            RoundedRectangle(cornerRadius: 1)
+                .fill(metalGradient)
+                .frame(height: 9)
+        }
+        .frame(width: 34)
+        .clipShape(RoundedRectangle(cornerRadius: 3))
+        .overlay(
+            RoundedRectangle(cornerRadius: 3)
+                .strokeBorder(.black.opacity(0.25), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+    }
+
+    private var metalGradient: LinearGradient {
+        LinearGradient(colors: [Color(hex: 0xF2F4F6), Color(hex: 0xB9BEC3), Color(hex: 0x8E949A)],
+                       startPoint: .top, endPoint: .bottom)
     }
 }
