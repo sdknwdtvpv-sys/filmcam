@@ -149,11 +149,11 @@ struct AlbumView: View {
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
                                 GridItem(.flexible(), spacing: 12)],
                       spacing: 12) {
-                ForEach(sections) { section in
+                ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
                     Button {
                         withAnimation(.easeOut(duration: 0.18)) { openRoll = section.id }
                     } label: {
-                        rollCard(section)
+                        rollCard(section, index: index)
                     }
                     .buttonStyle(.plain)
                 }
@@ -165,14 +165,16 @@ struct AlbumView: View {
     }
 
     /// 一卷的样子：大胶卷罐立在上面，信息与缩略图在下面
-    private func rollCard(_ section: AlbumSection) -> some View {
+    private func rollCard(_ section: AlbumSection, index: Int) -> some View {
+        // 越新的卷罐子越大，货架有前后错落，不是一排等高的格子
+        let scale: CGFloat = index == 0 ? 1.16 : (index <= 2 ? 1.0 : 0.86)
         let roll = RollStore.shared.roll(id: section.id)
         let preset = roll.flatMap { FilmPreset(rawValue: $0.presetRaw) }
         let band = preset.map { canisterColor($0) } ?? CameraTheme.amber
         return VStack(spacing: 0) {
             // 罐子立在货架上
-            MiniCanister(color: band, iso: preset.map { "\($0.nominalISO)" } ?? "", large: true)
-                .padding(.top, 14)
+            MiniCanister(color: band, iso: preset.map { "\($0.nominalISO)" } ?? "", scale: scale)
+                .padding(.top, 14 * scale)
                 .padding(.bottom, 10)
 
             // 货架隔板：一道凹槽，罐子像是站在上面
@@ -675,8 +677,8 @@ struct MiniCanister: View {
     let color: Color
     /// ISO 数字，印在白色标签条上
     var iso: String = ""
-    /// 相册里立着展示时放大
-    var large: Bool = false
+    /// 相册里立着展示时的缩放（越新的卷越大）
+    var scale: CGFloat = 1
 
     var body: some View {
         VStack(spacing: 0) {
@@ -701,10 +703,10 @@ struct MiniCanister: View {
                     ZStack {
                         Rectangle().fill(.white.opacity(0.92))
                         Text(iso)
-                            .font(.system(size: large ? 13 : 8, weight: .heavy, design: .monospaced))
+                            .font(.system(size: 13 * scale, weight: .heavy, design: .monospaced))
                             .foregroundColor(color.opacity(0.9))
                     }
-                    .frame(height: large ? 22 : 13)
+                    .frame(height: 22 * scale)
                     Spacer(minLength: 0)
                 }
                 VStack(spacing: 2) {
@@ -728,12 +730,12 @@ struct MiniCanister: View {
             RoundedRectangle(cornerRadius: 3)
                 .strokeBorder(.black.opacity(0.25), lineWidth: 0.5)
         )
-        .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
+        .shadow(color: .black.opacity(0.30), radius: 7 * scale, x: 0, y: 6 * scale)
     }
 
-    private var bodyWidth: CGFloat { large ? 62 : 34 }
-    private var bodyHeight: CGFloat { large ? 76 : 40 }
-    private var capHeight: CGFloat { large ? 15 : 9 }
+    private var bodyWidth: CGFloat { 62 * scale }
+    private var bodyHeight: CGFloat { 76 * scale }
+    private var capHeight: CGFloat { 15 * scale }
 
     private var metalGradient: LinearGradient {
         LinearGradient(colors: [Color(hex: 0xF2F4F6), Color(hex: 0xB9BEC3), Color(hex: 0x8E949A)],
