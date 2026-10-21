@@ -657,6 +657,12 @@ struct SettingsSheet: View {
             GrooveLine()
             settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
             GrooveLine()
+            settingsToggle(title: "地理标记",
+                           subtitle: "关掉后照片不带位置信息",
+                           isOn: Binding(
+                               get: { !UserDefaults.standard.bool(forKey: "futurecam.geotag.off") },
+                               set: { UserDefaults.standard.set(!$0, forKey: "futurecam.geotag.off") }))
+            GrooveLine()
             timerRow()
             GrooveLine()
             languageRow()

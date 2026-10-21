@@ -30,6 +30,12 @@ enum PhotoEncoding {
                                                           1, nil) else { return nil }
 
         var props = metadata
+        // 关掉地理标记时把 GPS 整段摘掉（隐私开关，默认开）
+        if !UserDefaults.standard.bool(forKey: "futurecam.geotag.off") {
+            // 保持原样
+        } else {
+            props.removeValue(forKey: kCGImagePropertyGPSDictionary as String)
+        }
         // 像素已经转正，方向必须写 1，否则相册会再转一次
         props[kCGImagePropertyOrientation as String] = 1
         var tiff = (props[kCGImagePropertyTIFFDictionary as String] as? [String: Any]) ?? [:]
