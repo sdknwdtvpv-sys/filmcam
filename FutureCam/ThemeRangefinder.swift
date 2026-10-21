@@ -120,47 +120,93 @@ struct RangefinderCameraView: View {
             }
             .padding(.horizontal, 10)
 
-            readoutStrip(t)
-                .padding(.horizontal, 10)
-                .padding(.top, 6)
-                .padding(.bottom, 4)
         }
         .frame(maxWidth: .infinity)
         .background(LeatherPanel())
     }
 
-    /// 横屏右侧握把：三个控件竖排（相册 / 快门 / 翻转），和竖屏的左右顺序一一对应
+    /// 横屏右侧握把：参数条在上（两列），下面才是控件
     private func landscapeGripVertical(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
         VStack(spacing: 0) {
-            Spacer(minLength: 8)
+            GrooveLine()
 
-            VStack(spacing: 6) {
-                albumWindow(t)
-                Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
-            }
+            readoutColumns(t)
+                .padding(.horizontal, 6)
+                .padding(.top, 6)
 
-            Spacer(minLength: 10)
+            GrooveLine()
+                .padding(.top, 6)
+
+            Spacer(minLength: 6)
 
             shutterDial(t)
 
-            Spacer(minLength: 10)
+            Spacer(minLength: 8)
 
-            VStack(spacing: 6) {
-                flipKey(t)
-                Silkscreen(text: "后置", color: t.inkDim, size: 6, tracking: 0.8)
+            HStack(spacing: 12) {
+                VStack(spacing: 5) {
+                    albumWindow(t)
+                    Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
+                }
+                VStack(spacing: 5) {
+                    flipKey(t)
+                    Silkscreen(text: "后置", color: t.inkDim, size: 6, tracking: 0.8)
+                }
             }
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
 
             Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
                        color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
                 .padding(.bottom, 4 + bottomInset)
         }
-        .frame(width: 128)
-        .padding(.horizontal, 8)
+        .frame(width: 176)
         .background(AluminumFace(tokens: t))
         .overlay(alignment: .leading) {
             Rectangle().fill(.black.opacity(0.35)).frame(width: 1)
+        }
+    }
+
+    /// 两列参数读数：横屏握把只有 176pt，五列会挤成省略号
+    private func readoutColumns(_ t: ThemeTokens) -> some View {
+        let keys = visibleParams(manager)
+        let rows = stride(from: 0, to: keys.count, by: 2).map { Array(keys[$0..<min($0 + 2, keys.count)]) }
+        return VStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                if index > 0 {
+                    Rectangle().fill(.black.opacity(0.10)).frame(height: 1).padding(.horizontal, 6)
+                }
+                HStack(spacing: 0) {
+                    ForEach(row, id: \.self) { key in
+                        Button {
+                            manager.selectParam(key)
+                            announceArmed()
+                            Haptics.impact(.light)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(paramTitle(key))
+                                    .font(t.labelFont(6.5, .medium))
+                                    .foregroundColor(manager.activeParam == key ? t.accent : t.ink.opacity(0.45))
+                                Text(paramValue(key, manager))
+                                    .font(t.displayFont(12, .medium))
+                                    .foregroundColor(manager.activeParam == key ? t.ink : t.ink.opacity(0.72))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .overlay(alignment: .bottom) {
+                                if manager.activeParam == key {
+                                    Rectangle().fill(t.accent).frame(height: 1.5)
+                                }
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
         }
     }
 
