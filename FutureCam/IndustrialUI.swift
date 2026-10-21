@@ -49,10 +49,12 @@ struct AluminumFace: View {
         ZStack {
             LinearGradient(colors: [tokens.faceTop, tokens.faceBottom],
                            startPoint: .top, endPoint: .bottom)
+            // softLight 叠在近白的铝面上几乎是透明的，改用 overlay 才看得见拉丝。
+            // 顶部状态栏/灵动岛那块也是同一层，纹理一路铺满。
             Image(uiImage: TextureFactory.brushed())
                 .resizable(resizingMode: .tile)
-                .blendMode(.softLight)
-                .opacity(0.85)
+                .blendMode(.overlay)
+                .opacity(0.9)
         }
     }
 }

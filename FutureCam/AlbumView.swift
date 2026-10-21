@@ -29,23 +29,32 @@ struct AlbumView: View {
     @State private var detailItem: AlbumItem?
     /// 接触印相模式：一冲出来就是一整张，和胶片真正拿到手的样子一样
     @State private var contactSheetMode = DebugHarness.shouldContactSheet
+    /// 打开的是哪一卷；nil = 胶卷架
+    @State private var openRoll: String?
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
 
     var body: some View {
         ZStack {
-            // 洗印台：深色蒙皮底 + 一层压暗，相纸浮在上面
-            LeatherPanel().ignoresSafeArea()
-            Color.black.opacity(0.35).ignoresSafeArea()
+            // 洗印台：整机同一套铝拉丝。铺在最外层背景上，
+            // 这样状态栏/灵动岛那块也一定是金属，不会被别的底色盖掉
+            Color.clear
 
             VStack(spacing: 0) {
-                header
-                if manager.albumItems.isEmpty {
-                    emptyState
-                } else if contactSheetMode {
-                    contactSheet
+                if let openRoll {
+                    rollHeader(openRoll)
+                    if contactSheetMode {
+                        contactSheet(sections.filter { $0.id == openRoll })
+                    } else {
+                        grid(sections.filter { $0.id == openRoll })
+                    }
                 } else {
-                    grid
+                    header
+                    if manager.albumItems.isEmpty {
+                        emptyState
+                    } else {
+                        rollShelf
+                    }
                 }
             }
 
@@ -57,6 +66,7 @@ struct AlbumView: View {
                 .zIndex(1)
             }
         }
+        .background(AluminumFace(tokens: ThemeStore.current).ignoresSafeArea())
         .onAppear { manager.loadAlbum() }
         .task {
             #if DEBUG
@@ -79,7 +89,7 @@ struct AlbumView: View {
         let t = ThemeStore.current
         return HStack(spacing: 8) {
             ScrewHead(size: 7)
-            Silkscreen(text: "CONTACT SHEET", color: .black.opacity(0.55), size: 7, tracking: 2)
+            Silkscreen(text: "FILM ARCHIVE", color: CameraTheme.ink.opacity(0.6), size: 7, tracking: 2)
             Text(String(format: "%02d EXP", manager.albumItems.count))
                 .font(.system(size: 9, weight: .bold, design: .monospaced))
                 .foregroundColor(.black.opacity(0.45))
@@ -133,10 +143,129 @@ struct AlbumView: View {
 
     /// 按卷分组的相册：一卷一段，像翻底片袋
     /// 接触印相：按卷分块，每卷一张黑纸，6 列密排，带齿孔
-    private var contactSheet: some View {
+    /// 胶卷架：一排胶卷罐，点开才看里面的照片
+    private var rollShelf: some View {
+        ScrollView {
+            LazyVStack(spacing: 10) {
+                ForEach(sections) { section in
+                    Button {
+                        withAnimation(.easeOut(duration: 0.18)) { openRoll = section.id }
+                    } label: {
+                        rollCard(section)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.top, 8)
+            .padding(.bottom, 24)
+        }
+    }
+
+    /// 一卷的样子：色带 + 型号 + 卷号 + 张数 + 三张预览
+    private func rollCard(_ section: AlbumSection) -> some View {
+        let preset = RollStore.shared.roll(id: section.id).map { FilmPreset(rawValue: $0.presetRaw) ?? .neutral }
+        let band = preset.map { canisterColor($0) } ?? CameraTheme.amber
+        return HStack(spacing: 0) {
+            Rectangle().fill(band).frame(width: 10)
+
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text(section.title)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(CameraTheme.ink)
+                    if let sub = section.subtitle {
+                        Text(sub)
+                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .foregroundColor(CameraTheme.ink.opacity(0.45))
+                    }
+                    Spacer(minLength: 0)
+                    Text("\(section.items.count) 张")
+                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .foregroundColor(CameraTheme.ink.opacity(0.5))
+                }
+
+                if let preset {
+                    Text(preset.scene)
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(CameraTheme.ink.opacity(0.4))
+                }
+
+                HStack(spacing: 3) {
+                    ForEach(section.items.prefix(5)) { item in
+                        MediaThumbnail(item: item, maxPixel: 120)
+                            .frame(width: 46, height: 32)
+                            .clipped()
+                            .overlay(Rectangle().strokeBorder(.black.opacity(0.15), lineWidth: 0.5))
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(CameraTheme.ink.opacity(0.3))
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(CameraTheme.ink.opacity(0.05))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(CameraTheme.ink.opacity(0.12), lineWidth: 0.5)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+
+    /// 打开某一卷后的头：返回 + 卷信息 + 网格/印相切换
+    private func rollHeader(_ rollID: String) -> some View {
+        let section = sections.first { $0.id == rollID }
+        return HStack(spacing: 8) {
+            Button {
+                withAnimation(.easeOut(duration: 0.18)) { openRoll = nil }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(CameraTheme.ink.opacity(0.6))
+                    .frame(width: 34, height: 34)
+            }
+            .buttonStyle(.plain)
+
+            Silkscreen(text: section?.title ?? "胶卷", color: CameraTheme.ink.opacity(0.6),
+                       size: 7, tracking: 1.6)
+            if let sub = section?.subtitle {
+                Text(sub)
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                    .foregroundColor(CameraTheme.ink.opacity(0.4))
+            }
+            Spacer(minLength: 0)
+            Button {
+                contactSheetMode.toggle()
+            } label: {
+                Image(systemName: contactSheetMode ? "square.grid.2x2" : "film")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(CameraTheme.ink.opacity(0.55))
+                    .frame(width: 34, height: 34)
+            }
+            .buttonStyle(.plain)
+            Button { manager.closeAlbum() } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(CameraTheme.ink.opacity(0.55))
+                    .frame(width: 34, height: 34)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+    }
+
+    private func contactSheet(_ list: [AlbumSection]) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
-                ForEach(sections) { section in
+                ForEach(list) { section in
                     VStack(alignment: .leading, spacing: 0) {
                         HStack(spacing: 6) {
                             Silkscreen(text: section.title, color: .white.opacity(0.7),
@@ -188,10 +317,10 @@ struct AlbumView: View {
         }
     }
 
-    private var grid: some View {
+    private func grid(_ list: [AlbumSection]) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
-                ForEach(sections) { section in
+                ForEach(list) { section in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) {
                             Silkscreen(text: section.title, color: .white.opacity(0.62),
