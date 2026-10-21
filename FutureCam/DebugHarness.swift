@@ -33,6 +33,16 @@ enum DebugHarness {
     /// `-fcProbeShare`：把三种分享版式写入沙盒
     static var shouldProbeShare: Bool { arguments.contains("-fcProbeShare") }
 
+    /// `-fcSkipPermission`：跳过相机授权门（只为截图）
+    static var shouldSkipPermission: Bool { arguments.contains("-fcSkipPermission") }
+
+    /// `-fcOnbPage <0|1|2>`：引导直接打开第几屏
+    static var onbPage: Int? {
+        guard let i = arguments.firstIndex(of: "-fcOnbPage"),
+              i + 1 < arguments.count, let n = Int(arguments[i + 1]) else { return nil }
+        return n
+    }
+
     /// `-fcEmptyShelf`：相册强制显示空货架
     static var shouldEmptyShelf: Bool { arguments.contains("-fcEmptyShelf") }
 

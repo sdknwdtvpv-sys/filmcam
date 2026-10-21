@@ -681,6 +681,8 @@ struct SettingsSheet: View {
                                get: { !UserDefaults.standard.bool(forKey: "futurecam.geotag.off") },
                                set: { UserDefaults.standard.set(!$0, forKey: "futurecam.geotag.off") }))
             GrooveLine()
+            helpRow()
+            GrooveLine()
             aspectRow()
             GrooveLine()
             timerRow()
@@ -750,6 +752,36 @@ struct SettingsSheet: View {
     }
 
 
+
+    /// 使用提示：原来新用户引导里的控件说明，搬到这里
+    @State private var showHelp = false
+
+    private func helpRow() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("使用提示").font(CameraTheme.mono(13, weight: .medium))
+                        .foregroundColor(CameraTheme.ink)
+                    Text("这个界面怎么用").font(CameraTheme.mono(11))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
+                Spacer()
+                Button {
+                    showHelp = true
+                } label: {
+                    Text("查看")
+                        .font(CameraTheme.mono(11, weight: .semibold))
+                        .foregroundColor(CameraTheme.ink.opacity(0.75))
+                        .padding(.horizontal, 14)
+                        .frame(height: 28)
+                        .background(Capsule().strokeBorder(CameraTheme.ink.opacity(0.2), lineWidth: 0.8))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.vertical, 10)
+        .sheet(isPresented: $showHelp) { HelpSheet() }
+    }
 
     /// 画幅：4:3 / 16:9
     private func aspectRow() -> some View {
@@ -959,5 +991,61 @@ struct FilmLoadBar: View {
         .padding(.horizontal, 12)
         .padding(.bottom, 8)
         .background(LeatherPanel())
+    }
+}
+
+
+/// 使用提示：三句话说完，不打断拍摄
+struct HelpSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private let items: [(String, String)] = [
+        ("快门", "轻点就拍。按住左右拖：左双曝、右录像"),
+        ("滚花环", "转它调当前参数，下面的参数条可切换调哪一项"),
+        ("片仓", "右上角，点它换卷。一卷 36 张，拍满才能换"),
+        ("显影", "拍完往下拉。冲出来才能看，这是胶片"),
+        ("相册", "右下角。按胶卷分架，点开一卷看这卷的照片"),
+        ("我的", "点顶部 FUTURE CAM 铭牌")
+    ]
+
+    var body: some View {
+        ZStack {
+            AluminumFace(tokens: ThemeStore.current).ignoresSafeArea()
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    Silkscreen(text: "HOW IT WORKS", color: CameraTheme.ink.opacity(0.55),
+                               size: 7, tracking: 2)
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(CameraTheme.ink.opacity(0.55))
+                            .frame(width: 32, height: 32)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 14)
+                .padding(.top, 14)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        ForEach(items, id: \.0) { item in
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(item.0)
+                                    .font(CameraTheme.mono(13, weight: .semibold))
+                                    .foregroundColor(CameraTheme.ink)
+                                Text(item.1)
+                                    .font(CameraTheme.mono(11))
+                                    .foregroundColor(CameraTheme.ink.opacity(0.55))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 16)
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }

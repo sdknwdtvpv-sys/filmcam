@@ -34,7 +34,7 @@ struct CameraRoot: View {
                     message: "FutureCam 需要相机权限才能拍摄。点下方按钮前往系统设置开启相机权限，然后返回本页即可。",
                     buttonTitle: "去系统设置开启",
                     action: { manager.openSystemSettings() })
-            } else if manager.authorizationStatus == .notDetermined {
+            } else if manager.authorizationStatus == .notDetermined && !DebugHarness.shouldSkipPermission {
                 PermissionGate(
                     title: "需要相机权限",
                     message: "FutureCam 需要访问相机来拍摄复古胶片照片。",
@@ -92,9 +92,7 @@ struct CameraRoot: View {
 
             // 一次性的用法引导（拍过一张或点一下就不再出现）
             if shouldShowGuide {
-                FirstRunGuide(anchors: anchors,
-                              onFinish: { seenGuide = true },
-                              initialStep: guideInitialStep)
+                OnboardingFlow(onFinish: { seenGuide = true })
                     .transition(.opacity)
             }
         }
