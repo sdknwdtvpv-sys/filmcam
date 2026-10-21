@@ -145,23 +145,34 @@ struct AlbumView: View {
     /// 接触印相：按卷分块，每卷一张黑纸，6 列密排，带齿孔
     /// 胶卷架：一排胶卷罐，点开才看里面的照片
     private var rollShelf: some View {
-        ScrollView {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
-                                GridItem(.flexible(), spacing: 12)],
-                      spacing: 12) {
-                ForEach(Array(sections.enumerated()), id: \.element.id) { index, section in
-                    Button {
-                        withAnimation(.easeOut(duration: 0.18)) { openRoll = section.id }
-                    } label: {
-                        rollCard(section, index: index)
-                    }
-                    .buttonStyle(.plain)
-                }
+        // 瀑布流：两列各自堆叠，卡片高度不同也能各自贴紧，不留空洞。
+        // LazyVGrid 会对齐行高，矮卡下面必然留白，所以这里手写两列。
+        let indexed = Array(sections.enumerated())
+        let left = indexed.filter { $0.offset % 2 == 0 }
+        let right = indexed.filter { $0.offset % 2 == 1 }
+        return ScrollView {
+            HStack(alignment: .top, spacing: 12) {
+                column(left)
+                column(right)
             }
             .padding(.horizontal, 12)
             .padding(.top, 8)
             .padding(.bottom, 24)
         }
+    }
+
+    private func column(_ items: [(offset: Int, element: AlbumSection)]) -> some View {
+        VStack(spacing: 12) {
+            ForEach(items, id: \.element.id) { item in
+                Button {
+                    withAnimation(.easeOut(duration: 0.18)) { openRoll = item.element.id }
+                } label: {
+                    rollCard(item.element, index: item.offset)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
     /// 一卷的样子：大胶卷罐立在上面，信息与缩略图在下面
