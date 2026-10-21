@@ -151,6 +151,18 @@ final class CameraManager: NSObject, ObservableObject {
     // 取景手势状态（对焦/变焦/镜头）
     /// 当前取景画面的宽高比（来自首帧，用于把点击坐标换算成设备坐标）
     @Published var previewAspect: CGFloat?
+    /// 画幅：4:3（默认）或 16:9。取景窗按它约束，成片按它裁切
+    enum CaptureAspect: String, CaseIterable {
+        case ratio4x3 = "4:3"
+        case ratio16x9 = "16:9"
+        var value: CGFloat { self == .ratio4x3 ? 4.0 / 3.0 : 16.0 / 9.0 }
+    }
+
+    @Published var captureAspect: CaptureAspect =
+        CaptureAspect(rawValue: UserDefaults.standard.string(forKey: "futurecam.aspect") ?? "") ?? .ratio4x3 {
+        didSet { UserDefaults.standard.set(captureAspect.rawValue, forKey: "futurecam.aspect") }
+    }
+
     /// 取景窗的宽高比。成片按这个比例裁，保证所见即所得
     @Published var viewfinderAspect: CGFloat = 4.0 / 3.0
     /// 自拍倒计时：0 = 关闭，3 / 10 秒。倒计时中 non-nil 表示剩余秒数

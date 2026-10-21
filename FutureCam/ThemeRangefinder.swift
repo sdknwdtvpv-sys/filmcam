@@ -107,7 +107,7 @@ struct RangefinderCameraView: View {
             .padding(.bottom, 6)
 
             GeometryReader { proxy in
-                let aspect: CGFloat = 3.0 / 2.0
+                let aspect = manager.captureAspect.value
                 let maxW = proxy.size.width
                 let maxH = proxy.size.height - 12
                 let width = min(maxW, maxH * aspect)
@@ -315,17 +315,17 @@ struct RangefinderCameraView: View {
     private func waist(_ t: ThemeTokens) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 6) {
-                Silkscreen(text: manager.selectedPreset.label, color: .white.opacity(0.62),
+                Silkscreen(text: manager.selectedPreset.label, color: t.ink.opacity(0.62),
                            size: 7, tracking: 2)
                 Spacer()
                 // 本卷张数：拍满转红
                 Text(manager.roll.countText)
                     .font(t.monoFont(7.5, .bold))
-                    .foregroundColor(manager.roll.isFull ? t.accent : .white.opacity(0.5))
+                    .foregroundColor(manager.roll.isFull ? t.accent : t.ink.opacity(0.55))
                     .tracking(0.6)
                 LEDDot(color: t.glow, size: 4, dimmed: !manager.hasPreview)
                 Silkscreen(text: manager.hasPreview ? "READY" : "BOOT",
-                           color: .white.opacity(0.5), size: 5.5, tracking: 1)
+                           color: t.ink.opacity(0.5), size: 5.5, tracking: 1)
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
@@ -333,7 +333,11 @@ struct RangefinderCameraView: View {
 
             LCDWindow(tokens: t, bezel: 5, radius: 7) {
                 PreviewSurface(showsScrim: false)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipped()
             }
+            // 竖屏时 4:3 是竖着的 3:4，不能直接用 1.333
+            .aspectRatio(1 / manager.captureAspect.value, contentMode: .fit)
             .padding(.horizontal, 14)
             .overlay {
                 // 切焦段时的一闪：目标画幅的角标

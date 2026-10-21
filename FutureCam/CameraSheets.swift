@@ -663,6 +663,8 @@ struct SettingsSheet: View {
                                get: { !UserDefaults.standard.bool(forKey: "futurecam.geotag.off") },
                                set: { UserDefaults.standard.set(!$0, forKey: "futurecam.geotag.off") }))
             GrooveLine()
+            aspectRow()
+            GrooveLine()
             timerRow()
             GrooveLine()
             languageRow()
@@ -730,6 +732,37 @@ struct SettingsSheet: View {
     }
 
 
+
+    /// 画幅：4:3 / 16:9
+    private func aspectRow() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("画幅").font(CameraTheme.mono(13, weight: .medium))
+                    .foregroundColor(CameraTheme.ink)
+                Text("取景窗和成片都按这个比例").font(CameraTheme.mono(11))
+                    .foregroundColor(CameraTheme.inkDim)
+            }
+            HStack(spacing: 6) {
+                ForEach(CameraManager.CaptureAspect.allCases, id: \.rawValue) { aspect in
+                    let active = manager.captureAspect == aspect
+                    Button {
+                        manager.captureAspect = aspect
+                        Haptics.impact(.light)
+                    } label: {
+                        Text(aspect.rawValue)
+                            .font(CameraTheme.mono(11, weight: active ? .bold : .medium))
+                            .foregroundColor(active ? .white : CameraTheme.ink.opacity(0.65))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(RoundedRectangle(cornerRadius: 5)
+                                .fill(active ? CameraTheme.amber : CameraTheme.ink.opacity(0.06)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, 10)
+    }
 
     /// 自拍定时：关 / 3 秒 / 10 秒
     private func timerRow() -> some View {

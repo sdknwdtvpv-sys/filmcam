@@ -38,10 +38,12 @@ extension TextureFactory {
 }
 
 /// 蒙皮纹理铺满
+/// 机身面板：统一铝拉丝。
+/// 原来是黑皮，用户要求整机一个质地，且取景窗外那圈留白也要是金属，
+/// 所以直接换成和顶盖、操控区同一套拉丝铝。
 struct LeatherPanel: View {
     var body: some View {
-        Image(uiImage: TextureFactory.leather())
-            .resizable(resizingMode: .tile)
+        AluminumFace(tokens: ThemeStore.current)
     }
 }
 
