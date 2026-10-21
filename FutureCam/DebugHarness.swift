@@ -24,6 +24,9 @@ enum DebugHarness {
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
 
+    /// `-fcLandscapePreview`：按横屏尺寸离屏渲染布局，缩小后看整体构图
+    static var shouldPreviewLandscape: Bool { arguments.contains("-fcLandscapePreview") }
+
     /// `-fcContactSheet`：相册直接以接触印相模式打开
     static var shouldContactSheet: Bool { arguments.contains("-fcContactSheet") }
 

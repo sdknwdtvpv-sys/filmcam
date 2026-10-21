@@ -46,12 +46,25 @@ struct RangefinderCameraView: View {
                     .ignoresSafeArea()
 
                 // 整台机器铺满屏幕，内容再按安全区让开灵动岛和 home indicator
-                VStack(spacing: 0) {
-                    topPlate(t, topInset: insets.top)
-                    waist(t)
-                    bottomPlate(t, bottomInset: insets.bottom)
+                // 横过来 = 真正把相机端平：取景窗占主视野，
+                // 控制键收到右侧像握把一样竖排，而不是把竖版拉伸
+                if geo.size.width > geo.size.height {
+                    VStack(spacing: 0) {
+                        topPlate(t, topInset: insets.top)
+                        HStack(spacing: 0) {
+                            waist(t)
+                            landscapeGrip(t, bottomInset: insets.bottom)
+                        }
+                    }
+                    .ignoresSafeArea()
+                } else {
+                    VStack(spacing: 0) {
+                        topPlate(t, topInset: insets.top)
+                        waist(t)
+                        bottomPlate(t, bottomInset: insets.bottom)
+                    }
+                    .ignoresSafeArea()
                 }
-                .ignoresSafeArea()
 
                 DeviceEdge(radius: 0, intensity: 1)
                     .ignoresSafeArea()
@@ -270,6 +283,90 @@ struct RangefinderCameraView: View {
                        color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
                 .padding(.trailing, 18)
                 .padding(.bottom, 2 + bottomInset)
+        }
+    }
+
+    /// 横屏读数：2×2 网格，握把只有 300pt，四列会把数值挤成「1…」
+    private func readoutGrid(_ t: ThemeTokens) -> some View {
+        let keys = visibleParams(manager)
+        let rows = stride(from: 0, to: keys.count, by: 2).map { Array(keys[$0..<min($0 + 2, keys.count)]) }
+        return VStack(spacing: 0) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { index, row in
+                if index > 0 {
+                    Rectangle().fill(.black.opacity(0.12)).frame(height: 1)
+                }
+                HStack(spacing: 0) {
+                    ForEach(Array(row.enumerated()), id: \.element) { column, key in
+                        if column > 0 {
+                            Rectangle().fill(.black.opacity(0.16)).frame(width: 1, height: 20)
+                        }
+                        Button {
+                            manager.selectParam(key)
+                            announceArmed()
+                            Haptics.impact(.light)
+                        } label: {
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text(paramTitle(key))
+                                    .font(t.labelFont(7, .medium))
+                                    .foregroundColor(manager.activeParam == key ? t.accent : t.ink.opacity(0.5))
+                                    .frame(width: 26, alignment: .leading)
+                                Text(paramValue(key, manager))
+                                    .font(t.displayFont(13, .medium))
+                                    .foregroundColor(manager.activeParam == key ? t.ink : t.ink.opacity(0.72))
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                Spacer(minLength: 0)
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+    }
+
+    /// 横屏右侧握把：读数在上，快门居中，两个小键在下
+    private func landscapeGrip(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            GrooveLine()
+
+            readoutGrid(t)
+                .padding(.horizontal, 12)
+                .padding(.top, 10)
+
+            GrooveLine()
+                .padding(.top, 10)
+
+            Spacer(minLength: 6)
+
+            shutterDial(t)
+
+            Spacer(minLength: 6)
+
+            HStack {
+                albumWindow(t)
+                    .overlay(alignment: .bottom) {
+                        Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
+                            .offset(y: 10)
+                    }
+                Spacer(minLength: 0)
+                flipKey(t)
+            }
+            .padding(.horizontal, 22)
+
+            Spacer(minLength: 4)
+
+            Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
+                       color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
+                .padding(.bottom, 6 + bottomInset)
+        }
+        .frame(width: 300)
+        .background(AluminumFace(tokens: t))
+        .overlay(alignment: .leading) {
+            Rectangle().fill(.black.opacity(0.35)).frame(width: 1)
         }
     }
 

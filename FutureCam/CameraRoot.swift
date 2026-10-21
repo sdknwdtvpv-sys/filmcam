@@ -15,7 +15,17 @@ struct CameraRoot: View {
 
     var body: some View {
         ZStack {
+            #if DEBUG
+            if DebugHarness.shouldPreviewLandscape {
+                RangefinderCameraView()
+                    .frame(width: 844, height: 390)
+                    .scaleEffect(0.46)
+            } else {
+                RangefinderCameraView()
+            }
+            #else
             RangefinderCameraView()
+            #endif
 
             // 权限引导（可操作，绝不空转/死锁）
             if manager.authorizationStatus == .denied || manager.authorizationStatus == .restricted {
