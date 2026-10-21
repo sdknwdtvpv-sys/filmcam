@@ -50,7 +50,7 @@ struct AlbumView: View {
                     }
                 } else {
                     header
-                    if manager.albumItems.isEmpty {
+                    if manager.albumItems.isEmpty || DebugHarness.shouldEmptyShelf {
                         emptyState
                     } else {
                         rollShelf
@@ -127,15 +127,49 @@ struct AlbumView: View {
         }
     }
 
+    /// 空货架：一排空罐位 + 一句话
     private var emptyState: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 18) {
             Spacer()
-            Image(systemName: "photo.on.rectangle.angled")
-                .font(.system(size: 30, weight: .light))
-                .foregroundColor(CameraTheme.inkDim)
-            Text("还没有照片，先拍一张吧")
-                .foregroundColor(CameraTheme.ink.opacity(0.7))
-                .font(CameraTheme.mono(14))
+
+            HStack(alignment: .bottom, spacing: 14) {
+                ForEach(0..<3, id: \.self) { i in
+                    // 空位：只有罐子的轮廓，虚着等新卷
+                    RoundedRectangle(cornerRadius: 4)
+                        .strokeBorder(
+                            CameraTheme.ink.opacity(i == 1 ? 0.28 : 0.16),
+                            style: StrokeStyle(lineWidth: 1, dash: [3, 3])
+                        )
+                        .frame(width: i == 1 ? 46 : 38, height: i == 1 ? 84 : 70)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                GrooveLine().offset(y: 10)
+            }
+            .padding(.bottom, 14)
+
+            VStack(spacing: 6) {
+                Text("货架还是空的")
+                    .font(CameraTheme.mono(15, weight: .medium))
+                    .foregroundColor(CameraTheme.ink.opacity(0.75))
+                Text("装一卷，拍下第一张")
+                    .font(CameraTheme.mono(11))
+                    .foregroundColor(CameraTheme.ink.opacity(0.45))
+            }
+
+            Button {
+                manager.closeAlbum()
+                manager.showFilmSheet = true
+            } label: {
+                Text("去装卷")
+                    .font(CameraTheme.mono(12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 22)
+                    .frame(height: 34)
+                    .background(Capsule().fill(CameraTheme.amber))
+            }
+            .buttonStyle(.plain)
+
             Spacer()
         }
         .frame(maxWidth: .infinity)
@@ -208,10 +242,24 @@ struct AlbumView: View {
                 }
 
                 HStack(spacing: 6) {
-                    Text(preset?.scene ?? "")
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(CameraTheme.ink.opacity(0.4))
-                        .lineLimit(1)
+                    if let badge = rollBadge(roll) {
+                        Text(badge.text)
+                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                            .foregroundColor(badge.warn ? CameraTheme.amber : CameraTheme.ink.opacity(0.45))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 1)
+                            .background(
+                                RoundedRectangle(cornerRadius: 3)
+                                    .strokeBorder(badge.warn ? CameraTheme.amber.opacity(0.5)
+                                                             : CameraTheme.ink.opacity(0.15),
+                                                  lineWidth: 0.5)
+                            )
+                    } else {
+                        Text(preset?.scene ?? "")
+                            .font(.system(size: 9, design: .monospaced))
+                            .foregroundColor(CameraTheme.ink.opacity(0.4))
+                            .lineLimit(1)
+                    }
                     Spacer(minLength: 0)
                     Text("\(section.items.count) 张")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
@@ -242,6 +290,21 @@ struct AlbumView: View {
                 .strokeBorder(CameraTheme.ink.opacity(0.10), lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    /// 这一卷的使用状态：拍完 / 正在拍 / 中途收起
+    private func rollBadge(_ roll: FilmRoll?) -> (text: String, warn: Bool)? {
+        guard let roll else { return nil }
+        if RollStore.shared.current.id == roll.id {
+            return ("余 \(max(0, roll.capacity - roll.used)) 张", false)
+        }
+        if roll.used >= roll.capacity {
+            return ("已拍完", false)
+        }
+        if roll.finishedAt != nil {
+            return ("未拍完 · \(roll.used)/\(roll.capacity)", true)
+        }
+        return nil
     }
 
     /// 打开某一卷后的头：返回 + 卷信息 + 网格/印相切换
