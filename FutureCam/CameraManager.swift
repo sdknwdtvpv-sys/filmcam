@@ -320,6 +320,8 @@ final class CameraManager: NSObject, ObservableObject {
     /// 首次/主动请求：只处理 notDetermined。
     /// denied / restricted 时【不能】空转——由界面引导用户去系统设置，见 openSystemSettings()。
     func requestAccessAndConfigure() {
+        // 开始采重力：拍片朝向要用
+        MotionShim.shared.start { _ in }
         let status = AVCaptureDevice.authorizationStatus(for: .video)
         authorizationStatus = status
         switch status {
@@ -770,8 +772,9 @@ final class CameraManager: NSObject, ObservableObject {
     /// 顺序很关键：先按取景框（竖幅）裁切，再旋转。这样构图和你取景时看到的一致，
     /// 只是整幅转正，不会因为旋转后比例变了被裁掉两边。
     func uprightedForDevice(_ image: UIImage) -> UIImage {
-        let o = UIDevice.current.orientation
-        NSLog("[Orientation] 拍摄时设备朝向=%d", o.rawValue)
+        let o = MotionShim.shared.deviceOrientation
+        NSLog("[Orientation] 拍摄时设备朝向=%d gravity=%@", o.rawValue,
+              String(describing: MotionShim.shared.gravity))
         switch o {
         case .landscapeLeft:  return Self.rotate(image, clockwise: true)
         case .landscapeRight: return Self.rotate(image, clockwise: false)
