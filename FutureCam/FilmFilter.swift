@@ -90,6 +90,27 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         return self
     }
 
+    /// 这一卷适合拍什么。写清楚比让用户试错好——
+    /// 有些卷本来就不适合人像（比如暗部偏青的风光卷），标出来比改调更诚实。
+    var scene: String {
+        switch self {
+        case .neutral:      return "通用"
+        case .kodakGold:    return "人像 / 日常"
+        case .fuji400:      return "风光 / 街景"
+        case .classicBnw:   return "人像 / 街拍"
+        case .fadedCinema:  return "叙事 / 街拍"
+        case .cinematic:    return "风光 / 建筑"
+        case .duskGold:     return "日落 / 人像"
+        case .slate:        return "阴天 / 街拍"
+        case .mint:         return "植物 / 夏日"
+        case .rust:         return "静物 / 复古"
+        case .frost:        return "极简 / 雪景"
+        case .ochre:        return "静物 / 人像"
+        case .abyss:        return "夜景"
+        default:            return "调色"
+        }
+    }
+
     /// 这一卷的胶片性格（色调映射 / 分离色调 / halation / 柔化 / LUT 占比）
     var character: FilmCharacter {
         var base = characterBase

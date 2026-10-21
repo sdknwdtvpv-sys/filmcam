@@ -161,6 +161,38 @@
         }
       }
     },
+    "人像 / 日常": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portrait / daily"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人像 / 日常"
+          }
+        }
+      }
+    },
+    "人像 / 街拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portrait / street"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人像 / 街拍"
+          }
+        }
+      }
+    },
     "保存": {
       "localizations": {
         "en": {
@@ -721,6 +753,22 @@
         }
       }
     },
+    "叙事 / 街拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Story / street"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "叙事 / 街拍"
+          }
+        }
+      }
+    },
     "只过胶片的底": {
       "localizations": {
         "en": {
@@ -861,6 +909,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "夏日 400"
+          }
+        }
+      }
+    },
+    "夜景": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "夜景"
           }
         }
       }
@@ -1521,6 +1585,22 @@
         }
       }
     },
+    "日落 / 人像": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunset / portrait"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日落 / 人像"
+          }
+        }
+      }
+    },
     "明显更亮": {
       "localizations": {
         "en": {
@@ -1841,6 +1921,22 @@
         }
       }
     },
+    "极简 / 雪景": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minimal / snow"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "极简 / 雪景"
+          }
+        }
+      }
+    },
     "架稳再拍": {
       "localizations": {
         "en": {
@@ -1901,6 +1997,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "森野 400"
+          }
+        }
+      }
+    },
+    "植物 / 夏日": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plants / summer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "植物 / 夏日"
           }
         }
       }
@@ -2705,6 +2817,22 @@
         }
       }
     },
+    "调色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Color grade"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调色"
+          }
+        }
+      }
+    },
     "调色 · 叠在胶片之上": {
       "localizations": {
         "en": {
@@ -2945,6 +3073,22 @@
         }
       }
     },
+    "通用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Any"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通用"
+          }
+        }
+      }
+    },
     "重置": {
       "localizations": {
         "en": {
@@ -3057,6 +3201,22 @@
         }
       }
     },
+    "阴天 / 街拍": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overcast / street"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阴天 / 街拍"
+          }
+        }
+      }
+    },
     "随机器附赠": {
       "localizations": {
         "en": {
@@ -3117,6 +3277,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "霜白 400"
+          }
+        }
+      }
+    },
+    "静物 / 人像": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still life / portrait"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静物 / 人像"
+          }
+        }
+      }
+    },
+    "静物 / 复古": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Still life / retro"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静物 / 复古"
           }
         }
       }
@@ -3229,6 +3421,38 @@
           "stringUnit": {
             "state": "translated",
             "value": "颗粒细"
+          }
+        }
+      }
+    },
+    "风光 / 建筑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Landscape / architecture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "风光 / 建筑"
+          }
+        }
+      }
+    },
+    "风光 / 街景": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Landscape / street"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "风光 / 街景"
           }
         }
       }

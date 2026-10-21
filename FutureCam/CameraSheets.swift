@@ -231,9 +231,16 @@ struct FilmCanister: View {
                                     .minimumScaleFactor(0.6)
                                     .padding(.horizontal, 4)
                             )
-                        Text(iso)
-                            .font(.system(size: 6, weight: .bold, design: .monospaced))
-                            .foregroundColor(.black.opacity(0.55))
+                        HStack(spacing: 3) {
+                            Text(iso)
+                                .font(.system(size: 6, weight: .bold, design: .monospaced))
+                                .foregroundColor(.black.opacity(0.55))
+                            Text(preset.scene)
+                                .font(.system(size: 5.5, weight: .medium, design: .monospaced))
+                                .foregroundColor(.black.opacity(0.38))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
                         Spacer(minLength: 0)
                         // 卷轴
                         Circle()
