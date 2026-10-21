@@ -90,6 +90,37 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         return self
     }
 
+    /// 用途分组：片仓按「你要拍什么」分组，而不是按色相平铺。
+    /// 13 卷一起摆，用户根本不知道该挑哪一卷。
+    enum FilmCollection: String, CaseIterable, Identifiable {
+        case daily = "日常"
+        case street = "街头"
+        case landscape = "风光"
+        case night = "夜色"
+        case still = "静物"
+        var id: String { rawValue }
+        var hint: String {
+            switch self {
+            case .daily: return "人像 · 室内 · 随手拍"
+            case .street: return "街景 · 阴天 · 高反差"
+            case .landscape: return "山野 · 天空 · 大光比"
+            case .night: return "夜景 · 灯光 · 暗光"
+            case .still: return "食物 · 器物 · 纹理"
+            }
+        }
+    }
+
+    var collection: FilmCollection {
+        switch self {
+        case .neutral, .kodakGold, .duskGold, .ochre: return .daily
+        case .classicBnw, .slate, .fadedCinema: return .street
+        case .fuji400, .cinematic, .frost: return .landscape
+        case .abyss: return .night
+        case .mint, .rust: return .still
+        default: return .daily
+        }
+    }
+
     /// 这一卷适合拍什么。写清楚比让用户试错好——
     /// 有些卷本来就不适合人像（比如暗部偏青的风光卷），标出来比改调更诚实。
     var scene: String {

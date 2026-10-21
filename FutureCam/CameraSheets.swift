@@ -67,28 +67,44 @@ struct FilmSheet: View {
                 Rectangle().fill(.black.opacity(0.45)).frame(height: 1)
             }
 
-            // 仓内：胶卷导轨
-            Silkscreen(text: "胶卷 · 决定介质与张数", color: .white.opacity(0.32),
-                       size: 5.5, tracking: 1.6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.leading, 12)
-                .padding(.top, 10)
+            // 仓内：按用途分组的胶卷导轨
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 14) {
+                    ForEach(FilmPreset.FilmCollection.allCases) { collection in
+                        let films = FilmPreset.films.filter { $0.collection == collection }
+                        if !films.isEmpty {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack(spacing: 6) {
+                                    Silkscreen(text: collection.rawValue,
+                                               color: CameraTheme.ink.opacity(0.7), size: 6.5, tracking: 1.8)
+                                    Rectangle().fill(CameraTheme.ink.opacity(0.15)).frame(height: 1)
+                                    Text(collection.hint)
+                                        .font(.system(size: 8, design: .monospaced))
+                                        .foregroundColor(CameraTheme.ink.opacity(0.35))
+                                }
+                                .padding(.horizontal, 12)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    ForEach(FilmPreset.films) { preset in
-                        let unlocked = PurchaseStore.shared.isUnlocked(preset)
-                        FilmCanister(preset: preset,
-                                     loaded: manager.selectedPreset == preset,
-                                     tokens: t) {
-                            // 第一下只是选中：先看样片和说明，装卷要再按一次
-                            withAnimation(.easeOut(duration: 0.16)) { focused = preset }
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 10) {
+                                        ForEach(films) { preset in
+                                            FilmCanister(preset: preset,
+                                                         loaded: manager.selectedPreset == preset,
+                                                         tokens: t) {
+                                                withAnimation(.easeOut(duration: 0.16)) { focused = preset }
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                }
+                            }
                         }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
+                .padding(.top, 10)
+                .padding(.bottom, 6)
             }
+            .frame(maxHeight: 150)
             .background(LeatherPanel())
 
             // 这卷拍出来什么样：两张样片，选卷前先看一眼
@@ -99,13 +115,13 @@ struct FilmSheet: View {
 
             // 当前这卷：型号 · 张数
             HStack(spacing: 6) {
-                Silkscreen(text: manager.roll.numberText, color: .white.opacity(0.38),
+                Silkscreen(text: manager.roll.numberText, color: CameraTheme.ink.opacity(0.45),
                            size: 5.5, tracking: 1.4)
                 Rectangle().fill(.white.opacity(0.16)).frame(width: 1, height: 7)
                 Silkscreen(text: manager.roll.isFull ? "本卷拍完 · 换一卷"
                                       : String(format: NSLocalizedString("还剩 %d 张", comment: ""),
                                                manager.roll.remaining),
-                           color: .white.opacity(0.38), size: 5.5, tracking: 1.4)
+                           color: CameraTheme.ink.opacity(0.45), size: 5.5, tracking: 1.4)
                 Spacer(minLength: 0)
                 Text(manager.roll.countText)
                     .font(t.monoFont(7.5, .bold))
@@ -873,7 +889,7 @@ struct FilmSampleStrip: View {
                     Image(uiImage: ui)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 66, height: 88)
+                        .frame(width: 52, height: 70)
                         .clipped()
                         .overlay(Rectangle().strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
                 }
@@ -907,8 +923,8 @@ struct FilmLoadBar: View {
         let used = manager.roll.used
         VStack(spacing: 6) {
             HStack(spacing: 6) {
-                Silkscreen(text: preset.label, color: .white.opacity(0.5), size: 6, tracking: 1.2)
-                Silkscreen(text: "ISO \(preset.nominalISO)", color: .white.opacity(0.32),
+                Silkscreen(text: preset.label, color: CameraTheme.ink.opacity(0.65), size: 6, tracking: 1.2)
+                Silkscreen(text: "ISO \(preset.nominalISO)", color: CameraTheme.ink.opacity(0.4),
                            size: 5.5, tracking: 0.8)
                 Spacer(minLength: 0)
                 if !isLoaded && used > 0 {
@@ -928,18 +944,18 @@ struct FilmLoadBar: View {
             } label: {
                 Text(isLoaded ? "当前已装" : "装这一卷")
                     .font(t.monoFont(11, .bold))
-                    .foregroundColor(isLoaded ? .white.opacity(0.45) : .black.opacity(0.85))
+                    .foregroundColor(isLoaded ? CameraTheme.ink.opacity(0.45) : .white)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 34)
+                    .frame(height: 30)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
-                            .fill(isLoaded ? Color.white.opacity(0.06) : t.accent)
+                            .fill(isLoaded ? Color.white.opacity(0.10) : t.accent)
                     )
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
-        .padding(.bottom, 10)
+        .padding(.bottom, 8)
         .background(LeatherPanel())
     }
 }
