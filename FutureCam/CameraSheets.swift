@@ -87,6 +87,9 @@ struct FilmSheet: View {
             }
             .background(LeatherPanel())
 
+            // 这卷拍出来什么样：两张样片，选卷前先看一眼
+            FilmSampleStrip(preset: manager.selectedPreset)
+
             // 当前这卷：型号 · 张数
             HStack(spacing: 6) {
                 Silkscreen(text: manager.roll.numberText, color: .white.opacity(0.38),
@@ -766,3 +769,42 @@ struct SettingsSheet: View {
 // MARK: - 权限引导层
 
 /// 权限引导：机身上的镜头盖。点键取下盖子＝授权；被拒时盖子锁死，只能去系统设置。
+
+
+/// 样片条：这一卷在人像和室内两种场景下的样子。
+/// 图片是打包进 App 的（拍摄时用样片底片预渲染），不联网。
+struct FilmSampleStrip: View {
+    let preset: FilmPreset
+
+    private func image(_ index: Int) -> UIImage? {
+        guard let dir = Bundle.main.path(forResource: "FilmSamples", ofType: nil) else { return nil }
+        return UIImage(contentsOfFile: "\(dir)/\(preset.rawValue)_\(index).jpg")
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<2, id: \.self) { i in
+                if let ui = image(i) {
+                    Image(uiImage: ui)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 66, height: 88)
+                        .clipped()
+                        .overlay(Rectangle().strokeBorder(.white.opacity(0.12), lineWidth: 0.5))
+                }
+            }
+            VStack(alignment: .leading, spacing: 3) {
+                Silkscreen(text: "SAMPLES", color: .white.opacity(0.35), size: 5.5, tracking: 1.2)
+                Text(preset.scene)
+                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.55))
+                Text("换卷后可对照")
+                    .font(.system(size: 8, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.3))
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+    }
+}
