@@ -525,6 +525,17 @@ struct AlbumDetailView: View {
     private var currentIndex: Int? {
         manager.albumItems.firstIndex { $0.id == item.id }
     }
+    /// 同一卷里的上一张：并排版式（练前/练后）需要第二张
+    private func siblingImage() -> UIImage? {
+        guard let idx = currentIndex else { return nil }
+        let items = manager.albumItems
+        guard idx + 1 < items.count else { return nil }
+        let next = items[idx + 1]
+        guard next.rollID == item.rollID, next.kind == .photo else { return nil }
+        guard let data = try? Data(contentsOf: next.url) else { return nil }
+        return UIImage(data: data)
+    }
+
     private var hasPrev: Bool { (currentIndex ?? 0) > 0 }
     private var hasNext: Bool {
         guard let i = currentIndex else { return false }
@@ -624,6 +635,7 @@ struct AlbumDetailView: View {
             if let image {
                 ShareCardSheet(item: item,
                                image: image,
+                               secondImage: siblingImage(),
                                film: manager.presetLabel(for: item),
                                rollText: "VOL.\(manager.rollNumberText(for: item))",
                                frameText: manager.frameText(for: item))

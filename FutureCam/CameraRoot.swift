@@ -119,6 +119,7 @@ struct CameraRoot: View {
                 if let stub = DebugHarness.stubPreviewFrame() {
                     manager.previewCapturedForDebug(stub)
                     if DebugHarness.shouldSaveStub { manager.saveStubForDebug(stub) }
+                    if DebugHarness.shouldProbeShare { manager.probeShareVariants(stub) }
                 }
             } else {
                 manager.requestAccessAndConfigure()

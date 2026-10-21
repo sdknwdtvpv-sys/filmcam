@@ -731,6 +731,21 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     #if DEBUG
+    /// 调试：把三种分享版式渲染到沙盒，供外部核对（-fcProbeShare）
+    func probeShareVariants(_ image: UIImage) {
+        let second = image
+        for variant in ShareCard.Variant.allCases {
+            let card = ShareCard.render(image, variant: variant, second: second,
+                                        film: "松石 400", roll: "VOL.06", frame: "12/36",
+                                        date: Date())
+            guard let data = card.pngData() else { continue }
+            let url = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("share-\(variant.rawValue).png")
+            try? data.write(to: url)
+            NSLog("[ShareProbe] \(variant.rawValue) \(Int(card.size.width))x\(Int(card.size.height))")
+        }
+    }
+
     /// 调试：验证底片是否落盘（-fcSaveStub）
     func saveStubForDebug(_ image: UIImage) {
         let rollID = rolls.current.id

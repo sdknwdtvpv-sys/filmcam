@@ -30,6 +30,9 @@ enum DebugHarness {
     /// `-fcContactSheet`：相册直接以接触印相模式打开
     static var shouldContactSheet: Bool { arguments.contains("-fcContactSheet") }
 
+    /// `-fcProbeShare`：把三种分享版式写入沙盒
+    static var shouldProbeShare: Bool { arguments.contains("-fcProbeShare") }
+
     /// `-fcEmptyShelf`：相册强制显示空货架
     static var shouldEmptyShelf: Bool { arguments.contains("-fcEmptyShelf") }
 
