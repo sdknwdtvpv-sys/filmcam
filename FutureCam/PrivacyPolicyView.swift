@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// 隐私政策：内置在 App 里，不依赖网页。
-/// 审核要求「能随时访问」，本地页面比外链更稳——不会因为网络或托管挂了打不开。
+/// 隐私政策：内置在 App 里，不依赖网页，样式和「我的」同一个底部面板。
+/// 审核要求「能随时访问」，本地内容比外链更稳——不会因为网络或托管挂了打不开。
 struct PrivacyPolicyView: View {
-    let onClose: () -> Void
+    let onBack: () -> Void
 
     private var isEnglish: Bool {
         switch LanguageStore.shared.language {
@@ -16,9 +16,7 @@ struct PrivacyPolicyView: View {
 
     var body: some View {
         let t = ThemeStore.current
-        ZStack {
-            Color(hex: 0x0B0C0D).ignoresSafeArea()
-            VStack(spacing: 0) {
+        VStack(spacing: 0) {
                 header(t)
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 18) {
@@ -28,40 +26,39 @@ struct PrivacyPolicyView: View {
                                     Circle().fill(t.accent).frame(width: 4, height: 4)
                                     Text(section.title)
                                         .font(t.monoFont(13, .bold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundColor(CameraTheme.ink)
                                 }
                                 Text(section.body)
                                     .font(.system(size: 13))
                                     .lineSpacing(4)
-                                    .foregroundColor(.white.opacity(0.66))
+                                    .foregroundColor(CameraTheme.inkDim)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
                     }
-                    .padding(.horizontal, 22)
-                    .padding(.top, 8)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 12)
                     .padding(.bottom, 44)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
     }
 
     private func header(_ t: ThemeTokens) -> some View {
         VStack(spacing: 0) {
-            HStack {
-                Silkscreen(text: isEnglish ? "PRIVACY" : "隐私政策",
-                           color: .white.opacity(0.55), size: 7, tracking: 2.2)
+            HStack(spacing: 8) {
+                ScrewHead(size: 7)
+                Silkscreen(text: "PRIVACY", color: CameraTheme.ink.opacity(0.55),
+                           size: 7, tracking: 2)
                 Spacer()
-                Button(isEnglish ? "Done" : "完成") { onClose() }
-                    .font(t.monoFont(12, .bold))
-                    .foregroundColor(t.accentGlow)
+                Button(isEnglish ? "Back" : "返回") { onBack() }
+                    .font(CameraTheme.mono(11, weight: .bold))
+                    .foregroundColor(CameraTheme.amber)
+                ScrewHead(size: 7)
             }
-            .padding(.horizontal, 22)
-            .padding(.top, 60)   // 让开状态栏
-            .padding(.bottom, 12)
-            Rectangle().fill(.white.opacity(0.12)).frame(height: 0.5)
-                .padding(.horizontal, 22)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            GrooveLine()
         }
     }
 

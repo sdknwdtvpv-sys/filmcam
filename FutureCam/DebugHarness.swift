@@ -161,7 +161,9 @@ enum DebugHarness {
         case "album", "albumDetail", "albumPhoto": manager.showAlbum = true
         case "film": manager.showFilmSheet = true
         case "settings": manager.showSettingsSheet = true
-        case "privacy": manager.showPrivacyPolicy = true
+        case "privacy":
+            manager.showSettingsSheet = true
+            manager.showPrivacyPolicy = true
         default: break
         }
     }

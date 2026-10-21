@@ -319,9 +319,18 @@ struct SettingsSheet: View {
         ZStack(alignment: .bottom) {
             CameraTheme.bgDeep.opacity(0.6).ignoresSafeArea()
                 .contentShape(Rectangle())
-                .onTapGesture { manager.showSettingsSheet = false }
+                .onTapGesture {
+                    if manager.showPrivacyPolicy {
+                        manager.showPrivacyPolicy = false
+                    } else {
+                        manager.showSettingsSheet = false
+                    }
+                }
 
             VStack(spacing: 0) {
+                if manager.showPrivacyPolicy {
+                    PrivacyPolicyView { manager.showPrivacyPolicy = false }
+                } else {
                 panelHeader
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
@@ -337,6 +346,7 @@ struct SettingsSheet: View {
                         Color.clear.frame(height: 40)
                     }
                     .padding(.horizontal, 20)
+                }
                 }
             }
             .frame(maxHeight: 620)
