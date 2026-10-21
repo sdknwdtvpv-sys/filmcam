@@ -996,6 +996,10 @@ struct FilmLoadBar: View {
 
 
 /// 使用提示：三句话说完，不打断拍摄
+extension Notification.Name {
+    static let fcReplayOnboarding = Notification.Name("fcReplayOnboarding")
+}
+
 struct HelpSheet: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -1016,6 +1020,21 @@ struct HelpSheet: View {
                     Silkscreen(text: "HOW IT WORKS", color: CameraTheme.ink.opacity(0.55),
                                size: 7, tracking: 2)
                     Spacer()
+                    Button {
+                        UserDefaults.standard.removeObject(forKey: "futurecam.seenGuide.v3")
+                        dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            NotificationCenter.default.post(name: .fcReplayOnboarding, object: nil)
+                        }
+                    } label: {
+                        Text("重看引导")
+                            .font(CameraTheme.mono(10, weight: .semibold))
+                            .foregroundColor(CameraTheme.ink.opacity(0.6))
+                            .padding(.horizontal, 10)
+                            .frame(height: 26)
+                            .background(Capsule().strokeBorder(CameraTheme.ink.opacity(0.2), lineWidth: 0.8))
+                    }
+                    .buttonStyle(.plain)
                     Button { dismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 12, weight: .semibold))

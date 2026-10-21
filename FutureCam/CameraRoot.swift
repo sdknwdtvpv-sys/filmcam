@@ -7,7 +7,8 @@ struct CameraRoot: View {
     @Environment(\.scenePhase) private var scenePhase
     /// 关键控件的屏幕位置：胶片仓从这里长出来，首跑引导也指这里
     @State private var anchors: [GuideTarget: CGRect] = [:]
-    @AppStorage("futurecam.seenGuide.v2") private var seenGuide = false
+    @AppStorage("futurecam.seenGuide.v3") private var seenGuide = false
+    @State private var replayGuide = false
     /// 冷启动时先放一次开机页
     @State private var showLaunch = true
     /// 进后台的时刻：离开久了再回来，重新放一次开机页
@@ -92,11 +93,15 @@ struct CameraRoot: View {
 
             // 一次性的用法引导（拍过一张或点一下就不再出现）
             if shouldShowGuide {
-                OnboardingFlow(onFinish: { seenGuide = true })
+                OnboardingFlow(onFinish: { seenGuide = true; replayGuide = false })
                     .transition(.opacity)
             }
         }
         .onPreferenceChange(GuideAnchorKey.self) { anchors = $0 }
+        .onReceive(NotificationCenter.default.publisher(for: .fcReplayOnboarding)) { _ in
+            // 从「使用提示」里重看：临时放行一次
+            replayGuide = true
+        }
         .animation(.spring(response: 0.32, dampingFraction: 0.82),
                    value: manager.showFilmSheet)
         .animation(.easeInOut(duration: 0.22), value: manager.showSettingsSheet)
@@ -195,7 +200,7 @@ struct CameraRoot: View {
     }
 
     private var shouldShowGuide: Bool {
-        guard !seenGuide, manager.capturedImage == nil else { return false }
+        guard (!seenGuide || replayGuide), manager.capturedImage == nil else { return false }
         #if DEBUG
         if DebugHarness.shouldShowGuide { return true }
         #endif
