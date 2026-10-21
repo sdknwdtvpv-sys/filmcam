@@ -328,39 +328,24 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
     private var lastISO: Float = 100
     private var lastBias: Float = 0
 
-    /// 设置手动曝光。
-    /// 注意：AVFoundation 在参数不被当前格式支持时会抛 **Objective-C 异常**，
-    /// Swift 的 do/catch 接不住，会直接 SIGABRT（滚花盘一拖就崩就是这么来的）。
-    /// 因此所有参数必须先按 activeFormat 的能力校验，能力不足时只调曝光补偿。
+    /// 设置曝光。
+    ///
+    /// 这里**不再调用 setExposureModeCustom**。
+    /// 该 API 在参数组合不被当前格式接受时抛 Objective-C 异常，
+    /// Swift 无法捕获，进程直接 SIGABRT；并且它内部还校验 lensAperture，
+    /// 即使把 ISO / 时长都 clamp 到 activeFormat 范围内仍会抛（真机日志已验证两次）。
+    ///
+    /// 现在只做两件事：
+    /// 1. 曝光补偿（安全，范围由设备给出）
+    /// 2. 记录 ISO / 快门值，供 UI 与胶片颗粒计算使用
+    /// 真正的传感器手动曝光等能稳定验证后再开。
     func setManualExposure(iso: Float, shutterSeconds: Double, bias: Float) {
         lastISO = iso
         lastBias = bias
         guard let device = videoDevice else { return }
-
-        let format = device.activeFormat
-        let supportsCustom = device.isExposureModeSupported(.custom)
-            && format.minISO > 0 && format.maxISO >= format.minISO
-            && CMTimeCompare(format.minExposureDuration, .zero) > 0
-            && shutterSeconds > 0
-
         do {
             try device.lockForConfiguration()
             let cBias = min(max(bias, device.minExposureTargetBias), device.maxExposureTargetBias)
-
-            if supportsCustom {
-                let cISO = min(max(iso, format.minISO), format.maxISO)
-                let dur = CMTimeClampToRange(
-                    CMTime(seconds: shutterSeconds, preferredTimescale: 1000),
-                    range: CMTimeRange(start: format.minExposureDuration,
-                                       end: format.maxExposureDuration))
-                // 时长仍可能等于 0（个别格式），等于 0 就不走手动模式
-                if CMTimeCompare(dur, .zero) > 0 {
-                    device.setExposureModeCustom(duration: dur, iso: cISO, completionHandler: nil)
-                }
-            } else if device.isExposureModeSupported(.continuousAutoExposure) {
-                device.exposureMode = .continuousAutoExposure
-            }
-
             device.setExposureTargetBias(cBias, completionHandler: nil)
             device.unlockForConfiguration()
         } catch {}
