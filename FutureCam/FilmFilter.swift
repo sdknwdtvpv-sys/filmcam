@@ -717,7 +717,7 @@ struct FilmFilter {
         guard extent.width > 1, extent.height > 1,
               let generator = CIFilter(name: "CIRandomGenerator")?.outputImage else { return image }
 
-        let scale = max(1.0, settings.scale * max(0.4, multiplier))
+        let scale = max(1.0, settings.scale * max(0.4, multiplier) * 0.72)
         let smallW = max(1, extent.width / scale)
         let smallH = max(1, extent.height / scale)
         let originX = settings.offsetX * 800
@@ -748,7 +748,7 @@ struct FilmFilter {
         // 强度靠把噪声往中灰压缩实现：越薄越接近纯灰，软光几乎看不出
         if let c = CIFilter(name: "CIColorControls") {
             c.setValue(noise, forKey: kCIInputImageKey)
-            c.setValue(max(0.02, settings.intensity * 1.8), forKey: "inputContrast")
+            c.setValue(max(0.02, settings.intensity * 1.05), forKey: "inputContrast")
             noise = c.outputImage ?? noise
         }
 
