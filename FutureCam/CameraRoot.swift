@@ -47,6 +47,9 @@ struct CameraRoot: View {
             // 保存提示
             if manager.showVideoSaved { ToastVideoSaved() }
             if manager.videoSaveBlocked { ToastVideoBlocked() }
+            if let count = manager.countdown {
+                CountdownOverlay(seconds: count) { manager.cancelCountdown() }
+            }
             if manager.photoSaveBlocked { ToastPhotoBlocked() }
             if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
@@ -193,5 +196,31 @@ struct CameraRoot: View {
     private func updateFeedbackSound() {
         DetentFeedback.shared.soundEnabled = manager.mode != .video && !manager.isRecording
         MechanicalSounds.shared.soundEnabled = manager.mode != .video && !manager.isRecording
+    }
+}
+
+
+/// 自拍倒计时浮层：大数字 + 一圈进度，点一下取消
+struct CountdownOverlay: View {
+    let seconds: Int
+    let onCancel: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.28).ignoresSafeArea()
+            VStack(spacing: 10) {
+                Text("\(seconds)")
+                    .font(.system(size: 96, weight: .thin, design: .rounded))
+                    .foregroundColor(.white)
+                    .monospacedDigit()
+                    .shadow(color: .black.opacity(0.5), radius: 12)
+                Text("点一下取消")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { onCancel() }
+        .transition(.opacity)
     }
 }

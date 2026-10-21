@@ -657,6 +657,8 @@ struct SettingsSheet: View {
             GrooveLine()
             settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
             GrooveLine()
+            timerRow()
+            GrooveLine()
             languageRow()
             GrooveLine()
             settingsToggle(title: "日期背印",
@@ -722,6 +724,39 @@ struct SettingsSheet: View {
     }
 
 
+
+    /// 自拍定时：关 / 3 秒 / 10 秒
+    private func timerRow() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("自拍定时").font(CameraTheme.mono(13, weight: .medium))
+                    .foregroundColor(CameraTheme.ink)
+                Text("按快门后倒数，倒计时中再按一下取消")
+                    .font(CameraTheme.mono(11))
+                    .foregroundColor(CameraTheme.inkDim)
+            }
+            HStack(spacing: 6) {
+                ForEach([0, 3, 10], id: \.self) { seconds in
+                    let active = manager.timerSeconds == seconds
+                    Button {
+                        manager.timerSeconds = seconds
+                        UserDefaults.standard.set(seconds, forKey: "futurecam.timer")
+                        Haptics.impact(.light)
+                    } label: {
+                        Text(seconds == 0 ? "关闭" : "\(seconds) 秒")
+                            .font(CameraTheme.mono(11, weight: active ? .bold : .medium))
+                            .foregroundColor(active ? .white : CameraTheme.ink.opacity(0.65))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(RoundedRectangle(cornerRadius: 5)
+                                .fill(active ? CameraTheme.amber : CameraTheme.ink.opacity(0.06)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(.vertical, 10)
+    }
 
     /// 语言：三档，切换后重新打开生效
     private func languageRow() -> some View {

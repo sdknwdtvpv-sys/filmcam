@@ -153,6 +153,10 @@ final class CameraManager: NSObject, ObservableObject {
     @Published var previewAspect: CGFloat?
     /// 取景窗的宽高比。成片按这个比例裁，保证所见即所得
     @Published var viewfinderAspect: CGFloat = 4.0 / 3.0
+    /// 自拍倒计时：0 = 关闭，3 / 10 秒。倒计时中 non-nil 表示剩余秒数
+    @Published var timerSeconds: Int = UserDefaults.standard.integer(forKey: "futurecam.timer")
+    @Published var countdown: Int?
+    private var countdownTask: Task<Void, Never>?
     /// 当前变焦倍率（1.0 = 1×）
     /// 三脚架检测
     private let stability = StabilityMonitor()
@@ -468,6 +472,49 @@ final class CameraManager: NSObject, ObservableObject {
 
     // MARK: - 控制
     func capturePhoto() {
+        // 倒计时中再按快门 = 取消（和浮层上的提示一致）
+        if countdown != nil {
+            cancelCountdown()
+            return
+        }
+        // 定时器：先倒数，时间到了再真正拍
+        if timerSeconds > 0 {
+            startCountdown()
+            return
+        }
+        capturePhotoNow()
+    }
+
+    private func startCountdown() {
+        countdownTask?.cancel()
+        Haptics.impact(.light)
+        countdown = timerSeconds
+        countdownTask = Task { [weak self] in
+            guard let self else { return }
+            while let left = self.countdown, left > 0 {
+                try? await Task.sleep(nanoseconds: 1_000_000_000)
+                if Task.isCancelled { break }
+                if left == 1 {
+                    self.countdown = nil
+                    self.capturePhotoNow()
+                    // 最后一秒给个重一点的反馈，别让人不确定到底拍没拍
+                    Haptics.impact(.rigid)
+                } else {
+                    self.countdown = left - 1
+                    Haptics.impact(.light)
+                }
+            }
+        }
+    }
+
+    /// 取消倒计时（点一下快门或切页面）
+    func cancelCountdown() {
+        countdownTask?.cancel()
+        countdownTask = nil
+        countdown = nil
+    }
+
+    private func capturePhotoNow() {
         guard !rolls.current.isFull else {
             notice = CameraNotice(title: "本卷拍完", value: "换一卷")
             Haptics.impact(.heavy)
