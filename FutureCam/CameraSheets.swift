@@ -308,6 +308,7 @@ struct SettingsSheet: View {
     @ObservedObject private var store = PurchaseStore.shared
     @ObservedObject private var filmStore = CustomFilmStore.shared
 
+
     private var version: String {
         let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
@@ -582,11 +583,11 @@ struct SettingsSheet: View {
             GrooveLine()
             aboutRow(title: "隐私政策",
                      detail: nil,
-                     action: { openURL("https://sdknwdtvpv-sys.github.io/filmcam/privacy.html") })
+                     action: { manager.showPrivacyPolicy = true })
             GrooveLine()
             aboutRow(title: "反馈与建议",
-                     detail: "919500973@qq.com",
-                     action: { openURL("mailto:919500973@qq.com?subject=FutureCam") })
+                     detail: PrivacyPolicyView.contactEmail,
+                     action: { openURL("mailto:\(PrivacyPolicyView.contactEmail)?subject=FutureCam") })
             GrooveLine()
             aboutRow(title: "给个评分", detail: nil, action: { requestReview() })
         }

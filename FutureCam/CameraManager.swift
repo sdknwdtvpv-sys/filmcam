@@ -155,6 +155,8 @@ final class CameraManager: NSObject, ObservableObject {
     /// 三脚架检测
     private let stability = StabilityMonitor()
     private var longExposureWarned = false
+    /// 隐私政策页
+    @Published var showPrivacyPolicy = false
     /// 自制胶卷编辑器
     @Published var showFilmEditor = false
     /// 长曝光进行中：按钮转红、盘面显示积分进度

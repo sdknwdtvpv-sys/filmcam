@@ -96,7 +96,7 @@ FutureCam 是一台做成测距仪样子的胶片相机：铝顶盖、黑蒙皮�
 
 ## 反馈邮箱
 
-`919500973@qq.com`
+`elliotsmail28@gmail.com`
 
 ## 测试员
 
