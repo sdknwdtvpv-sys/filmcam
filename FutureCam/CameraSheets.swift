@@ -2,6 +2,7 @@ import SwiftUI
 import UIKit
 import CoreMotion
 import AVKit
+import StoreKit
 
 struct FilmSheet: View {
     @EnvironmentObject var manager: CameraManager
@@ -299,9 +300,19 @@ struct FilmCanister: View {
 
 // MARK: - 设置弹层
 
+/// 「我的」：机器档案 + 我的胶卷 + 胶卷包 + 设置 + 关于。
+/// 不联网、不登录，所以没有账号那一层——这一页记录的是这台机器本身。
 struct SettingsSheet: View {
     @EnvironmentObject var manager: CameraManager
     @ObservedObject private var language = LanguageStore.shared
+    @ObservedObject private var store = PurchaseStore.shared
+    @ObservedObject private var filmStore = CustomFilmStore.shared
+
+    private var version: String {
+        let v = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        return "\(v) (\(b))"
+    }
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -309,61 +320,25 @@ struct SettingsSheet: View {
                 .contentShape(Rectangle())
                 .onTapGesture { manager.showSettingsSheet = false }
 
-            VStack(alignment: .leading, spacing: 0) {
-                // 服务面板：螺丝 + 丝印标题，和机身同一套语言
-                HStack(spacing: 8) {
-                    ScrewHead(size: 7)
-                    Silkscreen(text: "SERVICE PANEL", color: CameraTheme.ink.opacity(0.55),
-                               size: 7, tracking: 2)
-                    Spacer()
-                    Text("设置")
-                        .font(CameraTheme.mono(11, weight: .bold))
-                        .foregroundColor(CameraTheme.ink.opacity(0.6))
-                    ScrewHead(size: 7)
-                }
-                .padding(.vertical, 12)
-                GrooveLine()
-
-                Button {
-                    manager.resetAuto()
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("自动曝光与白平衡")
-                                .font(CameraTheme.mono(13, weight: .medium))
-                                .foregroundColor(CameraTheme.ink)
-                            Text("恢复连续自动对焦 / 曝光 / 白平衡")
-                                .font(CameraTheme.mono(11)).foregroundColor(CameraTheme.inkDim)
-                        }
-                        Spacer()
-                        Text(manager.autoExposure && manager.autoWB ? "已开启" : "恢复自动")
-                            .font(CameraTheme.mono(12, weight: .medium))
-                            .foregroundColor(CameraTheme.amber)
+            VStack(spacing: 0) {
+                panelHeader
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        statsSection
+                        sectionTitle("我的胶卷")
+                        customFilmSection
+                        sectionTitle("胶卷包")
+                        packSection
+                        sectionTitle("设置")
+                        settingsSection
+                        sectionTitle("关于")
+                        aboutSection
+                        Color.clear.frame(height: 40)
                     }
-                    .padding(.vertical, 14)
+                    .padding(.horizontal, 20)
                 }
-                .buttonStyle(.plain)
-
-                GrooveLine()
-
-                settingsToggle(title: "预览网格", subtitle: "三分构图辅助线", isOn: $manager.showGrid)
-                GrooveLine()
-                settingsToggle(title: "水平指示", subtitle: "取景器内显示横滚水平仪", isOn: $manager.showLevel)
-                GrooveLine()
-                settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
-                GrooveLine()
-                languageRow()
-
-                GrooveLine()
-
-                settingsToggle(title: "日期背印",
-                               subtitle: "把橙色日期烧进成片右下角（老式胶卷机后背）",
-                               isOn: $manager.dateStampEnabled)
-
-                Color.clear.frame(height: 34)
             }
-            .padding(.horizontal, 20)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxHeight: 620)
             .background(AluminumFace(tokens: ThemeStore.current))
             .clipShape(TopRounded(radius: 14))
             .overlay(TopRoundedBorder(radius: 14).stroke(.black.opacity(0.45), lineWidth: 1))
@@ -372,17 +347,300 @@ struct SettingsSheet: View {
         .ignoresSafeArea(edges: .bottom)
     }
 
-    /// 语言：三档，切完立刻生效
-    private func languageRow() -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("语言").font(CameraTheme.mono(13, weight: .medium))
-                        .foregroundColor(CameraTheme.ink)
-                    Text("界面语言，立即生效").font(CameraTheme.mono(11))
+    // MARK: 结构件
+
+    private var panelHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                ScrewHead(size: 7)
+                Silkscreen(text: "SERVICE PANEL", color: CameraTheme.ink.opacity(0.55),
+                           size: 7, tracking: 2)
+                Spacer()
+                Text("我的")
+                    .font(CameraTheme.mono(11, weight: .bold))
+                    .foregroundColor(CameraTheme.ink.opacity(0.6))
+                ScrewHead(size: 7)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            GrooveLine()
+        }
+    }
+
+    private func sectionTitle(_ text: String) -> some View {
+        Silkscreen(text: text, color: CameraTheme.ink.opacity(0.45), size: 6.5, tracking: 1.8)
+            .padding(.top, 16)
+            .padding(.bottom, 6)
+    }
+
+    // MARK: 机器档案
+
+    private var statsSection: some View {
+        let stats = manager.machineStats
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy.MM.dd"
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 0) {
+                statCell(value: "\(stats.shots)", unit: "张", label: "已拍")
+                statDivider
+                statCell(value: "\(stats.rolls)", unit: "卷", label: "用过")
+                statDivider
+                statCell(value: stats.firstShotAt.map { formatter.string(from: $0) } ?? "—",
+                         unit: "", label: "第一卷")
+            }
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(CameraTheme.ink.opacity(0.045))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(CameraTheme.ink.opacity(0.10), lineWidth: 0.5)
+            )
+
+            if let favourite = stats.favouriteFilm {
+                HStack(spacing: 5) {
+                    Circle().fill(canisterColor(manager.roll.preset)).frame(width: 5, height: 5)
+                    Text("最常用：\(favourite)")
+                        .font(CameraTheme.mono(10))
                         .foregroundColor(CameraTheme.inkDim)
                 }
+            }
+        }
+        .padding(.top, 14)
+    }
+
+    private var statDivider: some View {
+        Rectangle().fill(CameraTheme.ink.opacity(0.10)).frame(width: 0.5, height: 30)
+    }
+
+    private func statCell(value: String, unit: String, label: String) -> some View {
+        VStack(spacing: 3) {
+            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                Text(value)
+                    .font(CameraTheme.mono(15, weight: .bold))
+                    .foregroundColor(CameraTheme.ink)
+                if !unit.isEmpty {
+                    Text(unit).font(CameraTheme.mono(9))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
+            }
+            Silkscreen(text: label, color: CameraTheme.ink.opacity(0.45), size: 6, tracking: 1)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: 我的胶卷
+
+    private var customFilmSection: some View {
+        VStack(spacing: 0) {
+            if filmStore.films.isEmpty {
+                Text("还没有自制胶卷。拍完一张，在显影页点「+」就能调一卷。")
+                    .font(CameraTheme.mono(10))
+                    .foregroundColor(CameraTheme.inkDim)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 8)
+            } else {
+                ForEach(filmStore.films) { film in
+                    HStack(spacing: 8) {
+                        Circle().fill(LookChoice.custom(film).color).frame(width: 7, height: 7)
+                        Text(film.name)
+                            .font(CameraTheme.mono(12, weight: .medium))
+                            .foregroundColor(CameraTheme.ink)
+                        Spacer()
+                        Button {
+                            filmStore.delete(film)
+                            Haptics.impact(.light)
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(CameraTheme.inkDim)
+                                .frame(width: 30, height: 30)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("删除 \(film.name)")
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+            GrooveLine()
+        }
+    }
+
+    // MARK: 胶卷包
+
+    private var packSection: some View {
+        VStack(spacing: 0) {
+            ForEach(FilmPack.allCases) { pack in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(pack.title)
+                            .font(CameraTheme.mono(12, weight: .medium))
+                            .foregroundColor(CameraTheme.ink)
+                        if !pack.hint.isEmpty {
+                            Text(pack.hint)
+                                .font(CameraTheme.mono(10))
+                                .foregroundColor(CameraTheme.inkDim)
+                        }
+                    }
+                    Spacer()
+                    if pack.productID == nil {
+                        Text("已拥有")
+                            .font(CameraTheme.mono(11, weight: .medium))
+                            .foregroundColor(CameraTheme.inkDim)
+                    } else if store.isOpenElsewhere {
+                        // 商品还没在 App Store Connect 配好：照实说，不假装已购买
+                        Text("未上架")
+                            .font(CameraTheme.mono(10))
+                            .foregroundColor(CameraTheme.inkDim.opacity(0.7))
+                    } else if store.purchased.contains(pack.productID ?? "") {
+                        Text("已拥有")
+                            .font(CameraTheme.mono(11, weight: .medium))
+                            .foregroundColor(CameraTheme.inkDim)
+                    } else if let price = store.priceText(for: pack) {
+                        Button {
+                            Task {
+                                let ok = await store.purchase(pack)
+                                if ok { Haptics.impact(.rigid) }
+                            }
+                        } label: {
+                            Text(price)
+                                .font(CameraTheme.mono(12, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .frame(height: 28)
+                                .background(RoundedRectangle(cornerRadius: 5).fill(CameraTheme.amber))
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Text("即将上架")
+                            .font(CameraTheme.mono(10))
+                            .foregroundColor(CameraTheme.inkDim)
+                    }
+                }
+                .padding(.vertical, 9)
+                GrooveLine()
+            }
+
+            Button {
+                Task { await store.refreshEntitlements() }
+            } label: {
+                Text("恢复购买")
+                    .font(CameraTheme.mono(11, weight: .medium))
+                    .foregroundColor(CameraTheme.amber)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 10)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    // MARK: 设置
+
+    private var settingsSection: some View {
+        VStack(spacing: 0) {
+            Button {
+                manager.resetAuto()
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("自动曝光与白平衡")
+                            .font(CameraTheme.mono(13, weight: .medium))
+                            .foregroundColor(CameraTheme.ink)
+                        Text("恢复连续自动对焦 / 曝光 / 白平衡")
+                            .font(CameraTheme.mono(11)).foregroundColor(CameraTheme.inkDim)
+                    }
+                    Spacer()
+                    Text(manager.autoExposure && manager.autoWB ? "已开启" : "恢复自动")
+                        .font(CameraTheme.mono(12, weight: .medium))
+                        .foregroundColor(CameraTheme.amber)
+                }
+                .padding(.vertical, 12)
+            }
+            .buttonStyle(.plain)
+            GrooveLine()
+            settingsToggle(title: "预览网格", subtitle: "三分构图辅助线", isOn: $manager.showGrid)
+            GrooveLine()
+            settingsToggle(title: "水平指示", subtitle: "取景器内显示横滚水平仪", isOn: $manager.showLevel)
+            GrooveLine()
+            settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
+            GrooveLine()
+            languageRow()
+            GrooveLine()
+            settingsToggle(title: "日期背印",
+                           subtitle: "把橙色日期烧进成片右下角（老式胶卷机后背）",
+                           isOn: $manager.dateStampEnabled)
+        }
+    }
+
+    // MARK: 关于
+
+    private var aboutSection: some View {
+        VStack(spacing: 0) {
+            aboutRow(title: "版本", detail: version, action: nil)
+            GrooveLine()
+            aboutRow(title: "隐私政策",
+                     detail: nil,
+                     action: { openURL("https://sdknwdtvpv-sys.github.io/filmcam/privacy.html") })
+            GrooveLine()
+            aboutRow(title: "反馈与建议",
+                     detail: "919500973@qq.com",
+                     action: { openURL("mailto:919500973@qq.com?subject=FutureCam") })
+            GrooveLine()
+            aboutRow(title: "给个评分", detail: nil, action: { requestReview() })
+        }
+    }
+
+    private func aboutRow(title: String, detail: String?, action: (() -> Void)?) -> some View {
+        Button {
+            action?()
+            Haptics.impact(.light)
+        } label: {
+            HStack {
+                Text(title)
+                    .font(CameraTheme.mono(12, weight: .medium))
+                    .foregroundColor(CameraTheme.ink)
                 Spacer()
+                if let detail {
+                    Text(detail)
+                        .font(CameraTheme.mono(10))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
+                if action != nil {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
+            }
+            .padding(.vertical, 11)
+        }
+        .buttonStyle(.plain)
+        .disabled(action == nil)
+    }
+
+    private func openURL(_ string: String) {
+        guard let url = URL(string: string) else { return }
+        UIApplication.shared.open(url)
+    }
+
+    private func requestReview() {
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            SKStoreReviewController.requestReview(in: scene)
+        }
+    }
+
+
+
+    /// 语言：三档，切换后重新打开生效
+    private func languageRow() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("语言").font(CameraTheme.mono(13, weight: .medium))
+                    .foregroundColor(CameraTheme.ink)
+                Text("界面语言，重新打开 App 后生效")
+                    .font(CameraTheme.mono(11))
+                    .foregroundColor(CameraTheme.inkDim)
             }
             HStack(spacing: 6) {
                 ForEach(AppLanguage.allCases) { languageValue in

@@ -528,6 +528,37 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
+    /// 机器档案：全部来自本机数据，不联网
+    struct MachineStats {
+        var shots: Int = 0
+        var rolls: Int = 0
+        var firstShotAt: Date?
+        var favouriteFilm: String?
+    }
+
+    var machineStats: MachineStats {
+        var stats = MachineStats()
+        stats.shots = albumItems.filter { $0.kind == .photo }.count
+        let archived = rolls.archive.count
+        stats.rolls = archived + 1
+
+        let dates = albumItems.map(\.createdAt)
+        let rollDates = ([rolls.current.startedAt] + rolls.archive.map(\.startedAt))
+        stats.firstShotAt = (dates + rollDates).min()
+
+        // 哪一卷用得最多：按 rollID 分组数张数
+        var counts: [String: Int] = [:]
+        for item in albumItems {
+            guard let id = item.rollID else { continue }
+            counts[id, default: 0] += 1
+        }
+        if let top = counts.max(by: { $0.value < $1.value }),
+           let roll = rolls.roll(id: top.key) {
+            stats.favouriteFilm = roll.preset.label
+        }
+        return stats
+    }
+
     /// 这条记录属于哪一卷胶卷（相册详情里显示用）
     func presetLabel(for item: AlbumItem) -> String {
         guard let id = item.rollID, let roll = rolls.roll(id: id) else { return "未归档" }
