@@ -146,7 +146,9 @@ struct AlbumView: View {
     /// 胶卷架：一排胶卷罐，点开才看里面的照片
     private var rollShelf: some View {
         ScrollView {
-            LazyVStack(spacing: 10) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)],
+                      spacing: 12) {
                 ForEach(sections) { section in
                     Button {
                         withAnimation(.easeOut(duration: 0.18)) { openRoll = section.id }
@@ -162,61 +164,71 @@ struct AlbumView: View {
         }
     }
 
-    /// 一卷的样子：色带 + 型号 + 卷号 + 张数 + 三张预览
+    /// 一卷的样子：大胶卷罐立在上面，信息与缩略图在下面
     private func rollCard(_ section: AlbumSection) -> some View {
-        let preset = RollStore.shared.roll(id: section.id).map { FilmPreset(rawValue: $0.presetRaw) ?? .neutral }
+        let roll = RollStore.shared.roll(id: section.id)
+        let preset = roll.flatMap { FilmPreset(rawValue: $0.presetRaw) }
         let band = preset.map { canisterColor($0) } ?? CameraTheme.amber
-        return HStack(spacing: 12) {
-            MiniCanister(color: band, iso: preset.map { "\($0.nominalISO)" } ?? "")
+        return VStack(spacing: 0) {
+            // 罐子立在货架上
+            MiniCanister(color: band, iso: preset.map { "\($0.nominalISO)" } ?? "", large: true)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
 
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
+            // 货架隔板：一道凹槽，罐子像是站在上面
+            GrooveLine()
+                .opacity(0.5)
+
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     Text(section.title)
-                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .foregroundColor(CameraTheme.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    Spacer(minLength: 0)
                     if let sub = section.subtitle {
                         Text(sub)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(.system(size: 9, weight: .bold, design: .monospaced))
                             .foregroundColor(CameraTheme.ink.opacity(0.45))
                     }
+                }
+
+                HStack(spacing: 6) {
+                    Text(preset?.scene ?? "")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(CameraTheme.ink.opacity(0.4))
+                        .lineLimit(1)
                     Spacer(minLength: 0)
                     Text("\(section.items.count) 张")
-                        .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .foregroundColor(CameraTheme.ink.opacity(0.5))
                 }
 
-                if let preset {
-                    Text(preset.scene)
-                        .font(.system(size: 9, design: .monospaced))
-                        .foregroundColor(CameraTheme.ink.opacity(0.4))
-                }
-
-                HStack(spacing: 3) {
-                    ForEach(section.items.prefix(5)) { item in
-                        MediaThumbnail(item: item, maxPixel: 120)
-                            .frame(width: 46, height: 32)
+                HStack(spacing: 2) {
+                    ForEach(section.items.prefix(3)) { item in
+                        MediaThumbnail(item: item, maxPixel: 110)
+                            .frame(height: 34)
+                            .frame(maxWidth: .infinity)
                             .clipped()
-                            .overlay(Rectangle().strokeBorder(.black.opacity(0.15), lineWidth: 0.5))
                     }
                     Spacer(minLength: 0)
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(CameraTheme.ink.opacity(0.3))
                 }
             }
-            .padding(.trailing, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 10)
+            .padding(.top, 8)
+            .padding(.bottom, 10)
         }
-        .padding(.leading, 8)
+        .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(CameraTheme.ink.opacity(0.05))
+            RoundedRectangle(cornerRadius: 10)
+                .fill(CameraTheme.ink.opacity(0.045))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(CameraTheme.ink.opacity(0.12), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(CameraTheme.ink.opacity(0.10), lineWidth: 0.5)
         )
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     /// 打开某一卷后的头：返回 + 卷信息 + 网格/印相切换
@@ -663,18 +675,20 @@ struct MiniCanister: View {
     let color: Color
     /// ISO 数字，印在白色标签条上
     var iso: String = ""
+    /// 相册里立着展示时放大
+    var large: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
             // 卷轴凸起
             RoundedRectangle(cornerRadius: 1.5)
                 .fill(metalGradient)
-                .frame(width: 12, height: 5)
+                .frame(width: bodyWidth * 0.36, height: 6)
 
             // 上盖
             RoundedRectangle(cornerRadius: 1)
                 .fill(metalGradient)
-                .frame(height: 9)
+                .frame(height: capHeight)
 
             // 罐身：彩色标签 + 圆柱高光
             ZStack {
@@ -687,10 +701,10 @@ struct MiniCanister: View {
                     ZStack {
                         Rectangle().fill(.white.opacity(0.92))
                         Text(iso)
-                            .font(.system(size: 8, weight: .heavy, design: .monospaced))
+                            .font(.system(size: large ? 13 : 8, weight: .heavy, design: .monospaced))
                             .foregroundColor(color.opacity(0.9))
                     }
-                    .frame(height: 13)
+                    .frame(height: large ? 22 : 13)
                     Spacer(minLength: 0)
                 }
                 VStack(spacing: 2) {
@@ -700,15 +714,15 @@ struct MiniCanister: View {
                 }
                 .padding(.vertical, 4)
             }
-            .frame(width: 34, height: 40)
+            .frame(width: bodyWidth, height: bodyHeight)
             .clipped()
 
             // 下盖
             RoundedRectangle(cornerRadius: 1)
                 .fill(metalGradient)
-                .frame(height: 9)
+                .frame(height: capHeight)
         }
-        .frame(width: 34)
+        .frame(width: bodyWidth)
         .clipShape(RoundedRectangle(cornerRadius: 3))
         .overlay(
             RoundedRectangle(cornerRadius: 3)
@@ -716,6 +730,10 @@ struct MiniCanister: View {
         )
         .shadow(color: .black.opacity(0.25), radius: 3, x: 0, y: 2)
     }
+
+    private var bodyWidth: CGFloat { large ? 62 : 34 }
+    private var bodyHeight: CGFloat { large ? 76 : 40 }
+    private var capHeight: CGFloat { large ? 15 : 9 }
 
     private var metalGradient: LinearGradient {
         LinearGradient(colors: [Color(hex: 0xF2F4F6), Color(hex: 0xB9BEC3), Color(hex: 0x8E949A)],
