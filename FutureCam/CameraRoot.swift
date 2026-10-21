@@ -105,6 +105,7 @@ struct CameraRoot: View {
                 // 截图检查撕拉片时不要弹相机权限
                 if let stub = DebugHarness.stubPreviewFrame() {
                     manager.previewCapturedForDebug(stub)
+                    if DebugHarness.shouldSaveStub { manager.saveStubForDebug(stub) }
                 }
             } else {
                 manager.requestAccessAndConfigure()

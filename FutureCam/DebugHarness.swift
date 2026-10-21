@@ -24,6 +24,9 @@ enum DebugHarness {
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
 
+    /// `-fcSaveStub`：存一张假照片，验证底片是否一起落盘
+    static var shouldSaveStub: Bool { arguments.contains("-fcSaveStub") }
+
     /// 取 `-fcMode xxx` 的值
     static func modeArgument() -> String? {
         guard let index = arguments.firstIndex(of: "-fcMode"), index + 1 < arguments.count else { return nil }

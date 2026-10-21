@@ -257,7 +257,7 @@ final class CameraManager: NSObject, ObservableObject {
                 if self.mode == .doubleExposure, self.doubleExposureStep == 1 {
                     self.doubleExposureStep = 2
                 }
-                self.saveToAlbumOnly(final, jpeg: jpeg, rollID: rollID)
+                self.saveToAlbumOnly(final, jpeg: jpeg, rollID: rollID, base: base)
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -400,9 +400,9 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     /// 把一张成片写入本地沙盒，供应用内相册展示（不依赖系统相册权限）
-    private func persistLocally(_ image: UIImage, jpeg: Data?, rollID: String?) {
+    private func persistLocally(_ image: UIImage, jpeg: Data?, rollID: String?, base: UIImage? = nil) {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let item = AlbumStore.savePhoto(image, jpeg: jpeg, rollID: rollID) else { return }
+            guard let item = AlbumStore.savePhoto(image, jpeg: jpeg, rollID: rollID, base: base) else { return }
             DispatchQueue.main.async {
                 guard let self else { return }
                 if self.albumItems.firstIndex(where: { $0.id == item.id }) == nil {
@@ -666,6 +666,13 @@ final class CameraManager: NSObject, ObservableObject {
     }
 
     #if DEBUG
+    /// 调试：验证底片是否落盘（-fcSaveStub）
+    func saveStubForDebug(_ image: UIImage) {
+        let rollID = rolls.current.id
+        let jpeg = image.jpegData(compressionQuality: 0.9)
+        saveToAlbumOnly(image, jpeg: jpeg, rollID: rollID, base: image)
+    }
+
     /// 调试：让假成片也走一遍成片出口（日期背印等），用于截图自检
     func previewCapturedForDebug(_ image: UIImage) {
         let final = finalized(image)
@@ -752,8 +759,9 @@ final class CameraManager: NSObject, ObservableObject {
 
     // MARK: - 保存到相册
     /// 只写应用内相册（立刻，避免丢片）
-    private func saveToAlbumOnly(_ image: UIImage, jpeg: Data?, rollID: String?) {
-        persistLocally(image, jpeg: jpeg, rollID: rollID)
+    private func saveToAlbumOnly(_ image: UIImage, jpeg: Data?, rollID: String?,
+                                 base: UIImage? = nil) {
+        persistLocally(image, jpeg: jpeg, rollID: rollID, base: base)
     }
 
     /// 写系统相册（延后到关闭显影页，用最终选定的调色）

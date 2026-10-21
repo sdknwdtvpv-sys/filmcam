@@ -49,7 +49,9 @@ enum AlbumStore {
         guard let files = try? FileManager.default.contentsOfDirectory(
             at: dir, includingPropertiesForKeys: [.contentModificationDateKey]) else { return [] }
         return files
+            // 底片是附属文件，不能当成作品列出来
             .filter { $0.pathExtension.lowercased() == ext }
+            .filter { !$0.lastPathComponent.hasSuffix(".base.jpg") }
             .map { make($0.lastPathComponent, $0) }
     }
 
@@ -80,7 +82,8 @@ enum AlbumStore {
     // MARK: - 写入
 
     @discardableResult
-    static func savePhoto(_ image: UIImage, jpeg: Data? = nil, rollID: String? = nil) -> AlbumItem? {
+    static func savePhoto(_ image: UIImage, jpeg: Data? = nil, rollID: String? = nil,
+                          base: UIImage? = nil) -> AlbumItem? {
         try? FileManager.default.createDirectory(at: photosURL, withIntermediateDirectories: true)
         let stamp = Int(Date().timeIntervalSince1970 * 1000)
         let name = rollID.map { "fc_\($0)_\(stamp).jpg" } ?? "futurecam_\(stamp).jpg"
@@ -88,6 +91,22 @@ enum AlbumStore {
         guard let data = jpeg ?? image.jpegData(compressionQuality: 0.9) else { return nil }
         do {
             try data.write(to: url)
+            // 同时留一份没上滤镜的底片：调色参数、排查画质都靠它
+            if let base {
+                let baseURL = url.deletingPathExtension().appendingPathExtension("base.jpg")
+                // 底片可能是 CIImage 支撑的，jpegData 会返回 nil；退回自己渲染一遍
+                if let baseData = base.jpegData(compressionQuality: 0.95) {
+                    try? baseData.write(to: baseURL)
+                    NSLog("[BaseNegative] 写入 %@ (%d bytes)", baseURL.lastPathComponent, baseData.count)
+                } else if let ci = base.ciImage ?? base.cgImage.map(CIImage.init(cgImage:)),
+                          let cg = CIContext().createCGImage(ci, from: ci.extent),
+                          let data = UIImage(cgImage: cg).jpegData(compressionQuality: 0.95) {
+                    try? data.write(to: baseURL)
+                    NSLog("[BaseNegative] 渲染后写入 %@ (%d bytes)", baseURL.lastPathComponent, data.count)
+                } else {
+                    NSLog("[BaseNegative] 失败：底片无法编码 size=%@", NSCoder.string(for: base.size))
+                }
+            }
             return AlbumItem(id: name, url: url, kind: .photo, createdAt: Date(), rollID: rollID)
         } catch {
             return nil
