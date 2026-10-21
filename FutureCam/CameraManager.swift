@@ -252,7 +252,7 @@ final class CameraManager: NSObject, ObservableObject {
                 guard let self else { return }
                 self.showDoubleExposureFirst = false
                 let cropped = self.croppedToViewfinder(image)
-                let final = self.finalized(cropped)
+                let final = self.finalized(self.uprightedForDevice(cropped))
                 self.capturedImage = final
                 self.capturedBase = base
                 self.capturedAlbumItem = nil
@@ -764,6 +764,33 @@ final class CameraManager: NSObject, ObservableObject {
             return image
         }
         return UIImage(cgImage: cg, scale: image.scale, orientation: image.imageOrientation)
+    }
+
+    /// 界面锁竖屏，但横着拿手机拍时，传感器给的是躺倒的画面——按设备朝向上转回来。
+    /// 顺序很关键：先按取景框（竖幅）裁切，再旋转。这样构图和你取景时看到的一致，
+    /// 只是整幅转正，不会因为旋转后比例变了被裁掉两边。
+    func uprightedForDevice(_ image: UIImage) -> UIImage {
+        switch UIDevice.current.orientation {
+        case .landscapeLeft:  return Self.rotate(image, clockwise: true)
+        case .landscapeRight: return Self.rotate(image, clockwise: false)
+        case .portraitUpsideDown: return Self.rotate(image, clockwise: true, turns: 2)
+        default: return image
+        }
+    }
+
+    private static func rotate(_ image: UIImage, clockwise: Bool, turns: Int = 1) -> UIImage {
+        guard image.size.width > 1, image.size.height > 1 else { return image }
+        let radians = (clockwise ? CGFloat.pi / 2 : -CGFloat.pi / 2) * CGFloat(turns)
+        let w = image.size.width, h = image.size.height
+        // 90/270 度时宽高互换
+        let newSize = turns % 2 == 1 ? CGSize(width: h, height: w) : image.size
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        return renderer.image { ctx in
+            let c = ctx.cgContext
+            c.translateBy(x: newSize.width / 2, y: newSize.height / 2)
+            c.rotate(by: radians)
+            image.draw(in: CGRect(x: -w / 2, y: -h / 2, width: w, height: h))
+        }
     }
 
     /// 成片统一出口：需要日期背印就烧上去，并把 JPEG 重新编码（保留 EXIF）
