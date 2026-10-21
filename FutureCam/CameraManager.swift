@@ -772,15 +772,30 @@ final class CameraManager: NSObject, ObservableObject {
     /// 顺序很关键：先按取景框（竖幅）裁切，再旋转。这样构图和你取景时看到的一致，
     /// 只是整幅转正，不会因为旋转后比例变了被裁掉两边。
     func uprightedForDevice(_ image: UIImage) -> UIImage {
-        let o = MotionShim.shared.deviceOrientation
-        NSLog("[Orientation] 拍摄时设备朝向=%d gravity=%@", o.rawValue,
-              String(describing: MotionShim.shared.gravity))
+        let o = Self.interfaceOrientation()
+        NSLog("[Orientation] 拍摄时界面朝向=%d", o.rawValue)
         switch o {
         case .landscapeLeft:  return Self.rotate(image, clockwise: true)
         case .landscapeRight: return Self.rotate(image, clockwise: false)
         case .portraitUpsideDown: return Self.rotate(image, clockwise: true, turns: 2)
         default: return image
         }
+    }
+
+    /// 界面实际朝向。界面放开横屏后这个值才可靠；拿不到时退回重力判断
+    private static func interfaceOrientation() -> UIDeviceOrientation {
+        if let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }) {
+            switch scene.interfaceOrientation {
+            case .portrait: return .portrait
+            case .portraitUpsideDown: return .portraitUpsideDown
+            case .landscapeLeft: return .landscapeLeft
+            case .landscapeRight: return .landscapeRight
+            default: break
+            }
+        }
+        return MotionShim.shared.deviceOrientation
     }
 
     private static func rotate(_ image: UIImage, clockwise: Bool, turns: Int = 1) -> UIImage {
