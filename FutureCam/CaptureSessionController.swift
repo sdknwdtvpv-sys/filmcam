@@ -16,6 +16,9 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
 
     nonisolated(unsafe) private let session = AVCaptureSession()
     nonisolated(unsafe) private let videoOutput = AVCaptureVideoDataOutput()
+    /// 取景帧的朝向：竖屏是 .right（传感器本来就是横的），横屏要用 .up / .down。
+    /// 由界面朝向驱动，在 delegate 里直接读，避免后台队列访问 UI。
+    nonisolated(unsafe) var imageOrientation: CGImagePropertyOrientation = .right
     nonisolated(unsafe) private let audioOutput = AVCaptureAudioDataOutput()
     nonisolated(unsafe) private let photoOutput = AVCapturePhotoOutput()
     nonisolated(unsafe) private var cameraInput: AVCaptureDeviceInput?
@@ -601,7 +604,7 @@ final class CaptureSessionController: NSObject, @unchecked Sendable,
             return
         }
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-        let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(.right)
+        let oriented = CIImage(cvImageBuffer: pixelBuffer).oriented(imageOrientation)
         // 取景与录像同一条管线：都只过胶片，不叠调色与颗粒
         let filtered = RenderPipeline.render(oriented, recipe: .video(
             preset: preset, traits: rollTraits, mirrored: isFront))

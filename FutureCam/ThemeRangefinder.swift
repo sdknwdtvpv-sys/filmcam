@@ -70,6 +70,12 @@ struct RangefinderCameraView: View {
                     .ignoresSafeArea()
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            .onAppear {
+                manager.updateCaptureOrientation(isLandscape: geo.size.width > geo.size.height)
+            }
+            .onChange(of: geo.size) { _, size in
+                manager.updateCaptureOrientation(isLandscape: size.width > size.height)
+            }
         }
         .onChange(of: manager.notice) { _, notice in
             guard let notice else { return }

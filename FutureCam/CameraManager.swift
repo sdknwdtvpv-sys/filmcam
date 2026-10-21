@@ -795,6 +795,11 @@ final class CameraManager: NSObject, ObservableObject {
             + "n=\(supported.count) v\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")"
     }
 
+    /// 界面横过来时，取景帧也要跟着转，否则取景器里的画面是歪的
+    func updateCaptureOrientation(isLandscape: Bool) {
+        controller.imageOrientation = isLandscape ? .up : .right
+    }
+
     /// 界面实际朝向。界面放开横屏后这个值才可靠；拿不到时退回重力判断
     private static func interfaceOrientation() -> UIDeviceOrientation {
         if let scene = UIApplication.shared.connectedScenes
