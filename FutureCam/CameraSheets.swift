@@ -5,10 +5,19 @@ import AVKit
 import StoreKit
 
 struct FilmSheet: View {
+    /// 当前选中的卷（还没装）。首次进来等于手上这卷
+    @State private var focused: FilmPreset
     @EnvironmentObject var manager: CameraManager
 
     /// 顶盖胶片键在屏幕上的位置（全局坐标）
     var anchor: CGRect
+
+    init(anchor: CGRect, manager: CameraManager) {
+        self.anchor = anchor
+        _focused = State(initialValue: manager.selectedPreset)
+    }
+
+
 
     var body: some View {
         let t = ThemeStore.current
@@ -72,13 +81,8 @@ struct FilmSheet: View {
                         FilmCanister(preset: preset,
                                      loaded: manager.selectedPreset == preset,
                                      tokens: t) {
-                            // 点另一卷 = 装新卷：当前这卷会被收起来，成片仍按卷归档
-                            if manager.selectedPreset == preset {
-                                manager.showFilmSheet = false
-                            } else {
-                                manager.loadRoll(preset)
-                                manager.showFilmSheet = false
-                            }
+                            // 第一下只是选中：先看样片和说明，装卷要再按一次
+                            withAnimation(.easeOut(duration: 0.16)) { focused = preset }
                         }
                     }
                 }
@@ -88,7 +92,10 @@ struct FilmSheet: View {
             .background(LeatherPanel())
 
             // 这卷拍出来什么样：两张样片，选卷前先看一眼
-            FilmSampleStrip(preset: manager.selectedPreset)
+            FilmSampleStrip(preset: focused)
+
+            // 装卷按钮：选中不等于装了，避免误触把拍了一半的卷收起来
+            FilmLoadBar(preset: focused, manager: manager)
 
             // 当前这卷：型号 · 张数
             HStack(spacing: 6) {
@@ -137,6 +144,7 @@ struct LookChip: View {
     let selected: Bool
     let tokens: ThemeTokens
     let action: () -> Void
+
 
     var body: some View {
         Button(action: action) {
@@ -204,6 +212,7 @@ struct FilmCanister: View {
     private var labelColor: Color { canisterColor(preset) }
 
     private var iso: String { "ISO \(preset.nominalISO)" }
+
 
     var body: some View {
         Button(action: action) {
@@ -326,6 +335,7 @@ struct SettingsSheet: View {
         let b = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
         return "\(v) (\(b))"
     }
+
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -781,6 +791,7 @@ struct FilmSampleStrip: View {
         return UIImage(contentsOfFile: "\(dir)/\(preset.rawValue)_\(index).jpg")
     }
 
+
     var body: some View {
         HStack(spacing: 8) {
             ForEach(0..<2, id: \.self) { i in
@@ -806,5 +817,55 @@ struct FilmSampleStrip: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+    }
+}
+
+
+/// 装卷条：选中不等于装卷，这里才真正换卷。
+/// 之前点一下胶卷就立刻换，拍了一半的卷被默默收起来，没有任何提示。
+struct FilmLoadBar: View {
+    let preset: FilmPreset
+    @ObservedObject var manager: CameraManager
+
+    var body: some View {
+        let t = ThemeStore.current
+        let isLoaded = manager.selectedPreset == preset
+        let used = manager.roll.used
+        VStack(spacing: 6) {
+            HStack(spacing: 6) {
+                Silkscreen(text: preset.label, color: .white.opacity(0.5), size: 6, tracking: 1.2)
+                Silkscreen(text: "ISO \(preset.nominalISO)", color: .white.opacity(0.32),
+                           size: 5.5, tracking: 0.8)
+                Spacer(minLength: 0)
+                if !isLoaded && used > 0 {
+                    Text(String(format: NSLocalizedString("已拍 %d 张，换卷会收起当前这卷", comment: ""), used))
+                        .font(.system(size: 8, design: .monospaced))
+                        .foregroundColor(.orange.opacity(0.8))
+                }
+            }
+            Button {
+                if isLoaded {
+                    manager.showFilmSheet = false
+                } else {
+                    manager.loadRoll(preset)
+                    manager.showFilmSheet = false
+                    Haptics.impact(.rigid)
+                }
+            } label: {
+                Text(isLoaded ? "当前已装" : "装这一卷")
+                    .font(t.monoFont(11, .bold))
+                    .foregroundColor(isLoaded ? .white.opacity(0.45) : .black.opacity(0.85))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 34)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(isLoaded ? Color.white.opacity(0.06) : t.accent)
+                    )
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 10)
+        .background(LeatherPanel())
     }
 }

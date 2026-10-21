@@ -51,7 +51,7 @@ struct CameraRoot: View {
             if manager.showDoubleExposureFirst { ToastDoubleExposureFirst() }
 
             // 弹层
-            if manager.showFilmSheet { FilmSheet(anchor: anchors[.film] ?? .zero) }
+            if manager.showFilmSheet { FilmSheet(anchor: anchors[.film] ?? .zero, manager: manager) }
             if manager.showSettingsSheet { SettingsSheet() }
             if manager.showFilmEditor {
                 FilmEditorView().environmentObject(manager)
