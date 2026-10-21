@@ -301,6 +301,7 @@ struct FilmCanister: View {
 
 struct SettingsSheet: View {
     @EnvironmentObject var manager: CameraManager
+    @ObservedObject private var language = LanguageStore.shared
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -351,6 +352,10 @@ struct SettingsSheet: View {
                 GrooveLine()
                 settingsToggle(title: "存储提示", subtitle: "取景器右上角显示可用空间", isOn: $manager.showStorage)
                 GrooveLine()
+                languageRow()
+
+                GrooveLine()
+
                 settingsToggle(title: "日期背印",
                                subtitle: "把橙色日期烧进成片右下角（老式胶卷机后背）",
                                isOn: $manager.dateStampEnabled)
@@ -365,6 +370,47 @@ struct SettingsSheet: View {
             .transition(.move(edge: .bottom))
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    /// 语言：三档，切完立刻生效
+    private func languageRow() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("语言").font(CameraTheme.mono(13, weight: .medium))
+                        .foregroundColor(CameraTheme.ink)
+                    Text("界面语言，立即生效").font(CameraTheme.mono(11))
+                        .foregroundColor(CameraTheme.inkDim)
+                }
+                Spacer()
+            }
+            HStack(spacing: 6) {
+                ForEach(AppLanguage.allCases) { languageValue in
+                    let active = language.language == languageValue
+                    Button {
+                        language.set(languageValue)
+                        Haptics.impact(.light)
+                    } label: {
+                        Text(languageValue.label)
+                            .font(CameraTheme.mono(11, weight: active ? .bold : .medium))
+                            .foregroundColor(active ? .white : CameraTheme.ink.opacity(0.65))
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 30)
+                            .background(
+                                RoundedRectangle(cornerRadius: 5)
+                                    .fill(active ? CameraTheme.amber : CameraTheme.ink.opacity(0.06))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            if language.pendingRestart {
+                Text("已切换，重新打开 App 后生效")
+                    .font(CameraTheme.mono(10))
+                    .foregroundColor(CameraTheme.amber)
+            }
+        }
+        .padding(.vertical, 10)
     }
 
     private func settingsToggle(title: String, subtitle: String, isOn: Binding<Bool>) -> some View {

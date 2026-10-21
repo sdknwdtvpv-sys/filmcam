@@ -58,6 +58,7 @@
 		98D8BD4CF28C7887C4198CC4 /* FutureCamWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 42993311673E7C8E86C06B48 /* FutureCamWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		6D840CC5C698ADE36B820B96 /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50E6A738B3ECA24E7E26A45D /* WidgetBridge.swift */; };
 		2D8F40A7CC1FD8C1ECE0B956 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 11A0C39776C24F1007457413 /* Localizable.xcstrings */; };
+		31EB29708B1FCDB14775F665 /* AppLanguage.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0BE8F63E8585C2F26B6D51 /* AppLanguage.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -114,6 +115,7 @@
 		42993311673E7C8E86C06B48 /* FutureCamWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FutureCamWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		50E6A738B3ECA24E7E26A45D /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridge.swift; sourceTree = "<group>"; };
 		11A0C39776C24F1007457413 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		BA0BE8F63E8585C2F26B6D51 /* AppLanguage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLanguage.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +143,7 @@
 			children = (
 				0092A6C0C53C444BA566BEB7 /* CameraManager.swift */,
 				A1B2C3D4E5F6071829304B5C /* CameraTheme.swift */,
+				BA0BE8F63E8585C2F26B6D51 /* AppLanguage.swift */,
 				50E6A738B3ECA24E7E26A45D /* WidgetBridge.swift */,
 				5DCF7B489080B36FC236E6C9 /* FilmPacks.swift */,
 				978A2B37DA6834F6CFFFF688 /* MechanicalSounds.swift */,
@@ -309,6 +312,7 @@
 				7A27D2BE473F4D84B3B39172 /* FutureCamApp.swift in Sources */,
 				8D4662D67A3F48B4B29CF8CD /* FilmFilter.swift in Sources */,
 				ED2AF53204054F9F973AD559 /* LUTFilter.swift in Sources */,
+				31EB29708B1FCDB14775F665 /* AppLanguage.swift in Sources */,
 				6D840CC5C698ADE36B820B96 /* WidgetBridge.swift in Sources */,
 				970E5C46D37ABE6E09068C21 /* FilmPacks.swift in Sources */,
 				4579A6F60148C2B440E0B9C4 /* MechanicalSounds.swift in Sources */,

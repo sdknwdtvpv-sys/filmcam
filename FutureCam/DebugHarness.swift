@@ -62,10 +62,27 @@ enum DebugHarness {
         return Int(arguments[index + 1])
     }
 
+    /// `-fcLanguage en|zh`：启动时切界面语言（走和设置里同一个入口）
+    static var languageArgument: AppLanguage? {
+        guard let value = value(for: "-fcLanguage") else { return nil }
+        switch value {
+        case "en": return .english
+        case "zh", "zh-Hans": return .chinese
+        case "system": return .system
+        default: return nil
+        }
+    }
+
     /// `-fcResetRollNumber`：把当前这卷的卷号复位成 1
     static var shouldResetRollNumber: Bool { arguments.contains("-fcResetRollNumber") }
 
     /// `-fcDateStampProbe`：把成片写到沙盒，用于像素级检查日期背印
+    static func value(for flag: String) -> String? {
+        guard let index = arguments.firstIndex(of: flag),
+              arguments.indices.contains(index + 1) else { return nil }
+        return arguments[index + 1]
+    }
+
     static var shouldProbeDateStamp: Bool { arguments.contains("-fcDateStampProbe") }
 
     /// `-fcGrainCard`：颗粒对照卡（同一张底片在三个 ISO 下过一遍滤镜）

@@ -119,6 +119,11 @@ struct CameraRoot: View {
                 manager.refreshAuthorization()
                 DetentFeedback.shared.prepare()
                 MechanicalSounds.shared.prepare()
+                #if DEBUG
+                if let language = DebugHarness.languageArgument {
+                    LanguageStore.shared.set(language)
+                }
+                #endif
                 Task { await PurchaseStore.shared.start() }
                 updateFeedbackSound()
                 replayLaunchIfAwayTooLong()
