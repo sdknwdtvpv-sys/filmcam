@@ -16,11 +16,13 @@ enum RenderPipeline {
         var grain: GrainSettings
         /// 调色只作用于成片与显影页，不参与取景
         var grade: GradeSettings?
+        /// 取景与录像用 .fast：跳过柔化与 halation，保帧率
+        var quality: FilmFilter.Quality = .full
         /// 前置摄像头需要镜像
         var mirrored: Bool = false
 
         static func preview(preset: FilmPreset, traits: RollTraits?) -> Recipe {
-            Recipe(preset: preset, traits: traits, grain: .none, grade: nil)
+            Recipe(preset: preset, traits: traits, grain: .none, grade: nil, quality: .fast)
         }
 
         static func still(preset: FilmPreset, traits: RollTraits?, grain: GrainSettings,
@@ -29,7 +31,8 @@ enum RenderPipeline {
         }
 
         static func video(preset: FilmPreset, traits: RollTraits?, mirrored: Bool) -> Recipe {
-            Recipe(preset: preset, traits: traits, grain: .none, grade: nil, mirrored: mirrored)
+            Recipe(preset: preset, traits: traits, grain: .none, grade: nil,
+                   quality: .fast, mirrored: mirrored)
         }
     }
 
@@ -38,7 +41,8 @@ enum RenderPipeline {
         var out = FilmFilter.apply(oriented,
                                    preset: recipe.preset,
                                    traits: recipe.traits,
-                                   grain: recipe.grain)
+                                   grain: recipe.grain,
+                                   quality: recipe.quality)
         if let grade = recipe.grade {
             out = FilmFilter.applyGrade(out, grade)
         }

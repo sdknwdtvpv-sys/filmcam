@@ -1,5 +1,7 @@
 import CoreImage
+#if canImport(UIKit)
 import UIKit
+#endif
 
 /// 胶片预设（照片滤镜 & 视频 LUT 共用的风格定义）
 enum FilmPreset: String, CaseIterable, Identifiable {
@@ -78,6 +80,94 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .forestGreen: return "森野 400"
         case .snow:        return "雪原 100"
         case .vintageFilm: return "复古 200"
+        }
+    }
+
+    /// 自检用：临时覆盖 LUT 占比（不影响 App 内行为）
+    func withLutOverride(_ mix: CGFloat) -> FilmPreset {
+        let key = "_lutOverride_\(mix)"
+        _lutOverrides[rawValue + key] = mix
+        return self
+    }
+
+    /// 这一卷的胶片性格（色调映射 / 分离色调 / halation / 柔化 / LUT 占比）
+    var character: FilmCharacter {
+        var base = characterBase
+        if let override = _lutOverrides[rawValue + "_lutOverride_0.0"]
+            ?? _lutOverrides[rawValue + "_lutOverride_0.35"]
+            ?? _lutOverrides[rawValue + "_lutOverride_0.6"] {
+            base.lutMix = override
+        }
+        return base
+    }
+
+    private var characterBase: FilmCharacter {
+        switch self {
+        case .neutral:
+            return .none
+        case .kodakGold:      // 琥珀 200：暖、宽容、轻微晕
+            return FilmCharacter(blackLift: 0.032, highlightRoll: 0.950, midContrast: 0.24,
+                                 shadowTint: (0.20, 0.22, 0.26), highlightTint: (0.66, 0.50, 0.32),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.60, grainScale: 1.0)
+        case .fuji400:        // 松石 400：偏绿、高对比、颗粒明显
+            return FilmCharacter(blackLift: 0.026, highlightRoll: 0.945, midContrast: 0.28,
+                                 shadowTint: (0.14, 0.28, 0.28), highlightTint: (0.58, 0.52, 0.40),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.16,
+                                 lutMix: 0.62, grainScale: 1.15)
+        case .classicBnw:     // 银盐 400：黑白，靠曲线吃饭
+            return FilmCharacter(blackLift: 0.040, highlightRoll: 0.940, midContrast: 0.34,
+                                 shadowTint: (0.5, 0.5, 0.5), highlightTint: (0.5, 0.5, 0.5),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.18,
+                                 lutMix: 0.70, grainScale: 1.25)
+        case .fadedCinema:    // 褪色电影：大抬黑、低对比
+            return FilmCharacter(blackLift: 0.060, highlightRoll: 0.930, midContrast: 0.12,
+                                 shadowTint: (0.24, 0.26, 0.28), highlightTint: (0.58, 0.50, 0.44),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.26,
+                                 lutMix: 0.55, grainScale: 1.0)
+        case .cinematic:      // 钴蓝 200：冷调风光
+            return FilmCharacter(blackLift: 0.030, highlightRoll: 0.950, midContrast: 0.26,
+                                 shadowTint: (0.12, 0.24, 0.34), highlightTint: (0.54, 0.52, 0.44),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.18,
+                                 lutMix: 0.62, grainScale: 0.95)
+        case .duskGold:       // 暮金 100：日落
+            return FilmCharacter(blackLift: 0.034, highlightRoll: 0.945, midContrast: 0.22,
+                                 shadowTint: (0.22, 0.22, 0.28), highlightTint: (0.70, 0.52, 0.30),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.22,
+                                 lutMix: 0.58, grainScale: 0.85)
+        case .slate:          // 石板 800：阴天街拍
+            return FilmCharacter(blackLift: 0.036, highlightRoll: 0.940, midContrast: 0.24,
+                                 shadowTint: (0.16, 0.20, 0.24), highlightTint: (0.52, 0.50, 0.46),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.60, grainScale: 1.1)
+        case .mint:           // 薄荷 400：绿调
+            return FilmCharacter(blackLift: 0.034, highlightRoll: 0.950, midContrast: 0.20,
+                                 shadowTint: (0.16, 0.28, 0.26), highlightTint: (0.56, 0.54, 0.42),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.18,
+                                 lutMix: 0.62, grainScale: 1.0)
+        case .rust:           // 铁锈 400：暖褐
+            return FilmCharacter(blackLift: 0.038, highlightRoll: 0.940, midContrast: 0.26,
+                                 shadowTint: (0.26, 0.20, 0.18), highlightTint: (0.66, 0.48, 0.32),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.60, grainScale: 1.1)
+        case .frost:          // 霜白 400：冷白
+            return FilmCharacter(blackLift: 0.030, highlightRoll: 0.960, midContrast: 0.18,
+                                 shadowTint: (0.16, 0.22, 0.30), highlightTint: (0.54, 0.56, 0.56),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.16,
+                                 lutMix: 0.58, grainScale: 0.95)
+        case .ochre:          // 赭石 200：土黄
+            return FilmCharacter(blackLift: 0.036, highlightRoll: 0.945, midContrast: 0.24,
+                                 shadowTint: (0.24, 0.22, 0.18), highlightTint: (0.68, 0.52, 0.34),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.60, grainScale: 1.0)
+        case .abyss:          // 深潭 1600：夜空，溢出最强
+            return FilmCharacter(blackLift: 0.044, highlightRoll: 0.930, midContrast: 0.30,
+                                 shadowTint: (0.10, 0.18, 0.34), highlightTint: (0.70, 0.52, 0.36),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.62, grainScale: 1.35)
+        default:
+            // 配方类（调色派）不走胶片性格，由 applyGrade 负责
+            return .none
         }
     }
 
@@ -201,6 +291,38 @@ private struct FilterParams {
     var lutIntensity: CGFloat     // LUT 叠加强度（0 = 不使用 LUT）
 }
 
+/// 自检用的临时覆盖表（只在 macOS 接触印相里用）
+nonisolated(unsafe) var _lutOverrides: [String: CGFloat] = [:]
+
+/// 胶片性格：决定这一卷"像什么胶片"，而不是"调了什么色"。
+/// 真正的质感来自这几条曲线，LUT 只负责最后那点色彩倾向。
+struct FilmCharacter {
+    /// 黑位抬起：胶片从不死黑
+    var blackLift: CGFloat = 0.030
+    /// 高光滚降：1.0 会被压到这个值
+    var highlightRoll: CGFloat = 0.955
+    /// 中间调 S 形强度（0 = 不压，1 = 很强）
+    var midContrast: CGFloat = 0.22
+    /// 暗部偏色（青绿方向）
+    var shadowTint: (r: CGFloat, g: CGFloat, b: CGFloat) = (0.16, 0.26, 0.30)
+    /// 高光偏色（暖方向）
+    var highlightTint: (r: CGFloat, g: CGFloat, b: CGFloat) = (0.60, 0.49, 0.35)
+    /// 分离色调整体强度
+    var splitStrength: CGFloat = 0.16
+    /// 高光溢出（halation）
+    var halation: CGFloat = 0.28
+    /// 光学柔化（0 = 不动）
+    var soften: CGFloat = 0.22
+    /// LUT 占多少（剩下的留给原图）
+    var lutMix: CGFloat = 0.60
+    /// 颗粒倍率（乘在卷本身的颗粒上）
+    var grainScale: CGFloat = 1.0
+
+    static let none = FilmCharacter(blackLift: 0, highlightRoll: 1, midContrast: 0,
+                                    splitStrength: 0, halation: 0, soften: 0,
+                                    lutMix: 0, grainScale: 0)
+}
+
 /// 参数化调色层：对应照片 App 里那套滑块（曝光/高光/阴影/对比/黑点/饱和/自然饱和/色温/色调/暗角/锐度/清晰度）。
 /// 取值范围统一成 -1…1（除对比、饱和围绕 1.0），方便从配方里换算。
 struct GradeSettings: Equatable {
@@ -241,13 +363,26 @@ struct GrainSettings: Equatable {
 
 /// 实时胶片滤镜引擎（Core Image 链：色温 + 色彩控制 + 暗角 + 漏光 + 可插拔 3D LUT + 颗粒）
 struct FilmFilter {
+    /// 渲染质量：取景与录像用 .fast（跳过柔化与 halation，保 60fps），
+    /// 成片与显影用 .full。
+    enum Quality { case fast, full }
+
     static func apply(_ image: CIImage, preset: FilmPreset,
                       traits: RollTraits? = nil,
-                      grain: GrainSettings = .none) -> CIImage {
+                      grain: GrainSettings = .none,
+                      quality: Quality = .full) -> CIImage {
         let p = params(for: preset)
+        let c = preset.character
+        let extent = image.extent
+        let dbg = ProcessInfo.processInfo.environment
         var img = image
 
-        // 1. 内置色温 + 色彩控制（LUT 预设默认关闭，由 LUT 主导色调）
+        // 1. 光学柔化：数码原图太锐，胶片镜头有细微扩散
+        if quality == .full, c.soften > 0.01 {
+            img = soften(img, amount: c.soften)
+        }
+
+        // 2. 内置色温 + 色彩控制（LUT 预设默认关闭，由 LUT 主导色调）
         if p.proceduralColor {
             if let f = CIFilter(name: "CITemperatureAndTint") {
                 f.setValue(img, forKey: kCIInputImageKey)
@@ -264,18 +399,47 @@ struct FilmFilter {
             }
         }
 
-        // 2. 暗角
-        if let f = CIFilter(name: "CIVignette") {
+        // 3. 色调映射：黑位抬起 + 高光滚降 + 中间调 S。
+        //    这一层决定"像不像胶片"，必须在 LUT 之前。
+        if (c.blackLift > 0 || c.highlightRoll < 1), dbg["FC_NO_CURVE"] == nil {
+            img = toneCurve(img, character: c)
+        }
+
+        // 4. 3D LUT：只占 character.lutMix，其余留给原图的色彩关系
+        let lutAmount = p.lutIntensity * c.lutMix
+        if lutAmount > 0.01,
+           let lut = LUTFilter.resolvedLUT(for: preset, intensity: 1.0) {
+            let graded = LUTFilter.apply(lut, to: img)
+            img = dissolve(img, graded, time: lutAmount)
+        }
+
+        // 5. 分离色调：暗部偏青、高光偏暖
+        if c.splitStrength > 0.01, dbg["FC_NO_SPLIT"] == nil {
+            img = splitTone(img, character: c)
+        }
+
+        // 6. Halation：高光溢出，只做成片（模糊很贵）
+        if quality == .full, c.halation > 0.01, dbg["FC_NO_HALATION"] == nil {
+            img = halation(img, amount: c.halation)
+        }
+
+        // 7. 参数化调色（照片 App 那套滑块，配方类预设用）
+        if let grade = preset.grade {
+            img = applyGrade(img, grade)
+        }
+
+        // 8. 这卷的轻微偏色（±160K 以内，只做连续性不做风格）
+        if let traits, abs(traits.tintShift) > 0.05,
+           let f = CIFilter(name: "CITemperatureAndTint") {
             f.setValue(img, forKey: kCIInputImageKey)
-            f.setValue(p.vignette, forKey: "inputIntensity")
-            f.setValue(p.vignetteRadius, forKey: "inputRadius")
+            f.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
+            f.setValue(CIVector(x: 6500 - traits.tintShift * 160, y: 0), forKey: "inputTargetNeutral")
             if let out = f.outputImage { img = out }
         }
 
-        // 3. 漏光（径向渐变 + 滤色混合）
+        // 9. 漏光（径向渐变 + 滤色混合）
         if p.leakAlpha > 0,
            let grad = CIFilter(name: "CIRadialGradient") {
-            // 漏光位置由这卷的种子决定，同一卷每张都在同一个角落泛光
             let dx = traits.map { cos($0.leakAngle) * Double(img.extent.width) * 0.20 } ?? 0
             let dy = traits.map { sin($0.leakAngle) * Double(img.extent.height) * 0.20 } ?? 0
             let center = CIVector(x: img.extent.midX + CGFloat(dx),
@@ -297,38 +461,140 @@ struct FilmFilter {
             }
         }
 
-        // 4. 3D LUT（CC0 HaldCLUT，强度可调，由 LUTFilter 解析并缓存）
-        if p.lutIntensity > 0,
-           let lut = LUTFilter.resolvedLUT(for: preset, intensity: Float(p.lutIntensity)) {
-            img = LUTFilter.apply(lut, to: img)
+        // 10. 颗粒：只在中间调最强（真实胶片颗粒的分布）
+        if grain.intensity > 0.001 {
+            img = applyGrain(img.cropped(to: extent),
+                             settings: grain,
+                             scale: c.grainScale,
+                             midtoneMasked: true)
         }
 
-        // 5. 参数化调色（照片 App 那套滑块）
-        if let grade = preset.grade {
-            img = applyGrade(img, grade)
-        }
-
-        // 5b. 这卷的轻微偏色（±160K 以内，只做连续性不做风格）
-        if let traits, abs(traits.tintShift) > 0.05,
-           let f = CIFilter(name: "CITemperatureAndTint") {
+        // 11. 自然暗角（放在最后，避免被 LUT 再压一次）
+        if p.vignette > 0.001, dbg["FC_NO_VIGNETTE"] == nil, let f = CIFilter(name: "CIVignette") {
             f.setValue(img, forKey: kCIInputImageKey)
-            f.setValue(CIVector(x: 6500, y: 0), forKey: "inputNeutral")
-            f.setValue(CIVector(x: 6500 - traits.tintShift * 160, y: 0), forKey: "inputTargetNeutral")
+            f.setValue(p.vignette, forKey: "inputIntensity")
+            f.setValue(p.vignetteRadius, forKey: "inputRadius")
             if let out = f.outputImage { img = out }
         }
 
-        // 6. 颗粒。
-        // 必须先裁回原尺寸：漏光用的是无穷大的径向渐变，混合之后 extent 会变成 ∞，
-        // 颗粒按 ∞ 尺寸生成就完全落不到画面上（这个坑让第一版颗粒彻底不可见）。
-        if grain.intensity > 0.001 {
-            img = applyGrain(img.cropped(to: image.extent), settings: grain)
+        return img.cropped(to: extent)
+    }
+
+    // MARK: - 胶片响应层
+
+    private static func dissolve(_ a: CIImage, _ b: CIImage, time: CGFloat) -> CIImage {
+        guard let f = CIFilter(name: "CIDissolveTransition") else { return b }
+        f.setValue(a, forKey: kCIInputImageKey)
+        f.setValue(b, forKey: kCIInputTargetImageKey)
+        f.setValue(time, forKey: kCIInputTimeKey)
+        return (f.outputImage ?? b).cropped(to: a.extent)
+    }
+
+    private static func soften(_ image: CIImage, amount: CGFloat) -> CIImage {
+        guard let blur = CIFilter(name: "CIGaussianBlur") else { return image }
+        let radius = max(0.4, 1.4 * amount)
+        blur.setValue(image.clampedToExtent(), forKey: kCIInputImageKey)
+        blur.setValue(radius, forKey: kCIInputRadiusKey)
+        guard let blurred = blur.outputImage?.cropped(to: image.extent) else { return image }
+        return dissolve(image, blurred, time: amount)
+    }
+
+    /// 胶片曲线：抬黑 + 滚降 + S 形
+    private static func toneCurve(_ image: CIImage, character c: FilmCharacter) -> CIImage {
+        guard let f = CIFilter(name: "CIToneCurve") else { return image }
+        let lift = c.blackLift
+        let roll = c.highlightRoll
+        let s = c.midContrast
+        // 中间调两侧各抬/压一点，形成 S
+        let p1y = 0.25 + lift * 0.6 - s * 0.06
+        let p2y = 0.50 + lift * 0.25 + s * 0.02
+        let p3y = 0.78 + (roll - 1) * 0.5 + s * 0.05
+        f.setValue(image, forKey: kCIInputImageKey)
+        f.setValue(CIVector(x: 0, y: lift), forKey: "inputPoint0")
+        f.setValue(CIVector(x: 0.25, y: p1y), forKey: "inputPoint1")
+        f.setValue(CIVector(x: 0.5, y: p2y), forKey: "inputPoint2")
+        f.setValue(CIVector(x: 0.78, y: p3y), forKey: "inputPoint3")
+        f.setValue(CIVector(x: 1, y: roll), forKey: "inputPoint4")
+        return (f.outputImage ?? image).cropped(to: image.extent)
+    }
+
+    /// 亮度遮罩：0 = 全黑，1 = 全白
+    private static func luminance(_ image: CIImage) -> CIImage {
+        let m = CIFilter(name: "CIColorMatrix")!
+        m.setValue(image, forKey: kCIInputImageKey)
+        m.setValue(CIVector(x: 0.30, y: 0.30, z: 0.30, w: 0), forKey: "inputRVector")
+        m.setValue(CIVector(x: 0.59, y: 0.59, z: 0.59, w: 0), forKey: "inputGVector")
+        m.setValue(CIVector(x: 0.11, y: 0.11, z: 0.11, w: 0), forKey: "inputBVector")
+        return (m.outputImage ?? image).cropped(to: image.extent)
+    }
+
+    /// 分离色调：暗部与高光分别偏色
+    private static func splitTone(_ image: CIImage, character c: FilmCharacter) -> CIImage {
+        let lum = luminance(image)
+        var out = image
+
+        // 暗部：把阴影层的颜色压进去
+        let shadow = CIImage(color: CIColor(red: c.shadowTint.r, green: c.shadowTint.g,
+                                            blue: c.shadowTint.b))
+            .cropped(to: image.extent)
+        if let blend = CIFilter(name: "CISoftLightBlendMode"), let mask = CIFilter(name: "CIBlendWithMask") {
+            blend.setValue(shadow, forKey: kCIInputImageKey)
+            blend.setValue(out, forKey: kCIInputBackgroundImageKey)
+            mask.setValue(blend.outputImage, forKey: kCIInputImageKey)
+            mask.setValue(out, forKey: kCIInputBackgroundImageKey)
+            mask.setValue(lum.applyingFilter("CIColorInvert"), forKey: kCIInputMaskImageKey)
+            out = (mask.outputImage ?? out).cropped(to: image.extent)
         }
 
-        return img.cropped(to: image.extent)
+        // 高光
+        let highlight = CIImage(color: CIColor(red: c.highlightTint.r, green: c.highlightTint.g,
+                                               blue: c.highlightTint.b))
+            .cropped(to: image.extent)
+        if let blend = CIFilter(name: "CISoftLightBlendMode"), let mask = CIFilter(name: "CIBlendWithMask") {
+            blend.setValue(highlight, forKey: kCIInputImageKey)
+            blend.setValue(out, forKey: kCIInputBackgroundImageKey)
+            mask.setValue(blend.outputImage, forKey: kCIInputImageKey)
+            mask.setValue(out, forKey: kCIInputBackgroundImageKey)
+            mask.setValue(lum, forKey: kCIInputMaskImageKey)
+            out = (mask.outputImage ?? out).cropped(to: image.extent)
+        }
+
+        return dissolve(image, out, time: c.splitStrength)
+    }
+
+    /// 高光溢出：亮部模糊后偏红叠回去
+    private static func halation(_ image: CIImage, amount: CGFloat) -> CIImage {
+        guard let matrix = CIFilter(name: "CIColorMatrix"),
+              let blur = CIFilter(name: "CIGaussianBlur"),
+              let tint = CIFilter(name: "CIColorMatrix"),
+              let add = CIFilter(name: "CIAdditionCompositing") else { return image }
+
+        matrix.setValue(image, forKey: kCIInputImageKey)
+        matrix.setValue(CIVector(x: 1.4, y: 0, z: 0, w: 0), forKey: "inputRVector")
+        matrix.setValue(CIVector(x: 0, y: 1.3, z: 0, w: 0), forKey: "inputGVector")
+        matrix.setValue(CIVector(x: 0, y: 0, z: 1.2, w: 0), forKey: "inputBVector")
+        matrix.setValue(CIVector(x: -0.72, y: -0.70, z: -0.66, w: 0), forKey: "inputBiasVector")
+        guard let bright = matrix.outputImage else { return image }
+
+        blur.setValue(bright.clampedToExtent(), forKey: kCIInputImageKey)
+        blur.setValue(image.extent.width * 0.018, forKey: kCIInputRadiusKey)
+        guard let blurred = blur.outputImage?.cropped(to: image.extent) else { return image }
+
+        tint.setValue(blurred, forKey: kCIInputImageKey)
+        tint.setValue(CIVector(x: 1.0, y: 0, z: 0, w: 0), forKey: "inputRVector")
+        tint.setValue(CIVector(x: 0, y: 0.55, z: 0, w: 0), forKey: "inputGVector")
+        tint.setValue(CIVector(x: 0, y: 0, z: 0.40, w: 0), forKey: "inputBVector")
+        guard let warm = tint.outputImage else { return image }
+
+        add.setValue(warm, forKey: kCIInputImageKey)
+        add.setValue(image, forKey: kCIInputBackgroundImageKey)
+        guard let composed = add.outputImage else { return image }
+        return dissolve(image, composed.cropped(to: image.extent), time: amount)
     }
 
     private static let renderContext = CIContext(options: [.useSoftwareRenderer: false])
 
+    #if canImport(UIKit)
     /// 把 CIImage 渲染成 UIImage + JPEG（成片重渲染走这里）
     static func render(_ image: CIImage, quality: CGFloat = 0.92) -> (UIImage, Data)? {
         let extent = image.extent
@@ -338,6 +604,12 @@ struct FilmFilter {
         guard let data = ui.jpegData(compressionQuality: quality) else { return nil }
         return (ui, data)
     }
+    #else
+    /// macOS 自检用：只出 CGImage
+    static func renderCG(_ image: CIImage) -> CGImage? {
+        renderContext.createCGImage(image, from: image.extent)
+    }
+    #endif
 
     /// 参数化调色：按滑块语义依次施加 Core Image 滤镜
     static func applyGrade(_ image: CIImage, _ g: GradeSettings) -> CIImage {
@@ -416,12 +688,15 @@ struct FilmFilter {
     }
 
     /// 颗粒：随机噪声压成灰度、放大成粗颗粒，再用软光叠回画面
-    static func applyGrain(_ image: CIImage, settings: GrainSettings) -> CIImage {
+    static func applyGrain(_ image: CIImage,
+                           settings: GrainSettings,
+                           scale multiplier: CGFloat = 1,
+                           midtoneMasked: Bool = false) -> CIImage {
         let extent = image.extent
         guard extent.width > 1, extent.height > 1,
               let generator = CIFilter(name: "CIRandomGenerator")?.outputImage else { return image }
 
-        let scale = max(1.0, settings.scale)
+        let scale = max(1.0, settings.scale * max(0.4, multiplier))
         let smallW = max(1, extent.width / scale)
         let smallH = max(1, extent.height / scale)
         let originX = settings.offsetX * 800
@@ -459,9 +734,45 @@ struct FilmFilter {
         guard let blend = CIFilter(name: "CISoftLightBlendMode") else { return image }
         blend.setValue(noise.cropped(to: extent), forKey: kCIInputImageKey)
         blend.setValue(image, forKey: kCIInputBackgroundImageKey)
-        return (blend.outputImage ?? image).cropped(to: extent)
+        let grained = (blend.outputImage ?? image).cropped(to: extent)
+
+        guard midtoneMasked, let maskFilter = CIFilter(name: "CIBlendWithMask") else {
+            return grained
+        }
+        // 中间调遮罩：min(2L, 2-2L)，等于 1-|2L-1|。
+        // 高光和暗部都趋近 0，颗粒只落在中间调（真实胶片的分布）。
+        let bright = image.applyingFilter("CIColorMatrix", parameters: [
+            "inputRVector": CIVector(x: 2, y: 0, z: 0, w: 0),
+            "inputGVector": CIVector(x: 0, y: 2, z: 0, w: 0),
+            "inputBVector": CIVector(x: 0, y: 0, z: 2, w: 0)])
+        let dark = image.applyingFilter("CIColorMatrix", parameters: [
+            "inputRVector": CIVector(x: -2, y: 0, z: 0, w: 0),
+            "inputGVector": CIVector(x: 0, y: -2, z: 0, w: 0),
+            "inputBVector": CIVector(x: 0, y: 0, z: -2, w: 0),
+            "inputBiasVector": CIVector(x: 2, y: 2, z: 2, w: 0)])
+        var mask = bright
+        if let minFilter = CIFilter(name: "CIMinimumCompositing") {
+            minFilter.setValue(bright, forKey: kCIInputImageKey)
+            minFilter.setValue(dark, forKey: kCIInputBackgroundImageKey)
+            mask = minFilter.outputImage ?? bright
+        }
+        // 转灰度 + 轻微模糊，避免颗粒边缘出现硬边
+        mask = mask
+            .applyingFilter("CIColorClamp")
+            .applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: max(2, extent.width * 0.004)])
+            .cropped(to: extent)
+            .applyingFilter("CIColorMatrix", parameters: [
+                "inputRVector": CIVector(x: 0.30, y: 0.30, z: 0.30, w: 0),
+                "inputGVector": CIVector(x: 0.59, y: 0.59, z: 0.59, w: 0),
+                "inputBVector": CIVector(x: 0.11, y: 0.11, z: 0.11, w: 0)])
+
+        maskFilter.setValue(grained, forKey: kCIInputImageKey)
+        maskFilter.setValue(image, forKey: kCIInputBackgroundImageKey)
+        maskFilter.setValue(mask, forKey: kCIInputMaskImageKey)
+        return (maskFilter.outputImage ?? grained).cropped(to: extent)
     }
 
+    #if canImport(UIKit)
     /// 双重曝光：把 overlay 以"滤色 + 半透明"叠加到 base 之上（拍立得双曝风格）
     static func doubleExposure(base: UIImage, overlay: UIImage) -> UIImage {
         let size = base.size
@@ -474,6 +785,7 @@ struct FilmFilter {
             overlay.draw(in: CGRect(origin: .zero, size: size))
         }
     }
+    #endif
 
     private static func params(for preset: FilmPreset) -> FilterParams {
         switch preset {
