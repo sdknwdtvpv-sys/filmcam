@@ -51,12 +51,7 @@ struct RangefinderCameraView: View {
                     VStack(spacing: 0) {
                         topPlate(t, topInset: insets.top)
                         HStack(spacing: 0) {
-                            VStack(spacing: 0) {
-                                waist(t)
-                                readoutStrip(t)
-                                    .padding(.horizontal, 12)
-                                    .padding(.bottom, 6)
-                            }
+                            landscapeViewfinder(t)
                             landscapeGripVertical(t, bottomInset: insets.bottom)
                         }
                     }
@@ -91,6 +86,48 @@ struct RangefinderCameraView: View {
     }
 
     // MARK: 铝制顶盖
+
+    /// 横屏取景：固定 3:2 画幅窗口，四周留机身黑皮。
+    /// 之前让取景窗吃满剩余宽度，被拉成 2.2:1 的横条，跟 4:3 出片对不上。
+    private func landscapeViewfinder(_ t: ThemeTokens) -> some View {
+        VStack(spacing: 0) {
+            // 卷信息：贴着画幅上沿
+            HStack(spacing: 6) {
+                Silkscreen(text: manager.selectedPreset.label, color: .white.opacity(0.62),
+                           size: 7, tracking: 2)
+                Spacer(minLength: 0)
+                Text(manager.roll.countText)
+                    .font(t.monoFont(7.5, .bold))
+                    .foregroundColor(manager.roll.isFull ? t.accent : .white.opacity(0.5))
+                LEDDot(color: t.glow, size: 4, dimmed: !manager.hasPreview)
+                Silkscreen(text: manager.hasPreview ? "READY" : "BOOT",
+                           color: .white.opacity(0.5), size: 5.5, tracking: 1)
+            }
+            .padding(.horizontal, 10)
+            .padding(.bottom, 6)
+
+            GeometryReader { proxy in
+                let aspect: CGFloat = 3.0 / 2.0
+                let maxW = proxy.size.width
+                let maxH = proxy.size.height - 12
+                let width = min(maxW, maxH * aspect)
+                let height = width / aspect
+                LCDWindow(tokens: t, bezel: 5, radius: 7) {
+                    PreviewSurface(showsScrim: false)
+                }
+                .frame(width: width, height: height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .padding(.horizontal, 10)
+
+            readoutStrip(t)
+                .padding(.horizontal, 10)
+                .padding(.top, 6)
+                .padding(.bottom, 4)
+        }
+        .frame(maxWidth: .infinity)
+        .background(LeatherPanel())
+    }
 
     /// 横屏右侧握把：三个控件竖排（相册 / 快门 / 翻转），和竖屏的左右顺序一一对应
     private func landscapeGripVertical(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
