@@ -151,6 +151,8 @@ final class CameraManager: NSObject, ObservableObject {
     // 取景手势状态（对焦/变焦/镜头）
     /// 当前取景画面的宽高比（来自首帧，用于把点击坐标换算成设备坐标）
     @Published var previewAspect: CGFloat?
+    /// 取景窗的宽高比。成片按这个比例裁，保证所见即所得
+    @Published var viewfinderAspect: CGFloat = 4.0 / 3.0
     /// 当前变焦倍率（1.0 = 1×）
     /// 三脚架检测
     private let stability = StabilityMonitor()
@@ -245,7 +247,8 @@ final class CameraManager: NSObject, ObservableObject {
             Task { @MainActor in
                 guard let self else { return }
                 self.showDoubleExposureFirst = false
-                let final = self.finalized(image)
+                let cropped = self.croppedToViewfinder(image)
+                let final = self.finalized(cropped)
                 self.capturedImage = final
                 self.capturedBase = base
                 self.capturedAlbumItem = nil
@@ -257,7 +260,8 @@ final class CameraManager: NSObject, ObservableObject {
                 if self.mode == .doubleExposure, self.doubleExposureStep == 1 {
                     self.doubleExposureStep = 2
                 }
-                self.saveToAlbumOnly(final, jpeg: jpeg, rollID: rollID, base: base)
+                self.saveToAlbumOnly(final, jpeg: jpeg, rollID: rollID,
+                                     base: self.croppedToViewfinder(base))
             }
         }
         controller.onDoubleExposureFirstShot = { [weak self] image in
@@ -525,7 +529,7 @@ final class CameraManager: NSObject, ObservableObject {
             self.pendingLibrarySave = (final, self.controller.reencodeJPEG(final))
             self.selectedLook = .none
             self.bumpFrameCount()
-            self.saveToAlbumOnly(final, jpeg: nil, rollID: self.rolls.current.id)
+            self.saveToAlbumOnly(final, jpeg: nil, rollID: self.rolls.current.id, base: rendered.0)
             Haptics.impact(.heavy)
         }
     }
@@ -687,6 +691,33 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
     #endif
+
+    /// 按取景窗比例中心裁切：预览是 aspectFill 铺满，成片也必须裁到这个比例，
+    /// 否则用户框住的构图和拍出来的不是同一张
+    func croppedToViewfinder(_ image: UIImage) -> UIImage {
+        let aspect = viewfinderAspect
+        guard aspect > 0.1 else { return image }
+        let w = image.size.width, h = image.size.height
+        guard w > 1, h > 1 else { return image }
+        let current = w / h
+        guard abs(current - aspect) > 0.002 else { return image }
+        var rect = CGRect(origin: .zero, size: image.size)
+        if current > aspect {
+            let newW = h * aspect
+            rect = CGRect(x: (w - newW) / 2, y: 0, width: newW, height: h)
+        } else {
+            let newH = w / aspect
+            rect = CGRect(x: 0, y: (h - newH) / 2, width: w, height: newH)
+        }
+        // 用 CGImage 裁，避免 UIGraphics 重绘丢 EXIF 方向
+        guard let cg = image.cgImage?.cropping(to: CGRect(x: rect.minX * image.scale,
+                                                          y: rect.minY * image.scale,
+                                                          width: rect.width * image.scale,
+                                                          height: rect.height * image.scale)) else {
+            return image
+        }
+        return UIImage(cgImage: cg, scale: image.scale, orientation: image.imageOrientation)
+    }
 
     /// 成片统一出口：需要日期背印就烧上去，并把 JPEG 重新编码（保留 EXIF）
     private func finalized(_ image: UIImage) -> UIImage {

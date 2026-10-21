@@ -13,12 +13,28 @@ struct PreviewSurface: View {
     @State private var focusToken = UUID()
     @State private var zoomBase: CGFloat = 1
 
+    /// 取景窗尺寸变了就更新比例，成片按它裁
+    private func updateAspect(_ size: CGSize) {
+        guard size.width > 1, size.height > 1 else { return }
+        let aspect = size.width / size.height
+        if abs(aspect - manager.viewfinderAspect) > 0.002 {
+            manager.viewfinderAspect = aspect
+        }
+    }
+
     var body: some View {
         let t = ThemeStore.current
 
         ZStack {
             PreviewView(frames: manager.previewFrames, initialImage: manager.lastPreviewFrame)
                 .background(Color.black)
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { updateAspect(proxy.size) }
+                            .onChange(of: proxy.size) { _, new in updateAspect(new) }
+                    }
+                )
 
             if showsScrim {
                 VStack(spacing: 0) {
