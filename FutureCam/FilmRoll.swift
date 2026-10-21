@@ -96,6 +96,12 @@ final class RollStore: ObservableObject {
     /// 当前这卷一张都没拍就换型号 = 同一卷换了胶卷，卷号不进位、也不归档。
     @discardableResult
     func load(_ preset: FilmPreset) -> FilmRoll {
+        // 装的还是同一型号 = 没换卷。之前这里会给同型号也建新卷，
+        // 结果每次打开片仓再点自己那卷，卷号就 +1，拍了一半的卷被收进档案。
+        if preset.rawValue == current.presetRaw, !current.isFull {
+            return current
+        }
+
         if current.used == 0 {
             current.presetRaw = preset.rawValue
             current.seed = Self.makeSeed()   // 换了型号就换一套性格
@@ -114,7 +120,7 @@ final class RollStore: ObservableObject {
                             number: nextNumber, capacity: Self.capacity, used: 0,
                             seed: Self.makeSeed(), startedAt: Date(), finishedAt: nil)
         current = roll
-        nextNumber += 1
+        nextNumber = roll.number + 1
         persist()
         return roll
     }
