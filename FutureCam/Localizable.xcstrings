@@ -1270,7 +1270,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "My films"
+            "value": "Mine"
           }
         },
         "zh-Hans": {
@@ -2061,6 +2061,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "点了没反应"
+          }
+        }
+      }
+    },
+    "点机身上的铭牌，打开设置：语言、网格、水平仪、日期背印": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap the nameplate to open Settings: language, grid, level, date imprint"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点机身上的铭牌，打开设置：语言、网格、水平仪、日期背印"
           }
         }
       }

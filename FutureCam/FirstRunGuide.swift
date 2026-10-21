@@ -2,6 +2,7 @@ import SwiftUI
 
 /// 引导要逐个点亮的控件
 enum GuideTarget: String, CaseIterable, Hashable {
+    case title
     case film
     case flash
     case strip
@@ -39,7 +40,7 @@ extension View {
 }
 
 /// 首次进入的逐项引导：一次只点亮一个控件，说一句话，按「下一步」往下走。
-/// 七步走完才开始使用，之后不再出现。
+/// 八步走完才开始使用，之后不再出现。
 struct FirstRunGuide: View {
     var anchors: [GuideTarget: CGRect]
     var onFinish: () -> Void
@@ -55,6 +56,8 @@ struct FirstRunGuide: View {
 
     /// 顺序沿机身从上到下：顶盖 → 参数条 → 快门盘 → 底部两个键
     private let steps: [Step] = [
+        Step(target: .title, title: "我的",
+             detail: "点机身上的铭牌，打开设置：语言、网格、水平仪、日期背印"),
         Step(target: .film, title: "换胶片",
              detail: "点这个窗开仓，换一筒胶片"),
         Step(target: .flash, title: "闪光",

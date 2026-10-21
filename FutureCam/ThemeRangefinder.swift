@@ -79,15 +79,25 @@ struct RangefinderCameraView: View {
                 ScrewHead(size: 7)
                     .padding(.top, 6)
 
-                VStack(alignment: .leading, spacing: 1) {
+                // 标题就是「我的」：点铭牌进设置
+                Button {
+                    manager.showSettingsSheet = true
+                    Haptics.impact(.light)
+                } label: {
+                    VStack(alignment: .leading, spacing: 1) {
                     Text("FUTURE CAM")
                         .font(t.labelFont(16, .medium))
                         .tracking(3.4)
                         .foregroundColor(t.ink)
                     Silkscreen(text: "M-01 RANGEFINDER", color: t.ink.opacity(0.55),
                                size: 6, tracking: 1.6)
+                    }
+                    .padding(.top, 2)
+                    .contentShape(Rectangle())   // 整块铭牌都可点
                 }
-                .padding(.top, 2)
+                .buttonStyle(TitlePlateStyle())
+                .guideAnchor(.title)
+                .accessibilityLabel("设置")
 
                 Spacer(minLength: 2)
 
@@ -139,23 +149,8 @@ struct RangefinderCameraView: View {
                 .accessibilityLabel("当前胶片 \(manager.selectedPreset.label)，点按更换")
                 .accessibilityAddTraits(.isButton)
 
-                // 右上角这颗螺丝就是检修口：点开 SERVICE PANEL（设置）
-                VStack(spacing: 3) {
-                    Button {
-                        manager.showSettingsSheet = true
-                        Haptics.impact(.light)
-                    } label: {
-                        ScrewHead(size: 7)
-                            .frame(width: 36, height: 34)   // 螺丝很小，热区放大
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    Silkscreen(text: "SERVICE", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
-                }
-                .padding(.top, -8)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("设置")
-                .accessibilityAddTraits(.isButton)
+                ScrewHead(size: 7)
+                    .padding(.top, 6)
             }
             .padding(.horizontal, 14)
             .padding(.top, topInset + 8)
@@ -791,5 +786,16 @@ struct TopDial: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(value.map { "\(caption) \($0)" } ?? caption)
         .accessibilityAddTraits(.isButton)
+    }
+}
+
+
+/// 铭牌按压反馈：轻微下沉 + 变暗，不用缩放以免标题模糊
+struct TitlePlateStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .opacity(configuration.isPressed ? 0.55 : 1)
+            .offset(y: configuration.isPressed ? 1 : 0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
