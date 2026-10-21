@@ -770,7 +770,9 @@ final class CameraManager: NSObject, ObservableObject {
     /// 顺序很关键：先按取景框（竖幅）裁切，再旋转。这样构图和你取景时看到的一致，
     /// 只是整幅转正，不会因为旋转后比例变了被裁掉两边。
     func uprightedForDevice(_ image: UIImage) -> UIImage {
-        switch UIDevice.current.orientation {
+        let o = UIDevice.current.orientation
+        NSLog("[Orientation] 拍摄时设备朝向=%d", o.rawValue)
+        switch o {
         case .landscapeLeft:  return Self.rotate(image, clockwise: true)
         case .landscapeRight: return Self.rotate(image, clockwise: false)
         case .portraitUpsideDown: return Self.rotate(image, clockwise: true, turns: 2)
