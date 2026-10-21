@@ -24,6 +24,9 @@ enum DebugHarness {
 
     static var shouldStubPreview: Bool { arguments.contains("-fcStubPreview") }
 
+    /// `-fcContactSheet`：相册直接以接触印相模式打开
+    static var shouldContactSheet: Bool { arguments.contains("-fcContactSheet") }
+
     /// `-fcSaveStub`：存一张假照片，验证底片是否一起落盘
     static var shouldSaveStub: Bool { arguments.contains("-fcSaveStub") }
 

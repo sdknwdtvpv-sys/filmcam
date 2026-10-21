@@ -28,7 +28,7 @@ struct AlbumView: View {
 
     @State private var detailItem: AlbumItem?
     /// 接触印相模式：一冲出来就是一整张，和胶片真正拿到手的样子一样
-    @State private var contactSheetMode = false
+    @State private var contactSheetMode = DebugHarness.shouldContactSheet
 
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
 
@@ -149,16 +149,22 @@ struct AlbumView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
 
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 2), count: 6),
-                                  spacing: 2) {
+                        // 接触印相是「小而密」：固定 6 列、每格指甲盖大，
+                        // 看的是整卷的节奏，不是单张细节
+                        LazyVGrid(columns: Array(repeating: GridItem(.fixed(54), spacing: 3), count: 6),
+                                  spacing: 3) {
                             ForEach(section.items) { item in
                                 Button { detailItem = item } label: {
-                                    MediaThumbnail(item: item, maxPixel: 200)
-                                        .aspectRatio(1.5, contentMode: .fill)
+                                    MediaThumbnail(item: item, maxPixel: 160)
+                                        .frame(width: 54, height: 36)
                                         .clipped()
                                         .overlay(Rectangle().strokeBorder(.white.opacity(0.10), lineWidth: 0.5))
                                 }
                                 .buttonStyle(.plain)
+                            }
+                            // 补空格子，让没拍满的卷也保持 6 列排面
+                            ForEach(0..<max(0, 6 - section.items.count % 6), id: \.self) { _ in
+                                Color.clear.frame(width: 54, height: 36)
                             }
                         }
                         .padding(.horizontal, 6)
