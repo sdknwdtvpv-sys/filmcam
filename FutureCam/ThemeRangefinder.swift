@@ -139,8 +139,23 @@ struct RangefinderCameraView: View {
                 .accessibilityLabel("当前胶片 \(manager.selectedPreset.label)，点按更换")
                 .accessibilityAddTraits(.isButton)
 
-                ScrewHead(size: 7)
-                    .padding(.top, 6)
+                // 右上角这颗螺丝就是检修口：点开 SERVICE PANEL（设置）
+                VStack(spacing: 3) {
+                    Button {
+                        manager.showSettingsSheet = true
+                        Haptics.impact(.light)
+                    } label: {
+                        ScrewHead(size: 7)
+                            .frame(width: 36, height: 34)   // 螺丝很小，热区放大
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    Silkscreen(text: "SERVICE", color: t.ink.opacity(0.5), size: 5, tracking: 0.9)
+                }
+                .padding(.top, -8)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("设置")
+                .accessibilityAddTraits(.isButton)
             }
             .padding(.horizontal, 14)
             .padding(.top, topInset + 8)
