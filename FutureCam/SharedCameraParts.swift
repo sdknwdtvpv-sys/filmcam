@@ -49,6 +49,17 @@ struct PreviewSurface: View {
                 .allowsHitTesting(false)
             }
 
+            #if DEBUG
+            Text(manager.orientationDebugText)
+                .font(.system(size: 9, weight: .bold, design: .monospaced))
+                .foregroundColor(.yellow)
+                .padding(4)
+                .background(Color.black.opacity(0.6))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.top, 40)
+                .allowsHitTesting(false)
+            #endif
+
             if manager.showGrid { GridOverlay() }
             if manager.showLevel { LevelIndicator() }
 

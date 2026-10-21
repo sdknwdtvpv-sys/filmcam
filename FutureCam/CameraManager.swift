@@ -782,6 +782,19 @@ final class CameraManager: NSObject, ObservableObject {
         }
     }
 
+    /// 调试用：当前朝向的所有来源，一眼看出卡在哪
+    var orientationDebugText: String {
+        let g = MotionShim.shared.gravity
+        let scene = UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+        let iface = scene.map { "\($0.interfaceOrientation.rawValue)" } ?? "nil"
+        let supported = Bundle.main.infoDictionary?["UISupportedInterfaceOrientations"] as? [String] ?? []
+        return "ori=\(UIDevice.current.orientation.rawValue) iface=\(iface) "
+            + "g=(\(String(format: "%.2f", g.x)),\(String(format: "%.2f", g.y))) "
+            + "n=\(supported.count) v\(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "?")"
+    }
+
     /// 界面实际朝向。界面放开横屏后这个值才可靠；拿不到时退回重力判断
     private static func interfaceOrientation() -> UIDeviceOrientation {
         if let scene = UIApplication.shared.connectedScenes
