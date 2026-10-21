@@ -328,42 +328,41 @@ struct RangefinderCameraView: View {
         }
     }
 
-    /// 横屏右侧握把：读数在上，快门居中，两个小键在下
+    /// 横屏右侧握把：读数在上，下面三个控件和竖屏底部保持同样的排列
+    /// （相册 —— 快门 —— 翻转），只是收窄了横向内边距
     private func landscapeGrip(_ t: ThemeTokens, bottomInset: CGFloat) -> some View {
         VStack(spacing: 0) {
             GrooveLine()
 
             readoutGrid(t)
-                .padding(.horizontal, 12)
-                .padding(.top, 10)
+                .padding(.horizontal, 10)
+                .padding(.top, 8)
 
             GrooveLine()
-                .padding(.top, 10)
+                .padding(.top, 8)
 
-            Spacer(minLength: 6)
+            Spacer(minLength: 0)
 
-            shutterDial(t)
-
-            Spacer(minLength: 6)
-
-            HStack {
+            HStack(alignment: .center, spacing: 10) {
                 albumWindow(t)
                     .overlay(alignment: .bottom) {
                         Silkscreen(text: "相册", color: t.inkDim, size: 6, tracking: 0.8)
-                            .offset(y: 10)
+                            .offset(y: 11)
                     }
+                Spacer(minLength: 0)
+                shutterDial(t)
                 Spacer(minLength: 0)
                 flipKey(t)
             }
-            .padding(.horizontal, 22)
+            .padding(.horizontal, 18)
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 0)
 
             Silkscreen(text: "VOL. \(String(format: "%02d", manager.roll.number)) · \(manager.roll.countText)",
                        color: t.ink.opacity(0.45), size: 5.5, tracking: 1.2)
-                .padding(.bottom, 6 + bottomInset)
+                .padding(.bottom, 4 + bottomInset)
         }
-        .frame(width: 300)
+        .frame(width: 340)
         .background(AluminumFace(tokens: t))
         .overlay(alignment: .leading) {
             Rectangle().fill(.black.opacity(0.35)).frame(width: 1)
