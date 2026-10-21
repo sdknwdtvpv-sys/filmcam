@@ -405,12 +405,33 @@ struct FilmFilter {
             img = toneCurve(img, character: c)
         }
 
+        // 3b. 源图是手机 JPEG，高光里带色度噪点；LUT 会把它放大成彩色雪花
+        if quality == .full, let f = CIFilter(name: "CINoiseReduction") {
+            f.setValue(img, forKey: kCIInputImageKey)
+            f.setValue(0.02, forKey: "inputNoiseLevel")
+            f.setValue(0.4, forKey: "inputSharpness")
+            if let out = f.outputImage { img = out.cropped(to: extent) }
+        }
+
         // 4. 3D LUT：只占 character.lutMix，其余留给原图的色彩关系
         let lutAmount = p.lutIntensity * c.lutMix
         if lutAmount > 0.01,
            let lut = LUTFilter.resolvedLUT(for: preset, intensity: 1.0) {
             let graded = LUTFilter.apply(lut, to: img)
-            img = dissolve(img, graded, time: lutAmount)
+            // 高光不吃 LUT：真实胶片到白场会自然去色，也让过曝的窗子不再出现彩色噪点
+            let lum = luminance(img)
+            let squared = lum.applyingFilter("CIMultiplyBlendMode", parameters: [
+                kCIInputBackgroundImageKey: lum.cropped(to: extent)])
+            let keep = squared.applyingFilter("CIColorInvert").cropped(to: extent)
+            if let blend = CIFilter(name: "CIBlendWithMask") {
+                let mixed = dissolve(img, graded, time: lutAmount)
+                blend.setValue(mixed, forKey: kCIInputImageKey)
+                blend.setValue(img, forKey: kCIInputBackgroundImageKey)
+                blend.setValue(keep, forKey: kCIInputMaskImageKey)
+                img = (blend.outputImage ?? mixed).cropped(to: extent)
+            } else {
+                img = dissolve(img, graded, time: lutAmount)
+            }
         }
 
         // 5. 分离色调：暗部偏青、高光偏暖
