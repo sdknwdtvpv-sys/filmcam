@@ -93,7 +93,9 @@ struct CameraRoot: View {
 
             // 一次性的用法引导（拍过一张或点一下就不再出现）
             if shouldShowGuide {
-                OnboardingFlow(onFinish: { seenGuide = true; replayGuide = false })
+                FirstRunGuide(anchors: anchors,
+                              onFinish: { seenGuide = true; replayGuide = false },
+                              initialStep: guideInitialStep)
                     .transition(.opacity)
             }
         }
