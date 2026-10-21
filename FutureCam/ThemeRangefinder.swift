@@ -46,24 +46,16 @@ struct RangefinderCameraView: View {
                     .ignoresSafeArea()
 
                 // 整台机器铺满屏幕，内容再按安全区让开灵动岛和 home indicator
-                // 横过来 = 真正把相机端平：取景窗占主视野，
-                // 控制键收到右侧像握把一样竖排，而不是把竖版拉伸
+                // 竖过来 = 整台机器跟手一起转，不做第二套布局。
+                // 物理相机横过来时，机身、按键、丝印都是一起转的。
                 if geo.size.width > geo.size.height {
-                    VStack(spacing: 0) {
-                        topPlate(t, topInset: insets.top)
-                        HStack(spacing: 0) {
-                            waist(t)
-                            landscapeGrip(t, bottomInset: insets.bottom)
-                        }
-                    }
-                    .ignoresSafeArea()
+                    machine(t, topInset: 0, bottomInset: 0)
+                        .frame(width: geo.size.height, height: geo.size.width)
+                        .rotationEffect(.degrees(90))
+                        .frame(width: geo.size.width, height: geo.size.height)
                 } else {
-                    VStack(spacing: 0) {
-                        topPlate(t, topInset: insets.top)
-                        waist(t)
-                        bottomPlate(t, bottomInset: insets.bottom)
-                    }
-                    .ignoresSafeArea()
+                    machine(t, topInset: insets.top, bottomInset: insets.bottom)
+                        .ignoresSafeArea()
                 }
 
                 DeviceEdge(radius: 0, intensity: 1)
@@ -85,6 +77,15 @@ struct RangefinderCameraView: View {
     }
 
     // MARK: 铝制顶盖
+
+    /// 竖版机身：顶盖 + 取景 + 操控区。横屏时整体旋转，不另做布局
+    private func machine(_ t: ThemeTokens, topInset: CGFloat, bottomInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            topPlate(t, topInset: topInset)
+            waist(t)
+            bottomPlate(t, bottomInset: bottomInset)
+        }
+    }
 
     private func topPlate(_ t: ThemeTokens, topInset: CGFloat) -> some View {
         VStack(spacing: 0) {
