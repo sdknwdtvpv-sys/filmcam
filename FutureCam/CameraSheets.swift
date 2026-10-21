@@ -201,6 +201,8 @@ func canisterColor(_ preset: FilmPreset) -> Color {
     case .frost:       return Color(hex: 0x7C8790)
     case .ochre:       return Color(hex: 0xA8763C)
     case .abyss:       return Color(hex: 0x35485E)
+    case .neonNight:   return Color(hex: 0x7A2E63)   // 霓虹：品红
+    case .rainyDay:    return Color(hex: 0x6E7A80)   // 雨天：石板灰蓝
     case .clear:       return Color(hex: 0x3E8FA8)
     case .nightStreet: return Color(hex: 0x2B3A55)
     case .fresh:       return Color(hex: 0x6FA84E)

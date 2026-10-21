@@ -20,6 +20,8 @@ enum FilmPreset: String, CaseIterable, Identifiable {
     case frost
     case ochre
     case abyss
+    case neonNight       // 霓虹 800
+    case rainyDay        // 雨天 400
     // 以下 4 个来自公开调色配方，翻译成参数化调色层（不用 LUT）
     case clear
     case nightStreet
@@ -67,6 +69,8 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .frost:       return "霜白 400"
         case .ochre:       return "赭石 200"
         case .abyss:       return "深潭 1600"
+        case .neonNight:   return "霓虹 800"
+        case .rainyDay:    return "雨天 400"
         case .clear:       return "清透 100"
         case .nightStreet: return "夜街 800"
         case .fresh:       return "晴野 200"
@@ -115,7 +119,8 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .neutral, .kodakGold, .duskGold, .ochre: return .daily
         case .classicBnw, .slate, .fadedCinema: return .street
         case .fuji400, .cinematic, .frost: return .landscape
-        case .abyss: return .night
+        case .abyss, .neonNight: return .night
+        case .rainyDay: return .street
         case .mint, .rust: return .still
         default: return .daily
         }
@@ -138,6 +143,8 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .frost:        return "极简 / 雪景"
         case .ochre:        return "静物 / 人像"
         case .abyss:        return "夜景"
+        case .neonNight:    return "夜街 / 霓虹"
+        case .rainyDay:     return "雨天 / 阴湿"
         default:            return "调色"
         }
     }
@@ -212,6 +219,16 @@ enum FilmPreset: String, CaseIterable, Identifiable {
                                  shadowTint: (0.24, 0.22, 0.18), highlightTint: (0.68, 0.52, 0.34),
                                  splitStrength: 0.0, halation: 0.0, soften: 0.20,
                                  lutMix: 0.60, grainScale: 1.0)
+        case .neonNight:      // 霓虹 800：夜街招牌，暗部留青、霓虹保色
+            return FilmCharacter(blackLift: 0.050, highlightRoll: 0.915, midContrast: 0.30,
+                                 shadowTint: (0.08, 0.15, 0.32), highlightTint: (0.62, 0.44, 0.56),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.20,
+                                 lutMix: 0.0, grainScale: 1.35)
+        case .rainyDay:       // 雨天 400：低饱和、灰绿、柔
+            return FilmCharacter(blackLift: 0.042, highlightRoll: 0.945, midContrast: 0.16,
+                                 shadowTint: (0.20, 0.24, 0.24), highlightTint: (0.52, 0.52, 0.50),
+                                 splitStrength: 0.0, halation: 0.0, soften: 0.28,
+                                 lutMix: 0.0, grainScale: 0.95)
         case .abyss:          // 深潭 1600：夜空，溢出最强
             return FilmCharacter(blackLift: 0.044, highlightRoll: 0.930, midContrast: 0.30,
                                  shadowTint: (0.10, 0.18, 0.34), highlightTint: (0.70, 0.52, 0.36),
@@ -313,6 +330,8 @@ enum FilmPreset: String, CaseIterable, Identifiable {
         case .frost:       return "400"
         case .ochre:       return "200"
         case .abyss:       return "1600"
+        case .neonNight:   return "800"
+        case .rainyDay:    return "400"
         case .clear:       return "100"
         case .nightStreet: return "800"
         case .fresh:       return "200"
@@ -862,6 +881,15 @@ struct FilmFilter {
 
     private static func params(for preset: FilmPreset) -> FilterParams {
         switch preset {
+        case .neonNight:
+            // 不做 LUT：夜街的色靠曲线与暗部青、高光暖做，避免整幅偏色
+            return FilterParams(proceduralColor: true, neutral: 7200, saturation: 1.12, contrast: 1.12,
+                                brightness: -0.03, vignette: 0.55, vignetteRadius: 1.1,
+                                leakColor: (0.4, 0.5, 1.0), leakAlpha: 0.0, lutIntensity: 0.0)
+        case .rainyDay:
+            return FilterParams(proceduralColor: true, neutral: 6200, saturation: 0.82, contrast: 0.96,
+                                brightness: 0.015, vignette: 0.35, vignetteRadius: 1.3,
+                                leakColor: (0.6, 0.7, 0.8), leakAlpha: 0.0, lutIntensity: 0.0)
         case .kodakGold:
             return FilterParams(proceduralColor: false, neutral: 4500, saturation: 1.0, contrast: 1.0,
                                 brightness: 0.0, vignette: 0.6, vignetteRadius: 1.1,
