@@ -307,6 +307,8 @@ struct SettingsSheet: View {
     @ObservedObject private var language = LanguageStore.shared
     @ObservedObject private var store = PurchaseStore.shared
     @ObservedObject private var filmStore = CustomFilmStore.shared
+    /// 往下拖时的位移；松手没过阈值就弹回去
+    @State private var dragOffset: CGFloat = 0
 
 
     private var version: String {
@@ -328,6 +330,10 @@ struct SettingsSheet: View {
                 }
 
             VStack(spacing: 0) {
+                grabHandle
+                    .contentShape(Rectangle())
+                    .gesture(pullDownGesture)
+
                 if manager.showPrivacyPolicy {
                     PrivacyPolicyView { manager.showPrivacyPolicy = false }
                 } else {
@@ -350,12 +356,66 @@ struct SettingsSheet: View {
                 }
             }
             .frame(maxHeight: 620)
+            .offset(y: dragOffset)
             .background(AluminumFace(tokens: ThemeStore.current))
             .clipShape(TopRounded(radius: 14))
             .overlay(TopRoundedBorder(radius: 14).stroke(.black.opacity(0.45), lineWidth: 1))
             .transition(.move(edge: .bottom))
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+
+    // MARK: 抽屉手势
+
+    /// 抓手：一道带滚花的横槽，明示「可以往下拉」
+    private var grabHandle: some View {
+        VStack(spacing: 0) {
+            ZStack {
+                Capsule()
+                    .fill(CameraTheme.ink.opacity(0.16))
+                    .frame(width: 42, height: 4)
+                // 极细的滚花，和快门盘同一套语言
+                HStack(spacing: 2) {
+                    ForEach(0..<11, id: \.self) { _ in
+                        Rectangle()
+                            .fill(CameraTheme.ink.opacity(0.10))
+                            .frame(width: 1, height: 4)
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 34)   // 抓手要够大，不然抓不住
+            .padding(.top, 2)
+        }
+    }
+
+    private var pullDownGesture: some Gesture {
+        DragGesture(minimumDistance: 6)
+            .onChanged { value in
+                // 只跟往下拉，往上不给动
+                dragOffset = max(0, value.translation.height)
+            }
+            .onEnded { value in
+                let passed = value.translation.height > 110
+                    || value.predictedEndTranslation.height > 220
+                if passed {
+                    Haptics.impact(.light)
+                    // 在看隐私政策：先退回「我的」；否则收面板
+                    if manager.showPrivacyPolicy {
+                        withAnimation(.easeOut(duration: 0.2)) { dragOffset = 0 }
+                        manager.showPrivacyPolicy = false
+                    } else {
+                        withAnimation(.easeOut(duration: 0.22)) {
+                            manager.showSettingsSheet = false
+                            dragOffset = 0
+                        }
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.32, dampingFraction: 0.82)) {
+                        dragOffset = 0
+                    }
+                }
+            }
     }
 
     // MARK: 结构件
